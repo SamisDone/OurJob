@@ -92,7 +92,7 @@ No `fontenc T1` and no `inputenc` line, so the output matches Pratik's current C
 Checked with pdflatex (MiKTeX) using the template preamble unchanged: José Müller, Peña, François, Ørsted, Straße, Škoda, Łódź and Jiří compile with no errors and no missing characters, written either as accent commands or as raw UTF-8. Trade-off, measured with pdftotext: OT1 builds an accented letter from two glyphs, so extracted text splits it ("José" becomes "Jos´e"). ASCII text extracts cleanly. If this ever matters for an ATS, the fix that keeps the look is `accsupp` ActualText around each accented letter; that adds a package to the preamble, so it needs Sam's approval first.
 
 ### Style tile approval: not given yet
-The review line in Sam's message was the unfilled template ("[approved / approved with these changes: ...]"). UI work stays paused; non-UI Phase 1 work continues.
+The review line in Sam's message was the unfilled template ("[approved / approved with these changes: ...]"). UI work stays paused; non-UI Phase 1 work continues. Superseded: the palette was then rejected and redesigned (2026-10-29, below).
 
 ### Style tile shows the signed-in person's name
 Sam asked for the sample to say Pratik instead of Arif. The style tile now takes the name from the signed-in session and falls back to the fictional sample when nobody is signed in. Pratik's name is not written into the sample CV, `templates/resume-sample.tex` or any fixture: golden rule 5 keeps his data out of the repo, and a committed CV under his name with invented employers would be published with the open-source code. The real app shows his name from his own profile once he imports his CV (Phase 1).
@@ -123,3 +123,58 @@ All fictional: Nadia Chowdhury (Markdown CV plus a LinkedIn-style PDF with a del
 
 ### Portfolio import
 Readability on linkedom, links read before Readability mutates the page. Under 300 visible characters means the site likely renders in the browser; the result is flagged `thin` so onboarding can offer a paste box.
+
+## 2026-10-29: redesign to "index card and ballpoint"
+
+### Why
+Sam and Pratik rejected the Phase 0 palette (paper grey, yellow highlighter, magenta proofmark) as reading like generic AI design. The new direction from Sam: an index card on a desk, written in blue ballpoint. Matched keywords are circled in blue pen, missing keywords underlined in red pen, rows separated by faint blue ruled lines, cards and panels with a thin red rule at the top, and a red rubber stamp for Applied. Dark mode is "carbon paper". IBM Plex Sans, the type scale, spacing, radii and the rest of DESIGN.md stay. DESIGN.md sections 1, 3, 5.3, 5.4, 5.6, 6, 8 (focus ring), 10.1 (the gradient ban gains one exception, the ruled lines) and 10.2 were rewritten to match.
+
+### Tokens
+The highlighter (`--highlight`, `--highlight-ink`) and proofmark (`--proofmark`, `--proofmark-wash`) tokens are gone; a test checks they do not come back. New: `--body`, `--red-rule`, `--redpen`, `--redpen-wash`, `--circle-fill`, `--circle-stroke`. All values are Sam's, with one change: light `--control-edge` is `#6F7EA5`, not `#7685AE`. The brief's value measured 2.88:1 against `--paper`, below the 3:1 WCAG 1.4.11 asks for the edge of a text field; `#6F7EA5` measures 3.18:1 and looks the same.
+
+### Text color rules
+`--ink` only for headings, titles, the fit score, primary buttons, links, active nav and the pen marks; `--body` for all running text; `--graphite` for secondary lines. The page default text color is now `--body` and `h1` to `h4` default to `--ink`. Every component was audited: paragraphs, reasons, descriptions, dialog bodies, field text and labels, secondary and ghost buttons, table cells, code view and command palette items moved from `--ink` to `--body`; company lines moved to `--graphite`. Dark `--graphite` on `--circle-fill` is 4.47:1, so circled words always use `--body` and graphite never sits on the fill.
+
+### Contrast (WCAG 2.2 AA), enforced by tests/unit/design/tokens.test.ts
+
+| Pair | Use, minimum | Light | Dark |
+|---|---|---|---|
+| --ink on --paper | text, 4.5 | 7.93 | 14.09 |
+| --ink on --sheet | text, 4.5 | 10.07 | 12.64 |
+| --body on --paper | text, 4.5 | 10.18 | 11.61 |
+| --body on --sheet | text, 4.5 | 12.93 | 10.41 |
+| --graphite on --paper | text, 4.5 | 5.15 | 7.37 |
+| --graphite on --sheet | text, 4.5 | 6.54 | 6.61 |
+| --redpen on --paper | text, 4.5 | 4.60 | 6.53 |
+| --redpen on --sheet | text, 4.5 | 5.84 | 5.85 |
+| --ok on --paper | text, 4.5 | 5.20 | 8.30 |
+| --ok on --sheet | text, 4.5 | 6.61 | 7.45 |
+| --caution on --paper | text, 4.5 | 5.07 | 8.74 |
+| --caution on --sheet | text, 4.5 | 6.45 | 7.84 |
+| --body on --circle-fill | circled word, 4.5 | 10.31 | 7.04 |
+| --ink on --circle-fill | ink on circle fill, 4.5 | 8.03 | 8.55 |
+| --sheet on --ink | primary button, 4.5 | 10.07 | 12.64 |
+| --sheet on --redpen | destructive button, 4.5 | 5.84 | 5.85 |
+| --circle-stroke on --sheet | pen circle, 3 | 10.07 | 7.53 |
+| --circle-stroke on --circle-fill | pen circle on its fill, 3 | 8.03 | 5.09 |
+| --redpen on --sheet | red underline, 3 | 5.84 | 5.85 |
+| --control-edge on --paper | field edge, 3 | 3.18 | 4.12 |
+| --control-edge on --sheet | field edge, 3 | 4.04 | 3.70 |
+
+`--red-rule` is decoration only and never carries text, so it has no text requirement.
+
+### How the pen marks are built
+- `PenCircle` and `PenUnderline` (`src/components/marks/pen.tsx`) draw SVG paths seeded by the word and its position, so each mark is slightly different and the same word always gets the same mark. The circle is an open loop of about 1.1 turns that ends a little outside its start, like a quick pen loop, with a calmer closed shape for the fill. `vector-effect: non-scaling-stroke` keeps the 1.5 px (circle) and 2 px (underline) strokes even however wide the word is.
+- An ellipse needs about 1.4 times the box of the word it encloses, so circles get 0.42 em of side padding. Marks are sized to the letters (line-height 1.2 inside the mark), not the line box, so they never reach into the line above or below.
+- Marked job descriptions use a 28 px line height instead of the scale's 24 px. At 24 px a circle on one line touched a red underline on the line above in testing. This is the only line-height exception and it is written into DESIGN.md section 3.
+- The drawing moment uses `pathLength=1` and a stroke-dashoffset transition: circles in reading order with a 30 ms stagger (shrinking if there are many matches) and a 240 ms draw, then underlines; the whole moment stays under 1.2 s (`penTiming`, tested). Reduced motion makes every transition instant through the global rule in globals.css.
+
+### Index card details
+- Ruled lines are a `ruled` utility (hairlines every 32 px from a repeating linear gradient). DESIGN.md 10.1 bans gradients as decoration; this is recorded there as the one exception, and it is used only on the Today feed and in empty states. In empty states the text is set at 32 px so it sits on the lines.
+- The red rule is a `red-rule-top` utility (a 2 px line, clipped by the panel's rounded corners). It is on the Today panels, dialogs, sheets, tracker cards, empty states, error states and the new `Panel` primitive. The utility does not set `position`, because dialogs and sheets are `fixed`; non-positioned users add `relative`.
+- With the highlighter gone, the "new since your last visit" marker is a small `--ink` dot in the row margin, like a pen tick.
+- The Applied stamp is sentence case ("Applied"), not capitals, because DESIGN.md bans all-caps labels. It sits rotated 4 degrees in the card's top-right corner.
+- Focus ring: 2 px `--ink` outline plus a 3 px `--circle-fill` halo (box-shadow spread 5 px outside the 2 px outline).
+
+### Still waiting
+Style tile approval for this direction. Real screens stay paused until Sam approves.

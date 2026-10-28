@@ -1,68 +1,112 @@
 /*
- * The highlighter and the proofreader's mark.
- * The highlighter is a pseudo-element behind the word so it can sweep left to
- * right with a transform. Text on it stays dark (--highlight-ink) in both
- * themes.
+ * Ballpoint marks. Blue pen circles for matched keywords, red pen underlines
+ * for missing ones. Strokes keep a constant width however wide the word is
+ * (vector-effect: non-scaling-stroke).
  */
 
-.jd-mark {
+.pen-circle {
   position: relative;
+  display: inline-block;
   isolation: isolate;
-  background: transparent;
-  color: inherit;
-  padding: 0 0.12em;
-  margin: 0 -0.12em;
+  /* Room for the loop: an ellipse needs about 1.4x the box of the word it encloses. */
+  padding: 0 0.42em;
+  margin: 0 -0.2em;
+  white-space: nowrap;
+  color: var(--body);
+  /* Size the box to the letters, not the line, so marks stay inside their own line. */
+  line-height: 1.2;
 }
 
-.jd-mark[data-kind="matched"] {
-  color: var(--highlight-ink);
-}
-
-.jd-mark[data-kind="matched"]::before {
-  content: "";
+.pen-circle-svg {
   position: absolute;
   z-index: -1;
-  inset: 0.06em 0 0.02em;
-  background: var(--highlight);
-  /* Slightly uneven ends, like a felt tip. */
-  border-radius: 0.14em 0.24em 0.2em 0.3em / 0.3em 0.2em 0.26em 0.18em;
-  transform-origin: left center;
+  inset: -0.34em -0.06em -0.3em -0.04em;
+  width: calc(100% + 0.1em);
+  height: calc(100% + 0.64em);
+  overflow: visible;
+  pointer-events: none;
 }
 
-.jd-mark[data-kind="missing"] {
-  text-decoration: none;
+.pen-circle-fill {
+  fill: var(--circle-fill);
 }
 
-.jd-mark[data-kind="missing"]::after {
-  content: "";
+.pen-circle-stroke {
+  fill: none;
+  stroke: var(--circle-stroke);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.pen-circle-text {
+  position: relative;
+}
+
+.pen-underline {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.pen-underline-svg {
   position: absolute;
-  left: 0.12em;
-  right: 0.12em;
-  bottom: -0.08em;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--proofmark);
-  transform-origin: left center;
+  left: -0.04em;
+  right: -0.08em;
+  bottom: -0.3em;
+  width: calc(100% + 0.12em);
+  height: 0.42em;
+  overflow: visible;
+  pointer-events: none;
 }
 
-/* Pending: nothing marked yet. */
-.jd-text[data-phase="pending"] .jd-mark[data-kind="matched"] {
+.pen-underline-svg path {
+  fill: none;
+  stroke: var(--redpen);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+/*
+ * The signature moment (DESIGN.md 3, Motion). "pending": nothing marked.
+ * "run": circles draw in reading order, then the red underlines.
+ * Reduced motion: globals.css makes every transition instant.
+ */
+.jd-text[data-phase="pending"] .pen-circle-stroke,
+.jd-text[data-phase="pending"] .pen-underline-svg path {
+  stroke-dashoffset: 1;
+}
+.jd-text[data-phase="pending"] .pen-circle-fill {
+  opacity: 0;
+}
+
+.jd-text[data-phase="run"] .pen-circle-stroke {
+  transition: stroke-dashoffset var(--draw-ms) cubic-bezier(0.45, 0, 0.2, 1) calc(var(--i) * var(--draw-stagger));
+}
+.jd-text[data-phase="run"] .pen-circle-fill {
+  transition: opacity var(--draw-ms) linear calc(var(--i) * var(--draw-stagger));
+}
+.jd-text[data-phase="run"] .pen-underline-svg path {
+  transition: stroke-dashoffset 200ms cubic-bezier(0.45, 0, 0.2, 1) var(--underline-delay);
+}
+
+/*
+ * Marked job descriptions use a 28 px line height (the scale's body is 24)
+ * so a circle never runs into a mark on the line above or below.
+ */
+.jd-text {
+  line-height: 1.75rem;
+}
+
+/* Marks in running text are <mark> elements; reset the browser's yellow. */
+mark.jd-mark {
+  background: transparent;
   color: inherit;
-}
-.jd-text[data-phase="pending"] .jd-mark::before,
-.jd-text[data-phase="pending"] .jd-mark::after {
-  transform: scaleX(0);
-}
-
-/* Run: fill in reading order, underlines land at the end. */
-.jd-text[data-phase="run"] .jd-mark[data-kind="matched"] {
-  transition: color 1ms linear calc(var(--i) * var(--sweep-stagger) + var(--sweep-fill) * 0.35);
-}
-.jd-text[data-phase="run"] .jd-mark::before {
-  transform: scaleX(1);
-  transition: transform var(--sweep-fill) var(--ease-ink) calc(var(--i) * var(--sweep-stagger));
-}
-.jd-text[data-phase="run"] .jd-mark::after {
-  transform: scaleX(1);
-  transition: transform 200ms var(--ease-ink) var(--sweep-underline-delay);
 }

@@ -52,7 +52,7 @@ export function CodeView({
         </Button>
       </div>
       <div className="overflow-auto" style={{ maxHeight }} tabIndex={0} role="region" aria-label={label}>
-        <pre className="py-3 font-mono text-[13px] leading-5 text-ink">
+        <pre className="py-3 font-mono text-[13px] leading-5 text-body">
           <code className="grid grid-cols-[auto_1fr]">
             {lines.map((line, i) => (
               <span key={i} className="contents">

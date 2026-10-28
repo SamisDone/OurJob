@@ -1,5 +1,6 @@
 import { CaretDownIcon, CheckIcon, XIcon } from "@phosphor-icons/react/ssr";
 import type { ComponentProps, ReactNode } from "react";
+import { PenCircle, PenUnderline } from "@/components/marks/pen";
 import { cn } from "@/lib/utils";
 
 const pill = "inline-flex items-center gap-1.5 rounded-pill whitespace-nowrap text-sm";
@@ -22,7 +23,7 @@ export function FilterChip({ pressed = false, menu = false, className, children,
         "h-8 border px-3 transition-colors duration-[120ms] ease-ink max-md:h-10",
         pressed
           ? "border-ink bg-ink text-sheet hover:bg-ink/88"
-          : "border-rule bg-transparent text-ink hover:border-graphite",
+          : "border-rule bg-sheet text-body hover:border-graphite",
         className,
       )}
       {...props}
@@ -33,36 +34,48 @@ export function FilterChip({ pressed = false, menu = false, className, children,
   );
 }
 
-type KeywordChipProps = ComponentProps<"span"> & {
+type KeywordChipProps = {
   kind: "matched" | "missing";
   importance?: "must" | "nice";
+  children: string;
+  className?: string;
 };
 
-/** A job keyword. Matched ones carry the highlighter; missing ones the proofreader's mark. */
-export function KeywordChip({ kind, importance, className, children, ...props }: KeywordChipProps) {
+/**
+ * A job keyword. Matched: circled in blue pen. Missing: underlined in red pen.
+ * The word stays in --body; the accessible name says which it is.
+ */
+export function KeywordChip({ kind, importance, className, children }: KeywordChipProps) {
+  return (
+    <span data-kind={kind} className={cn("inline-flex h-8 items-center gap-1.5 px-1 text-sm whitespace-nowrap text-body", className)}>
+      <span className="sr-only">{kind === "matched" ? "Matched keyword: " : "Missing keyword: "}</span>
+      {kind === "matched" ? (
+        <PenCircle seed={children}>{children}</PenCircle>
+      ) : (
+        <PenUnderline seed={children}>{children}</PenUnderline>
+      )}
+      {importance === "must" && <span className="text-xs text-graphite">required</span>}
+    </span>
+  );
+}
+
+/** The tracker's Applied mark: a slightly rotated red rubber stamp. */
+export function Stamp({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span
-      data-kind={kind}
       className={cn(
-        pill,
-        "h-7 px-2.5",
-        kind === "matched" && "bg-highlight text-highlight-ink",
-        kind === "missing" && "border border-rule bg-transparent text-ink",
+        "inline-flex h-6 -rotate-[4deg] items-center rounded-[3px] border-2 border-redpen px-1.5 text-xs font-semibold text-redpen",
+        "shadow-[inset_0_0_0_1px_var(--redpen-wash)]",
         className,
       )}
-      {...props}
     >
-      <span className="sr-only">{kind === "matched" ? "Matched keyword: " : "Missing keyword: "}</span>
-      <span className={cn(kind === "missing" && "underline decoration-proofmark decoration-2 underline-offset-[5px]")}>
-        {children}
-      </span>
-      {importance === "must" && <span className="text-xs opacity-70">required</span>}
+      {children}
     </span>
   );
 }
 
 type TagProps = ComponentProps<"span"> & {
-  tone?: "neutral" | "ok" | "caution" | "proofmark" | "new";
+  tone?: "neutral" | "ok" | "caution" | "redpen" | "new";
   icon?: ReactNode;
 };
 
@@ -73,11 +86,11 @@ export function Tag({ tone = "neutral", icon, className, children, ...props }: T
       className={cn(
         pill,
         "h-6 px-2 text-xs font-medium",
-        tone === "neutral" && "border border-rule text-ink",
+        tone === "neutral" && "border border-rule text-body",
         tone === "ok" && "border border-ok/40 text-ok",
         tone === "caution" && "border border-caution/45 text-caution",
-        tone === "proofmark" && "border border-proofmark/40 text-proofmark",
-        tone === "new" && "bg-highlight text-highlight-ink",
+        tone === "redpen" && "border border-redpen/45 text-redpen",
+        tone === "new" && "bg-ink text-sheet",
         className,
       )}
       {...props}
@@ -99,7 +112,7 @@ export function TokenChip({
   className?: string;
 }) {
   return (
-    <span className={cn(pill, "h-8 border border-rule bg-sheet pr-1 pl-3 text-ink", className)}>
+    <span className={cn(pill, "h-8 border border-rule bg-sheet pr-1 pl-3 text-body", className)}>
       {children}
       {onRemove && (
         <button

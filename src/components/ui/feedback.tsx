@@ -14,7 +14,10 @@ export function Skeleton({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-/** One sentence on what is happening, plus the next action. No illustrations. */
+/**
+ * One sentence on what is happening, plus the next action. Set on a small
+ * ruled index card: text sits on the blue lines. No illustrations.
+ */
 export function EmptyState({
   title,
   children,
@@ -27,11 +30,25 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("border-y border-rule py-10", className)}>
-      <p className="text-lg font-semibold text-ink">{title}</p>
-      {children && <p className="mt-1 measure text-base text-graphite">{children}</p>}
-      {action && <div className="mt-5">{action}</div>}
+    <div
+      className={cn(
+        "relative red-rule-top ruled rounded-panel border border-rule px-6 pt-8 pb-8 leading-8 [background-position:0_-7px]",
+        className,
+      )}
+    >
+      <p className="text-lg leading-8 font-semibold text-ink">{title}</p>
+      {children && <p className="measure text-base leading-8 text-body">{children}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
+  );
+}
+
+/** A white sheet with the index card's red rule across the top. Borders, not shadows. */
+export function Panel({ children, className, ...props }: ComponentProps<"section">) {
+  return (
+    <section className={cn("relative red-rule-top rounded-panel border border-rule bg-sheet", className)} {...props}>
+      {children}
+    </section>
   );
 }
 
@@ -50,12 +67,12 @@ export function ErrorState({
   className?: string;
 }) {
   return (
-    <div role="alert" className={cn("rounded-panel border border-proofmark/35 bg-proofmark-wash px-5 py-4", className)}>
+    <div role="alert" className={cn("relative red-rule-top rounded-panel border border-redpen/35 bg-redpen-wash px-5 pt-5 pb-4", className)}>
       <div className="flex gap-3">
-        <WarningIcon size={20} aria-hidden className="mt-0.5 shrink-0 text-proofmark" />
+        <WarningIcon size={20} aria-hidden className="mt-0.5 shrink-0 text-redpen" />
         <div className="min-w-0">
           <p className="font-semibold text-ink">{title}</p>
-          {children && <p className="mt-1 measure text-sm text-ink/80">{children}</p>}
+          {children && <p className="mt-1 measure text-sm text-body">{children}</p>}
           {onRetry && (
             <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
               <ArrowClockwiseIcon aria-hidden />
@@ -73,7 +90,7 @@ export function CautionBar({ children, action }: { children: ReactNode; action?:
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-panel border border-caution/40 bg-caution-wash px-4 py-3 text-sm text-ink"
+      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-panel border border-caution/40 bg-caution-wash px-4 py-3 text-sm text-body"
     >
       <WarningIcon size={16} aria-hidden className="shrink-0 text-caution" />
       <p className="min-w-0 flex-1">{children}</p>
@@ -85,6 +102,6 @@ export function CautionBar({ children, action }: { children: ReactNode; action?:
 /** A calm note, for things like the Gemini free tier privacy note. */
 export function Callout({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("measure border-l-2 border-ink/40 py-1 pl-4 text-sm text-ink/85", className)}>{children}</div>
+    <div className={cn("measure border-l-2 border-ink/40 py-1 pl-4 text-sm text-body", className)}>{children}</div>
   );
 }

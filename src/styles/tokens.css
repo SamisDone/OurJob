@@ -1,7 +1,7 @@
 /*
- * OurJob design tokens. Source of truth: docs/DESIGN.md section 3.
- * Components never hard-code colors; they use these variables through the
- * Tailwind theme in src/app/globals.css.
+ * OurJob design tokens: "index card and ballpoint". Source of truth:
+ * docs/DESIGN.md section 3. Components never hard-code colors; they use these
+ * variables through the Tailwind theme in src/app/globals.css.
  *
  * Theme selection:
  *   - default follows the OS (prefers-color-scheme)
@@ -12,76 +12,90 @@
 
 :root,
 [data-theme="light"] {
-  --paper: #f3f5f7;
+  --paper: #e6e4df;
   --sheet: #ffffff;
-  --ink: #1a2233;
-  --graphite: #5a6476;
-  --rule: #d9dee6;
+  /* Blue ink: headings, titles, fit score, primary buttons, links, active nav, pen marks. */
+  --ink: #1f3a93;
+  /* Running text: descriptions, bullets, reasons, dialogs, toasts. Never set paragraphs in --ink. */
+  --body: #2a3145;
+  /* Secondary text: company and source lines, dates, hints, captions. */
+  --graphite: #4f5d80;
+  --rule: #c9d8f0;
   /* Edge of text fields and selects: 3:1 against paper and sheet (WCAG 1.4.11). */
-  --control-edge: #828c9d;
-  --highlight: #f9e55a;
-  --proofmark: #c2185b;
-  --ok: #2e7d4f;
-  --caution: #a15c00;
+  --control-edge: #6f7ea5;
+  /* The red line at the top of an index card. Decoration only, never text. */
+  --red-rule: #d7263d;
+  /* Red pen: missing keywords, destructive actions, the Applied stamp. */
+  --redpen: #c41e3a;
+  /* Blue pen circle around matched keywords. Text inside stays --ink. */
+  --circle-fill: #dce6fa;
+  --circle-stroke: #1f3a93;
+  --ok: #186a41;
+  --caution: #8a5100;
 
-  /* Text on a highlighter mark stays dark in both themes. */
-  --highlight-ink: #1a2233;
-  /* Tinted fills for the caution bar and selected rows. Derived, not new hues. */
+  /* Tinted fills, mixed from the colors above. Not new hues. */
   --caution-wash: color-mix(in srgb, var(--caution) 9%, var(--sheet));
-  --proofmark-wash: color-mix(in srgb, var(--proofmark) 8%, var(--sheet));
-  --ink-wash: color-mix(in srgb, var(--ink) 5%, var(--sheet));
+  --redpen-wash: color-mix(in srgb, var(--redpen) 7%, var(--sheet));
+  --ink-wash: color-mix(in srgb, var(--ink) 6%, var(--sheet));
 
   /* The CV is paper: white with black type in both themes. */
   --cv-paper: #ffffff;
   --cv-ink: #000000;
   --cv-rule: #e3e6eb;
-  --scrim: rgb(26 34 51 / 0.4);
+  --scrim: rgb(31 58 147 / 0.22);
 
-  --shadow-sheet: 0 1px 2px rgb(26 34 51 / 0.06), 0 8px 24px -6px rgb(26 34 51 / 0.14);
-  --shadow-pop: 0 2px 6px rgb(26 34 51 / 0.08), 0 18px 40px -8px rgb(26 34 51 / 0.22);
+  --shadow-sheet: 0 1px 2px rgb(31 58 147 / 0.08), 0 8px 24px -6px rgb(31 58 147 / 0.16);
+  --shadow-pop: 0 2px 6px rgb(31 58 147 / 0.1), 0 18px 40px -8px rgb(31 58 147 / 0.24);
 
   color-scheme: light;
 }
 
+/* Dark: carbon paper. The CV sheet stays white. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0f1522;
-    --sheet: #161d2c;
-    --ink: #e6eaf0;
-    --graphite: #98a2b3;
-    --rule: #273046;
-    --control-edge: #626e86;
-    --highlight: #e9d34a;
-    --proofmark: #f06292;
+    --paper: #10162a;
+    --sheet: #182039;
+    --ink: #dce4f7;
+    --body: #c9d0e0;
+    --graphite: #9aa6c4;
+    --rule: #2a3557;
+    --control-edge: #6878a6;
+    --red-rule: #ff6b7a;
+    --redpen: #ff6b7a;
+    --circle-fill: #2a3a6e;
+    --circle-stroke: #8fb0ff;
     --ok: #5cc48a;
     --caution: #f0a63c;
     --caution-wash: color-mix(in srgb, var(--caution) 10%, var(--sheet));
-    --proofmark-wash: color-mix(in srgb, var(--proofmark) 10%, var(--sheet));
-    --ink-wash: color-mix(in srgb, var(--ink) 5%, var(--sheet));
-    --scrim: rgb(5 8 14 / 0.62);
-    --shadow-sheet: 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.6);
-    --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 20px 48px -10px rgb(0 0 0 / 0.7);
+    --redpen-wash: color-mix(in srgb, var(--redpen) 10%, var(--sheet));
+    --ink-wash: color-mix(in srgb, var(--ink) 6%, var(--sheet));
+    --scrim: rgb(4 7 16 / 0.62);
+    --shadow-sheet: 0 0 0 1px rgb(220 228 247 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 0 0 1px rgb(220 228 247 / 0.08), 0 20px 48px -10px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }
 
 [data-theme="dark"] {
-  --paper: #0f1522;
-  --sheet: #161d2c;
-  --ink: #e6eaf0;
-  --graphite: #98a2b3;
-  --rule: #273046;
-  --control-edge: #626e86;
-  --highlight: #e9d34a;
-  --proofmark: #f06292;
+  --paper: #10162a;
+  --sheet: #182039;
+  --ink: #dce4f7;
+  --body: #c9d0e0;
+  --graphite: #9aa6c4;
+  --rule: #2a3557;
+  --control-edge: #6878a6;
+  --red-rule: #ff6b7a;
+  --redpen: #ff6b7a;
+  --circle-fill: #2a3a6e;
+  --circle-stroke: #8fb0ff;
   --ok: #5cc48a;
   --caution: #f0a63c;
   --caution-wash: color-mix(in srgb, var(--caution) 10%, var(--sheet));
-  --proofmark-wash: color-mix(in srgb, var(--proofmark) 10%, var(--sheet));
-  --ink-wash: color-mix(in srgb, var(--ink) 5%, var(--sheet));
-  --scrim: rgb(5 8 14 / 0.62);
-  --shadow-sheet: 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.6);
-  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 20px 48px -10px rgb(0 0 0 / 0.7);
+  --redpen-wash: color-mix(in srgb, var(--redpen) 10%, var(--sheet));
+  --ink-wash: color-mix(in srgb, var(--ink) 6%, var(--sheet));
+  --scrim: rgb(4 7 16 / 0.62);
+  --shadow-sheet: 0 0 0 1px rgb(220 228 247 / 0.06), 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 0 0 1px rgb(220 228 247 / 0.08), 0 20px 48px -10px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
@@ -91,4 +105,6 @@
   --dur-press: 120ms;
   --dur-expand: 200ms;
   --dur-pane: 320ms;
+  /* Ruled index-card lines: one line every 32 px. */
+  --ruled-gap: 32px;
 }

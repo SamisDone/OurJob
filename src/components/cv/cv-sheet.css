@@ -134,7 +134,7 @@
 }
 
 .cv-sheet [data-bullet][data-flash="true"] {
-  background: var(--highlight);
+  background: var(--circle-fill);
   transition: background-color 600ms var(--ease-ink);
 }
 
@@ -144,7 +144,7 @@
   left: 0;
   right: 0;
   height: 0;
-  border-top: 1px dashed var(--proofmark);
+  border-top: 1px dashed var(--redpen);
   pointer-events: none;
 }
 
@@ -155,7 +155,7 @@
   font-family: var(--font-sans);
   font-size: 11px;
   line-height: 14px;
-  color: var(--proofmark);
+  color: var(--redpen);
   background: var(--cv-paper);
   padding: 0 4px;
 }

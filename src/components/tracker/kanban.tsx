@@ -3,6 +3,7 @@
 import { DotsSixVerticalIcon, FileTextIcon } from "@phosphor-icons/react/ssr";
 import { DropdownMenu } from "radix-ui";
 import type { ReactNode } from "react";
+import { Stamp } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
 export const trackerColumns = ["Saved", "Applied", "Interviewing", "Offer", "Closed"] as const;
@@ -56,11 +57,12 @@ export function KanbanCard({
   return (
     <article
       className={cn(
-        "group rounded-control border border-rule bg-sheet p-3 transition-shadow duration-200 ease-ink",
+        "group relative red-rule-top rounded-control border border-rule bg-sheet px-3 pt-3.5 pb-3 transition-shadow duration-200 ease-ink",
         dragging && "shadow-pop",
       )}
     >
-      <div className="flex items-start gap-1">
+      {column === "Applied" && <Stamp className="absolute top-2.5 right-2.5">Applied</Stamp>}
+      <div className={cn("flex items-start gap-1", column === "Applied" && "pr-16")}>
         <span className="mt-0.5 -ml-1 cursor-grab text-graphite" aria-hidden>
           <DotsSixVerticalIcon size={16} />
         </span>
@@ -83,7 +85,7 @@ export function KanbanCard({
           )}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
-              className="rounded-[4px] px-1.5 py-0.5 text-ink hover:bg-ink-wash"
+              className="rounded-[4px] px-1.5 py-0.5 text-body hover:bg-ink-wash"
               aria-label={`Move ${title}`}
             >
               Move to
@@ -92,7 +94,7 @@ export function KanbanCard({
               <DropdownMenu.Content
                 sideOffset={4}
                 align="end"
-                className="z-50 min-w-40 rounded-panel border border-rule bg-sheet p-1 text-sm text-ink shadow-pop"
+                className="z-50 min-w-40 rounded-panel border border-rule bg-sheet p-1 text-sm text-body shadow-pop"
               >
                 {trackerColumns
                   .filter((c) => c !== column)

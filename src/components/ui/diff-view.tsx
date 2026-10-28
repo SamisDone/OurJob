@@ -20,7 +20,7 @@ export function DiffView({ items, className }: { items: DiffItem[]; className?: 
       {items.map((item, i) => (
         <li key={i} className="grid gap-x-6 gap-y-1 py-3.5 md:grid-cols-[132px_1fr]">
           <div className="text-sm">
-            <span className={cn("font-medium", item.kind === "dropped" ? "text-graphite" : "text-ink")}>
+            <span className={cn("font-medium", item.kind === "dropped" ? "text-graphite" : "text-body")}>
               {label[item.kind]}
             </span>
             <span className="block text-xs text-graphite">{item.where}</span>
@@ -32,7 +32,7 @@ export function DiffView({ items, className }: { items: DiffItem[]; className?: 
                   <span className="sr-only">Before: </span>
                   {item.before}
                 </del>
-                <ins className="block text-ink no-underline">
+                <ins className="block text-body no-underline">
                   <span className="sr-only">After: </span>
                   {item.after}
                 </ins>
@@ -40,7 +40,7 @@ export function DiffView({ items, className }: { items: DiffItem[]; className?: 
             )}
             {item.kind === "moved" && (
               <>
-                <p className="text-ink">{item.text}</p>
+                <p className="text-body">{item.text}</p>
                 <p className="text-xs text-graphite">{item.note}</p>
               </>
             )}
@@ -50,7 +50,7 @@ export function DiffView({ items, className }: { items: DiffItem[]; className?: 
                 {item.reason && <p className="text-xs text-graphite">{item.reason}</p>}
               </>
             )}
-            {item.kind === "kept" && <p className="text-ink">{item.text}</p>}
+            {item.kind === "kept" && <p className="text-body">{item.text}</p>}
           </div>
         </li>
       ))}

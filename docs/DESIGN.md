@@ -2,20 +2,24 @@
 
 Pratik cares about good design. This doc is the design system and the screen-by-screen UX. Follow it exactly; when something is missing, decide in the spirit of the principles below and log it in `DECISIONS.md`.
 
-## 1. Concept: the proofing desk
+## 1. Concept: index card and ballpoint
 
-The product is a desk where a job description gets marked up like a proof and a CV gets typeset to answer it. Two pieces of vernacular from that world carry the identity:
+The product is an index card on a desk, written in blue ballpoint. A job description gets marked up the way you would mark a printed posting with a pen, and the CV is typeset to answer it. The vernacular:
 
-- **The highlighter.** Matched keywords in a job description are marked with a yellow highlighter, the way you would mark up a printed posting by hand.
-- **The proofreader's mark.** Missing keywords get a magenta correction underline, the color editors use for marks that need attention.
+- **The blue pen circle.** Matched keywords are circled in blue ballpoint: a slightly irregular, hand-drawn loop with a pale blue fill behind the word.
+- **The red pen underline.** Missing keywords are underlined in red pen, slightly uneven like a hand stroke.
+- **The index card.** Panels are white cards with a thin red rule across the top. Rows on the Today feed are separated by faint blue ruled lines, like the lines on a card.
+- **The rubber stamp.** In the tracker, Applied is a slightly rotated red stamp.
 
-Everything else stays quiet: cool paper, deep ink, generous space. The highlighter is the one loud thing.
+Everything else stays quiet: a warm grey desk, white cards, blue ink, generous space. The pen marks are the loud thing.
+
+(Changed 2026-10-29 from "the proofing desk" with a yellow highlighter and magenta proofmarks. See DECISIONS.md.)
 
 ## 2. Principles
 
 1. **The job description is the working document.** Mark it up in place; do not hide matching inside a score.
 2. **Evidence over vibes.** Every score shows its reasons on the same screen. No score without a "why".
-3. **Quiet chrome, loud content.** Navigation and controls recede; job titles, CV text and highlights carry the page.
+3. **Quiet chrome, loud content.** Navigation and controls recede; job titles, CV text and pen marks carry the page.
 4. **One step to the next action.** From any job: tailor, open, save, dismiss, each one click or one key.
 5. **Honest states.** Unknown pay says "Pay not listed". Unclear eligibility says so. Estimates say "estimated".
 
@@ -25,24 +29,38 @@ Define all tokens as CSS variables in `src/styles/tokens.css`, expose them to Ta
 
 ### Color
 
-| Token | Light | Dark | Use |
+| Token | Light | Dark ("carbon paper") | Use |
 |---|---|---|---|
-| `--paper` | `#F3F5F7` | `#0F1522` | App background |
-| `--sheet` | `#FFFFFF` | `#161D2C` | Panels, the CV page, popovers |
-| `--ink` | `#1A2233` | `#E6EAF0` | Primary text, primary buttons |
-| `--graphite` | `#5A6476` | `#98A2B3` | Secondary text, icons |
-| `--rule` | `#D9DEE6` | `#273046` | Borders, dividers |
-| `--highlight` | `#F9E55A` | `#E9D34A` | Matched keyword background (text stays `#1A2233` in both themes) |
-| `--proofmark` | `#C2185B` | `#F06292` | Missing keywords, destructive actions |
-| `--ok` | `#2E7D4F` | `#5CC48A` | Applied, eligible, passed checks |
-| `--caution` | `#A15C00` | `#F0A63C` | Pipeline warnings, eligibility unclear |
+| `--paper` | `#E6E4DF` | `#10162A` | App background: the desk |
+| `--sheet` | `#FFFFFF` | `#182039` | Cards, panels, popovers |
+| `--ink` | `#1F3A93` | `#DCE4F7` | Headings, titles, fit score, primary buttons, links, active nav, pen marks |
+| `--body` | `#2A3145` | `#C9D0E0` | All running text |
+| `--graphite` | `#4F5D80` | `#9AA6C4` | Secondary text |
+| `--rule` | `#C9D8F0` | `#2A3557` | Ruled lines between rows, borders, dividers |
+| `--control-edge` | `#6F7EA5` | `#6878A6` | Edges of text fields, selects and the segmented control (3:1, WCAG 1.4.11) |
+| `--red-rule` | `#D7263D` | `#FF6B7A` | The red line at the top of a card. Decoration only, never text |
+| `--redpen` | `#C41E3A` | `#FF6B7A` | Missing keywords, destructive actions, the Applied stamp |
+| `--circle-fill` | `#DCE6FA` | `#2A3A6E` | Behind a circled keyword; the focus halo |
+| `--circle-stroke` | `#1F3A93` (same as `--ink`) | `#8FB0FF` | The blue pen circle |
+| `--ok` | `#186A41` | `#5CC48A` | Eligible, passed checks |
+| `--caution` | `#8A5100` | `#F0A63C` | Pipeline warnings, eligibility unclear |
+
+The light `--control-edge` is one step darker than the brief's `#7685AE`, which measured 2.88:1 on `--paper`.
+
+**Text color rules** (readability):
+- `--ink` (blue) is only for headings, page titles, job titles, the fit score, primary buttons, links, active nav items and the pen marks.
+- `--body` is for all running text: job descriptions, the pasted job post in the tailor workspace, CV bullets shown in the app, profile text, fit reasons, settings copy, dialogs and toasts. A circled keyword keeps its `--body` color.
+- `--graphite` is for secondary text: company and source lines, dates, hints, captions.
+- Never set a paragraph or any multi-line text in `--ink`. Never put `--graphite` text on `--circle-fill` (4.47:1 in dark).
 
 Rules:
-- Primary buttons: `--ink` background, `--sheet` text. Secondary: transparent with `--rule` border.
-- `--highlight` is reserved for matched keywords, the focus halo and the single "new" marker. Do not use it decoratively.
-- Never signal by color alone: missing keywords also get a label ("Missing") or an icon; matched ones get "Matched" in the accessible name.
-- Check every text and background pair for WCAG AA contrast in both themes, and write the results into `DECISIONS.md`.
-- Dark mode is a real design, not an inversion. The CV page stays white in dark mode (it is paper), with a soft edge so it reads as a sheet.
+- Primary buttons: `--ink` background, `--sheet` text. Secondary: `--sheet` with a `--rule` border and `--body` text.
+- Pen marks are reserved for keywords: blue circles for matched, red underlines for missing. Do not use them decoratively.
+- Cards and panels (the Today feed, dialogs, sheets, tracker cards, empty and error states) carry a 2 px `--red-rule` line across the top.
+- Ruled lines (`--rule`, every 32 px) appear only on the Today feed (as row separators) and in empty states. Nowhere else.
+- Never signal by color alone: missing keywords also get a "Missing" accessible label; matched ones get "Matched".
+- Check every text and background pair for WCAG AA in both themes; `tests/unit/design/tokens.test.ts` enforces it and the results are in `DECISIONS.md`.
+- Dark mode is carbon paper, not an inversion: deep blue-black paper, pale blue ink. The CV page stays white in dark mode, with a soft edge so it reads as a sheet.
 
 ### Type
 
@@ -74,7 +92,8 @@ Body line length max 72 characters. Sentence case everywhere. No all-caps labels
 ### Motion
 
 - Durations: 120 ms (hover, press), 200 ms (expand, collapse), 320 ms (dialogs, pane changes). Easing: `cubic-bezier(0.2, 0, 0, 1)`.
-- **The one signature moment:** when a tailoring finishes, highlights sweep across matched terms in the job description in reading order (left-to-right background fill, 30 ms stagger, total under 1.2 s) while the score counts up from the master CV score to the tailored score. Missing terms get their magenta underline at the end.
+- **The one signature moment:** when a tailoring finishes, the blue pen circles each matched term in the job description in reading order (each circle drawn with a stroke-dashoffset transition, about 30 ms stagger, total under 1.2 s) while the score counts up from the master CV score to the tailored score. Then the red pen underlines the missing terms.
+- Marked job descriptions use a 28 px line height (body text is otherwise 16 / 24) so a circle never runs into a mark on the line above or below. Pen marks are sized to the letters, not the line.
 - Other motion only answers an action: a job row expanding, a card moving between tracker columns, a toast confirming.
 - No entrance animations on page load. No hover lifts on list rows.
 - `prefers-reduced-motion`: all motion becomes instant; the score shows its final value.
@@ -138,9 +157,10 @@ Eligibility unclear (7)          collapsed group, caution color note explaining 
 ```
 
 - Greeting uses his first name from the profile and his timezone ("Good morning", "Good afternoon", "Good evening"). Never hard-code the name; this is open source.
-- Rows, not cards: each job is a row separated by `--rule`. Title in `text-lg` 600. Company and source on the second line in graphite. Third line: remote scope, pay, posted date as separate inline items with spacing, not joined with dots.
+- Rows on a white index card: each group ("New since yesterday", "Earlier this week") is one `--sheet` panel with the 2 px `--red-rule` across the top, and its jobs are rows separated by `--rule` lines, like the ruled lines on a card. Title in `text-lg` 600 in `--ink`. Company and source on the second line in `--graphite`. Third line in `--body`: remote scope, pay, posted date as separate inline items with spacing, not joined with dots.
+- New since the last visit: a small `--ink` dot in the row's left margin, like a pen tick, with "New" in the accessible name.
 - Fit score at the right: the number in tabular figures plus a thin 48 px bar.
-- Clicking a row expands it in place (200 ms): 2 to 3 reasons, main gaps (with the proofmark underline), description preview, actions: **Tailor CV** (primary), Open job, Save, Dismiss, Mark applied.
+- Clicking a row expands it in place (200 ms) on a faint `--ink-wash`: 2 to 3 reasons and the description preview in `--body`, main gaps with the red pen underline, actions: **Tailor CV** (primary), Open job, Save, Dismiss, Mark applied.
 - "New company" chip appears on jobs from companies first discovered in the last 14 days.
 - Keyboard: `j`/`k` move, `Enter` expand, `t` tailor, `o` open, `s` save, `d` dismiss (with Undo toast), `/` filter search.
 - Pipeline warning bar (caution) when the last run is over 30 hours old.
@@ -169,7 +189,7 @@ Desktop, three columns:
 
 - **Before tailoring:** the left column is a large paste area with the hint "Paste the full job post. Messy text is fine." and `Ctrl/Cmd + Enter` to run. Center shows his master CV preview. Right shows the master CV score once parsing finishes.
 - **Progress:** two named steps shown inline in the right column: "Reading the job" then "Tailoring your CV". No spinner-only states.
-- **Left column after parsing:** the job text with marks. Matched terms get the highlighter; missing terms get a magenta underline. Hovering a mark shows where it appears in the CV and scrolls the preview to it.
+- **Left column after parsing:** the job text in `--body` with pen marks. Matched terms are circled in blue pen; missing terms get the red pen underline. Hovering a mark shows where it appears in the CV and scrolls the preview to it.
 - **Center column tabs:**
   - Preview: the CV on a white sheet at true letter or A4 proportions with a page boundary line and "1 page" / "2 pages" indicator. Bullets are editable on click (inline, wording only; the validator re-runs on blur and flags problems inline).
   - LaTeX: read-only code view in Plex Mono with line numbers and Copy.
@@ -183,7 +203,7 @@ Desktop, three columns:
 Full description (sanitized HTML, typographically styled), source line and attribution link, remote scope with the evidence quote, salary with "approx. annual USD", fit reasons and gaps, history (seen, saved, tailored). Actions as in the feed.
 
 ### 5.6 Tracker
-Columns Saved, Applied, Interviewing, Offer, Closed. Compact cards: title, company, date moved, link to the tailored CV. Drag and drop with keyboard alternative (a "Move to" menu). Column counts in headers.
+Columns Saved, Applied, Interviewing, Offer, Closed. Compact cards with the red rule on top: title, company, date moved, link to the tailored CV. Cards in Applied carry a slightly rotated red rubber stamp ("Applied", `--redpen`, 2 px border) in the top-right corner. Drag and drop with keyboard alternative (a "Move to" menu). Column counts in headers.
 
 ### 5.7 Companies
 Table: name, website, ATS (or "careers site"), open roles, last checked, discovered via, flags (staffing agency, paused, muted). Row actions: mute, confirm ATS match, remove. "Add a company" dialog: paste a careers or website URL, show detection result live ("Found a Greenhouse board with 23 open roles"), then "Track this company".
@@ -196,7 +216,7 @@ Plain sections: Search preferences, CV defaults, AI provider (with the privacy n
 
 ## 6. Components to build (restyled shadcn/ui where possible)
 
-Button (primary, secondary, ghost, destructive; sizes sm/md), Input, Textarea (auto-grow), Select, Combobox, Segmented control, Chip (filter chip, keyword chip with matched/missing variants), Tabs, Dialog, Sheet, Popover, Tooltip, Toast, Accordion row (for job rows), Data table (Companies), Kanban column and card, Progress steps, Skeletons for every list and panel, Score display (number + breakdown bars), Highlighted text renderer (marks matched and missing ranges), Diff view, Code view, CV sheet preview, Empty state, Error state, Command palette.
+Button (primary, secondary, ghost, destructive; sizes sm/md), Input, Textarea (auto-grow), Select, Combobox, Segmented control, Chip (filter chip; keyword chip: matched is a pen-circled word, missing is a red-underlined word), Stamp (Applied), Panel (white card with the red rule), Tabs, Dialog, Sheet, Popover, Tooltip, Toast, Accordion row (for job rows), Data table (Companies), Kanban column and card, Progress steps, Skeletons for every list and panel, Score display (number + breakdown bars), Marked text renderer (pen circles for matched ranges, red underlines for missing ranges, with the drawing animation), Pen circle and Pen underline (seeded SVG paths, so each word gets its own slightly irregular stroke), Diff view, Code view, CV sheet preview, Empty state, Error state, Command palette.
 
 ## 7. States checklist (every screen)
 
@@ -208,7 +228,7 @@ Button (primary, secondary, ghost, destructive; sizes sm/md), Input, Textarea (a
 
 ## 8. Accessibility
 
-- WCAG 2.2 AA. Visible focus: 2 px ink outline plus a 4 px highlighter halo.
+- WCAG 2.2 AA. Visible focus: 2 px `--ink` outline plus a 3 px `--circle-fill` halo.
 - Full keyboard paths for every action, including drag and drop alternatives.
 - Live regions for tailoring progress and toasts.
 - Highlights in the JD are `<mark>` elements with accessible labels ("matched keyword", "missing keyword").
@@ -233,7 +253,7 @@ Visual:
 - Default shadcn/ui appearance: zinc or slate grays, the stock radius on everything, stock focus rings, stock card component as the main layout unit. Restyle every primitive to our tokens.
 - Inter, Geist, Roboto or system-ui as the UI face. Use IBM Plex Sans.
 - Identical rounded cards with the same soft gray shadow for every piece of content. Lists are rows.
-- Gradients of any kind as decoration, gradient text, glows, glassmorphism, blurred blobs, noise textures.
+- Gradients of any kind as decoration, gradient text, glows, glassmorphism, blurred blobs, noise textures. (The ruled index-card lines are the one exception: hairlines drawn with a repeating gradient, only on the Today feed and in empty states.)
 - Purple, violet or blue-to-purple "AI" accents. Sparkle, magic wand, robot or brain icons. Emoji in the UI.
 - Dashboard stat tiles ("Total jobs: 1,234", "Applications: 12") at the top of pages. Numbers appear only where they help a decision, next to what they describe.
 - A big number with a tiny label and a colored accent as a hero.
@@ -252,15 +272,18 @@ Copy:
 ### 10.2 Required, distinctive elements
 
 These are what make the app feel like its own thing. All must be present by the end of Phase 2:
-- The highlighter marks on the job description, with the signature sweep moment.
-- The proofreader's magenta underline for missing keywords.
+- Blue pen circles around matched keywords in the job description, hand-drawn and slightly irregular, with the signature drawing moment.
+- Red pen underlines for missing keywords.
+- Index cards: white panels with the 2 px red rule across the top; ruled blue lines between rows on the Today feed and in empty states.
 - The CV shown as a real paper sheet with true page proportions and a page boundary.
 - Job rows in Today that read like a well-set list, with fit score in tabular figures and a thin bar.
-- The ink-blue dark mode with the CV sheet still white.
+- The red Applied stamp in the tracker.
+- The carbon-paper dark mode with the CV sheet still white.
+- Running text in `--body`, never in `--ink`.
 
 ### 10.3 Style tile first
 
-Before building any real screen (Phase 0), build `/design` (dev only): a style tile page showing all tokens in both themes, the type scale with real content (a job title, a CV bullet, a JD paragraph with highlights), every component and state from section 6, the score display, and the highlighter sweep. Stop and ask Sam to review it with Pratik. Do not build screens until they approve. Record their feedback in `DECISIONS.md`.
+Before building any real screen (Phase 0), build `/design` (dev only): a style tile page showing all tokens in both themes, the type scale with real content (a job title, a CV bullet, a JD paragraph with pen marks), every component and state from section 6, the score display, and the pen drawing moment. Stop and ask Sam to review it with Pratik. Do not build screens until they approve. Record their feedback in `DECISIONS.md`.
 
 ### 10.4 The squint test
 

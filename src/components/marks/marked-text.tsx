@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useMemo, type CSSProperties } from "react";
+import { Fragment, useMemo, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { sweepTiming } from "./sweep";
+import { PenCircle, PenUnderline } from "./pen";
+import { penTiming } from "./sweep";
 import "./marks.css";
 
 export type TextMark = { start: number; end: number; kind: "matched" | "missing"; term?: string };
@@ -10,13 +11,13 @@ export type TextMark = { start: number; end: number; kind: "matched" | "missing"
 type Phase = "static" | "pending" | "run";
 
 /**
- * Job description text marked up like a proof: matched keywords get the
- * highlighter, missing ones the proofreader's magenta underline.
+ * Job description text marked up with a ballpoint: matched keywords circled
+ * in blue pen, missing ones underlined in red pen. Running text is --body.
  *
- * phase "static" shows all marks. "pending" hides them; switching to "run"
- * plays the sweep in reading order.
+ * phase "static" shows every mark. "pending" hides them; switching to "run"
+ * draws the circles in reading order, then the underlines.
  */
-export function HighlightedText({
+export function MarkedText({
   text,
   marks,
   phase = "static",
@@ -30,15 +31,13 @@ export function HighlightedText({
   onMarkEnter?: (mark: TextMark) => void;
 }) {
   const sorted = useMemo(() => [...marks].sort((a, b) => a.start - b.start), [marks]);
-  const matchedCount = sorted.filter((m) => m.kind === "matched").length;
-  const timing = sweepTiming(matchedCount);
+  const timing = penTiming(sorted.filter((m) => m.kind === "matched").length);
 
   const paragraphs = useMemo(() => {
-    // Split into paragraphs on blank lines, keeping absolute offsets.
+    // Split on blank lines, keeping absolute offsets so marks still line up.
     const out: { start: number; end: number }[] = [];
-    const re = /\n\s*\n/g;
     let last = 0;
-    for (const m of text.matchAll(re)) {
+    for (const m of text.matchAll(/\n\s*\n/g)) {
       out.push({ start: last, end: m.index ?? 0 });
       last = (m.index ?? 0) + m[0].length;
     }
@@ -50,32 +49,37 @@ export function HighlightedText({
 
   return (
     <div
-      className={cn("jd-text measure text-base text-ink", className)}
+      className={cn("jd-text measure text-base text-body", className)}
       data-phase={phase}
       style={
         {
-          "--sweep-stagger": `${timing.staggerMs}ms`,
-          "--sweep-fill": `${timing.fillMs}ms`,
-          "--sweep-underline-delay": `${timing.underlineDelayMs}ms`,
+          "--draw-stagger": `${timing.staggerMs}ms`,
+          "--draw-ms": `${timing.circleMs}ms`,
+          "--underline-delay": `${timing.underlineDelayMs}ms`,
         } as CSSProperties
       }
     >
       {paragraphs.map((p, pi) => {
-        const inPara = sorted.filter((m) => m.start >= p.start && m.end <= p.end);
-        const parts: React.ReactNode[] = [];
+        const parts: ReactNode[] = [];
         let cursor = p.start;
-        for (const m of inPara) {
+        for (const m of sorted.filter((x) => x.start >= p.start && x.end <= p.end)) {
           if (m.start > cursor) parts.push(<Fragment key={`t${cursor}`}>{text.slice(cursor, m.start)}</Fragment>);
-          const i = m.kind === "matched" ? matchedIndex++ : 0;
+          const word = text.slice(m.start, m.end);
+          const seed = `${word}:${m.start}`;
           parts.push(
             <mark
               key={`m${m.start}`}
               className="jd-mark"
               data-kind={m.kind}
-              style={{ "--i": i } as CSSProperties}
               onMouseEnter={onMarkEnter ? () => onMarkEnter(m) : undefined}
             >
-              {text.slice(m.start, m.end)}
+              {m.kind === "matched" ? (
+                <PenCircle seed={seed} index={matchedIndex++}>
+                  {word}
+                </PenCircle>
+              ) : (
+                <PenUnderline seed={seed}>{word}</PenUnderline>
+              )}
               <span className="sr-only">{m.kind === "matched" ? " (matched keyword)" : " (missing keyword)"}</span>
             </mark>,
           );

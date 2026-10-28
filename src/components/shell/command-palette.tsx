@@ -27,7 +27,7 @@ const pages: Action[] = [
 ];
 
 const item =
-  "flex h-10 cursor-default items-center gap-3 rounded-[6px] px-3 text-sm text-ink outline-none data-[selected=true]:bg-ink-wash [&_svg]:text-graphite";
+  "flex h-10 cursor-default items-center gap-3 rounded-[6px] px-3 text-sm text-body outline-none data-[selected=true]:bg-ink-wash [&_svg]:text-graphite";
 
 /** Ctrl/Cmd + K. Jump to pages, run actions, search jobs and companies. */
 export function CommandPalette({
@@ -74,7 +74,7 @@ export function CommandPalette({
               <Command.Input
                 autoFocus
                 placeholder="Jump to a page, run an action, or search jobs"
-                className="h-12 w-full bg-transparent text-base text-ink placeholder:text-graphite focus-visible:shadow-none focus-visible:outline-none"
+                className="h-12 w-full bg-transparent text-base text-body placeholder:text-graphite focus-visible:shadow-none focus-visible:outline-none"
               />
             </div>
             <Command.List className="max-h-[50vh] overflow-y-auto p-2">
@@ -126,7 +126,7 @@ export function CommandPalette({
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-[4px] border border-rule bg-paper px-1 font-sans text-xs text-ink">
+    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-[4px] border border-rule bg-paper px-1 font-sans text-xs text-body">
       {children}
     </kbd>
   );

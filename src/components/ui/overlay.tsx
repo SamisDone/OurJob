@@ -36,7 +36,7 @@ export function DialogContent({ title, description, footer, className, children,
       <D.Content
         className={cn(
           "fixed top-[12vh] left-1/2 z-50 w-[min(560px,calc(100vw-32px))] -translate-x-1/2",
-          "rounded-panel border border-rule bg-sheet text-ink shadow-pop",
+          "red-rule-top rounded-panel border border-rule bg-sheet text-body shadow-pop",
           "data-[state=closed]:animate-[overlay-out_200ms_var(--ease-ink)] data-[state=open]:animate-[dialog-in_320ms_var(--ease-ink)]",
           className,
         )}
@@ -75,7 +75,7 @@ export function SheetContent({ title, description, footer, className, children, 
       <Overlay />
       <D.Content
         className={cn(
-          "fixed z-50 flex flex-col border-rule bg-sheet text-ink shadow-pop",
+          "red-rule-top fixed z-50 flex flex-col border-rule bg-sheet text-body shadow-pop",
           "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-panel border-t",
           "md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[420px] md:rounded-none md:border-t-0 md:border-l",
           "data-[state=open]:animate-[sheet-up_320ms_var(--ease-ink)] md:data-[state=open]:animate-[sheet-in_320ms_var(--ease-ink)]",
@@ -117,7 +117,7 @@ export function PopoverContent({ className, sideOffset = 6, ...props }: Componen
       <P.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-56 rounded-panel border border-rule bg-sheet p-3 text-ink shadow-pop",
+          "z-50 min-w-56 rounded-panel border border-rule bg-sheet p-3 text-body shadow-pop",
           "data-[state=open]:animate-[pop-in_200ms_var(--ease-ink)]",
           className,
         )}

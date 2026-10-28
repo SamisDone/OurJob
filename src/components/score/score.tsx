@@ -79,7 +79,7 @@ export function ScoreDisplay({
               Master CV <span className="tabular">{masterScore}</span>
             </div>
             {delta !== null && delta !== 0 && (
-              <div className={cn("font-medium tabular", delta > 0 ? "text-ok" : "text-proofmark")}>
+              <div className={cn("font-medium tabular", delta > 0 ? "text-ok" : "text-redpen")}>
                 {delta > 0 ? `+${delta}` : delta} from tailoring
               </div>
             )}
@@ -90,9 +90,9 @@ export function ScoreDisplay({
         {components.map((c) => (
           <div key={c.id}>
             <div className="flex items-baseline justify-between gap-3 text-sm">
-              <dt className="text-ink">{c.label}</dt>
+              <dt className="text-body">{c.label}</dt>
               <dd className="text-graphite tabular">
-                <span className="text-ink">{Number.isInteger(c.points) ? c.points : c.points.toFixed(1)}</span> of{" "}
+                <span className="text-body">{Number.isInteger(c.points) ? c.points : c.points.toFixed(1)}</span> of{" "}
                 {c.max}
               </dd>
             </div>

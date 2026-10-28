@@ -195,7 +195,7 @@ export function AppShell({ children, user }: { children: ReactNode; user?: { nam
                   <Link
                     href={item.href}
                     onClick={() => setMoreOpen(false)}
-                    className="flex h-12 items-center gap-3 rounded-control px-3 text-base text-ink hover:bg-ink-wash"
+                    className="flex h-12 items-center gap-3 rounded-control px-3 text-base text-body hover:bg-ink-wash"
                   >
                     <I size={20} aria-hidden className="text-graphite" />
                     {item.label}

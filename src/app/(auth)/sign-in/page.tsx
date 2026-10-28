@@ -58,7 +58,7 @@ export default async function SignInPage({
         </form>
 
         {message && (
-          <p role="alert" className="mt-5 border-l-2 border-proofmark py-1 pl-3 text-sm text-ink">
+          <p role="alert" className="mt-5 border-l-2 border-redpen py-1 pl-3 text-sm text-body">
             {message}
           </p>
         )}

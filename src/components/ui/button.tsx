@@ -14,9 +14,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary: "bg-ink text-sheet hover:bg-ink/88",
-        secondary: "border border-rule bg-transparent text-ink hover:border-graphite hover:bg-ink-wash",
-        ghost: "bg-transparent text-ink hover:bg-ink-wash",
-        destructive: "bg-proofmark text-sheet hover:bg-proofmark/88",
+        secondary: "border border-rule bg-sheet text-body hover:border-graphite hover:bg-ink-wash",
+        ghost: "bg-transparent text-body hover:bg-ink-wash",
+        destructive: "bg-redpen text-sheet hover:bg-redpen/88",
         link: "h-auto rounded-none px-0 text-ink underline decoration-rule underline-offset-4 hover:decoration-ink",
       },
       size: {

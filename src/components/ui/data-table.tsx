@@ -51,7 +51,7 @@ export function DataTable<T>({
                 <td
                   key={c.key}
                   className={cn(
-                    "h-12 px-3 text-ink first:pl-0",
+                    "h-12 px-3 text-body first:pl-0",
                     c.align === "right" && "text-right tabular",
                     c.className,
                   )}

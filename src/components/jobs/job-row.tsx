@@ -4,6 +4,7 @@ import { ArrowSquareOutIcon, BookmarkSimpleIcon, CheckIcon, XIcon } from "@phosp
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/chip";
+import { PenUnderline } from "@/components/marks/pen";
 import { FitScore } from "@/components/score/score";
 import { cn } from "@/lib/utils";
 
@@ -47,10 +48,11 @@ export function JobRow({
 
   return (
     <article
-      className={cn("relative -mx-3 border-b border-rule px-3 md:-mx-4 md:px-4", open && "bg-sheet")}
+      className={cn("relative border-b border-rule px-4 last:border-b-0 md:px-6", open && "bg-ink-wash")}
       aria-label={`${job.title} at ${job.company}`}
     >
-      {job.isNew && <span className="absolute top-[21px] left-0 h-5 w-1 rounded-r-[2px] bg-highlight" aria-hidden />}
+      {/* New since the last visit: a small ink dot in the margin, like a pen tick. */}
+      {job.isNew && <span className="absolute top-[27px] left-1.5 size-1.5 rounded-pill bg-ink md:left-2.5" aria-hidden />}
       <button
         type="button"
         aria-expanded={open}
@@ -64,11 +66,11 @@ export function JobRow({
             {job.title}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-graphite">
-            <span className="font-medium text-ink">{job.company}</span>
+            <span className="font-medium text-graphite">{job.company}</span>
             <span>{job.source}</span>
             {job.newCompany && <Tag>New company</Tag>}
           </span>
-          <span className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink">
+          <span className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-body">
             <span>{job.remote}</span>
             <span className={cn(job.pay === "Pay not listed" && "text-graphite")}>{job.pay}</span>
             <span className="text-graphite">{job.posted}</span>
@@ -91,7 +93,7 @@ export function JobRow({
               {job.reasons.length > 0 ? (
                 <div>
                   <h4 className="text-sm font-medium text-ink">Why it fits</h4>
-                  <ul className="mt-1.5 space-y-1 text-sm text-ink">
+                  <ul className="mt-1.5 space-y-1 text-sm text-body">
                     {job.reasons.map((r) => (
                       <li key={r} className="flex gap-2">
                         <CheckIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-ok" />
@@ -106,18 +108,18 @@ export function JobRow({
               {job.gaps.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-ink">Main gaps</h4>
-                  <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink">
+                  <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-body">
                     {job.gaps.map((g) => (
-                      <span key={g} className="underline decoration-proofmark decoration-2 underline-offset-[5px]">
+                      <span key={g}>
                         <span className="sr-only">Missing: </span>
-                        {g}
+                        <PenUnderline seed={g}>{g}</PenUnderline>
                       </span>
                     ))}
                   </p>
                 </div>
               )}
             </div>
-            <p className="line-clamp-4 measure text-sm text-graphite">{job.preview}</p>
+            <p className="line-clamp-4 measure text-sm text-body">{job.preview}</p>
           </div>
           <div className="flex flex-wrap gap-2 pb-5">
             <Button onClick={onTailor}>Tailor CV</Button>
@@ -145,7 +147,7 @@ export function JobRow({
 
 export function JobRowSkeleton() {
   return (
-    <div className="-mx-3 grid grid-cols-[1fr_auto] gap-x-6 border-b border-rule px-3 py-4 md:-mx-4 md:px-4">
+    <div className="grid grid-cols-[1fr_auto] gap-x-6 border-b border-rule px-4 py-4 last:border-b-0 md:px-6">
       <div>
         <div className="flex h-7 items-center">
           <div className="h-4 w-3/5 animate-[skeleton-breathe_1.8s_ease-in-out_infinite] rounded-[4px] bg-rule/70" />

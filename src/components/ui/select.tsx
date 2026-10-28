@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 type Option = { value: string; label: string };
 
 const trigger = [
-  "inline-flex h-10 w-full items-center justify-between gap-2 rounded-control border border-control-edge bg-sheet px-3 text-left text-sm text-ink",
+  "inline-flex h-10 w-full items-center justify-between gap-2 rounded-control border border-control-edge bg-sheet px-3 text-left text-sm text-body",
   "transition-[border-color] duration-[120ms] ease-ink hover:border-ink/60 max-md:h-11",
   "data-[placeholder]:text-graphite",
 ];
 
-const panel = "z-50 overflow-hidden rounded-panel border border-rule bg-sheet p-1 text-ink shadow-pop";
+const panel = "z-50 overflow-hidden rounded-panel border border-rule bg-sheet p-1 text-body shadow-pop";
 const item = [
   "relative flex h-9 cursor-default select-none items-center gap-2 rounded-[6px] pr-8 pl-3 text-sm outline-none max-md:h-11",
   "data-[highlighted]:bg-ink-wash data-[selected=true]:bg-ink-wash data-[disabled]:opacity-50",
@@ -106,7 +106,7 @@ export function Combobox({
           <Command>
             <Command.Input
               placeholder={searchPlaceholder}
-              className="h-10 w-full border-b border-rule bg-transparent px-3 text-sm text-ink placeholder:text-graphite focus-visible:shadow-none focus-visible:outline-none"
+              className="h-10 w-full border-b border-rule bg-transparent px-3 text-sm text-body placeholder:text-graphite focus-visible:shadow-none focus-visible:outline-none"
             />
             <Command.List className="max-h-64 overflow-y-auto p-1">
               <Command.Empty className="px-3 py-2 text-sm text-graphite">{emptyText}</Command.Empty>

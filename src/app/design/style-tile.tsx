@@ -4,19 +4,19 @@ import { ArrowSquareOutIcon, CaretDownIcon, DownloadSimpleIcon, PlusIcon } from 
 import { useMemo, useState, type ReactNode } from "react";
 import { CvSheet } from "@/components/cv/cv-sheet";
 import { JobRow, JobRowSkeleton } from "@/components/jobs/job-row";
-import { HighlightedText } from "@/components/marks/highlighted-text";
-import { sweepTiming } from "@/components/marks/sweep";
+import { MarkedText } from "@/components/marks/marked-text";
+import { penTiming } from "@/components/marks/sweep";
 import { ScoreDisplay } from "@/components/score/score";
 import { AppShell } from "@/components/shell/app-shell";
 import { Kbd } from "@/components/shell/command-palette";
 import { ThemeControl } from "@/components/shell/theme-control";
 import { KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
 import { Button } from "@/components/ui/button";
-import { FilterChip, KeywordChip, Tag, TokenChip } from "@/components/ui/chip";
+import { FilterChip, KeywordChip, Stamp, Tag, TokenChip } from "@/components/ui/chip";
 import { CodeView } from "@/components/ui/code-view";
 import { DataTable } from "@/components/ui/data-table";
 import { DiffView } from "@/components/ui/diff-view";
-import { Callout, CautionBar, EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
+import { Callout, CautionBar, EmptyState, ErrorState, Panel, Skeleton } from "@/components/ui/feedback";
 import { FieldError, FieldHint, Input, Label, Textarea } from "@/components/ui/input";
 import {
   Dialog,
@@ -41,24 +41,32 @@ import { findSampleMarks, sampleAts, sampleCompanies, sampleCv, sampleJd, sample
 import { cn } from "@/lib/utils";
 
 const lightTokens = [
-  ["paper", "#F3F5F7", "App background"],
-  ["sheet", "#FFFFFF", "Panels, the CV page, popovers"],
-  ["ink", "#1A2233", "Primary text, primary buttons"],
-  ["graphite", "#5A6476", "Secondary text, icons"],
-  ["rule", "#D9DEE6", "Borders, dividers"],
-  ["highlight", "#F9E55A", "Matched keywords, focus halo, new marker"],
-  ["proofmark", "#C2185B", "Missing keywords, destructive actions"],
-  ["ok", "#2E7D4F", "Applied, eligible, passed checks"],
-  ["caution", "#A15C00", "Pipeline warnings, eligibility unclear"],
+  ["paper", "#E6E4DF", "The desk the cards sit on"],
+  ["sheet", "#FFFFFF", "Index cards, panels, popovers"],
+  ["ink", "#1F3A93", "Headings, titles, fit score, primary buttons, links"],
+  ["body", "#2A3145", "Running text: descriptions, bullets, reasons"],
+  ["graphite", "#4F5D80", "Secondary text: company, source, dates, hints"],
+  ["rule", "#C9D8F0", "Ruled lines between rows, borders"],
+  ["control-edge", "#6F7EA5", "Edges of text fields and selects"],
+  ["red-rule", "#D7263D", "The red line at the top of a card. Never text"],
+  ["redpen", "#C41E3A", "Missing keywords, destructive actions, the stamp"],
+  ["circle-fill", "#DCE6FA", "Behind a circled keyword, focus halo"],
+  ["circle-stroke", "#1F3A93", "The blue pen circle"],
+  ["ok", "#186A41", "Eligible, passed checks"],
+  ["caution", "#8A5100", "Pipeline warnings, eligibility unclear"],
 ] as const;
 const darkHex: Record<string, string> = {
-  paper: "#0F1522",
-  sheet: "#161D2C",
-  ink: "#E6EAF0",
-  graphite: "#98A2B3",
-  rule: "#273046",
-  highlight: "#E9D34A",
-  proofmark: "#F06292",
+  paper: "#10162A",
+  sheet: "#182039",
+  ink: "#DCE4F7",
+  body: "#C9D0E0",
+  graphite: "#9AA6C4",
+  rule: "#2A3557",
+  "control-edge": "#6878A6",
+  "red-rule": "#FF6B7A",
+  redpen: "#FF6B7A",
+  "circle-fill": "#2A3A6E",
+  "circle-stroke": "#8FB0FF",
   ok: "#5CC48A",
   caution: "#F0A63C",
 };
@@ -99,9 +107,9 @@ function Sub({ title, children, className }: { title: string; children: ReactNod
 
 function TokenPanel({ theme }: { theme: "light" | "dark" }) {
   return (
-    <div data-theme={theme} className="overflow-hidden rounded-panel border border-rule bg-paper text-ink">
+    <div data-theme={theme} className="relative red-rule-top overflow-hidden rounded-panel border border-rule bg-paper text-body">
       <div className="flex items-baseline justify-between border-b border-rule bg-sheet px-4 py-3">
-        <span className="font-medium">{theme === "light" ? "Light" : "Dark, deep ink blue"}</span>
+        <span className="font-medium text-ink">{theme === "light" ? "Light" : "Dark, carbon paper"}</span>
         <span className="text-sm text-graphite">tokens.css</span>
       </div>
       <ul className="divide-y divide-rule">
@@ -128,7 +136,7 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
   const marks = useMemo(() => findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing), []);
   const [phase, setPhase] = useState<"static" | "pending" | "run">("static");
   const [run, setRun] = useState(0);
-  const timing = sweepTiming(marks.filter((m) => m.kind === "matched").length);
+  const timing = penTiming(marks.filter((m) => m.kind === "matched").length);
 
   const replay = () => {
     setPhase("pending");
@@ -141,7 +149,7 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,300px)]">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,300px)]">
       <div>
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
@@ -149,13 +157,13 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
             <p className="text-sm text-graphite">at {sampleJd.company}</p>
           </div>
         </div>
-        <HighlightedText text={sampleJd.text} marks={marks} phase={phase} />
+        <MarkedText text={sampleJd.text} marks={marks} phase={phase} />
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Button variant="secondary" onClick={replay}>
-            Replay the finish
+            Replay the pen
           </Button>
           <span className="text-sm text-graphite">
-            Sweep takes {Math.round(timing.totalMs)} ms with a {Math.round(timing.staggerMs)} ms stagger.
+            The pen takes {Math.round(timing.totalMs)} ms, {Math.round(timing.staggerMs)} ms between circles.
           </span>
         </div>
       </div>
@@ -215,7 +223,7 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
           <h3 className="text-sm font-medium text-ink">
             Matched <span className="text-graphite tabular">({sampleJd.matched.length})</span>
           </h3>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
             {sampleJd.matched.map((k) => (
               <KeywordChip key={k} kind="matched">
                 {k}
@@ -311,7 +319,7 @@ function TodayPreview({ firstName }: { firstName: string }) {
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
           <p className="text-2xl font-semibold text-ink">Good morning, {firstName}</p>
-          <p className="mt-1 text-lg text-ink">24 new remote jobs that fit you</p>
+          <p className="mt-1 text-lg text-body">24 new remote jobs that fit you</p>
         </div>
         <div className="flex items-center gap-4 text-sm text-graphite">
           <span>Last checked at 6:32, 412 companies</span>
@@ -334,8 +342,10 @@ function TodayPreview({ firstName }: { firstName: string }) {
         <FilterChip menu>Seniority</FilterChip>
       </div>
 
-      <h3 className="mt-8 border-b border-rule pb-2 text-sm font-medium text-graphite">New since yesterday</h3>
-      <div>
+      <Panel className="mt-6" aria-labelledby="new-h">
+        <h3 id="new-h" className="border-b border-rule px-4 pt-4 pb-3 text-sm font-medium text-graphite md:px-6">
+          New since yesterday
+        </h3>
         {sampleJobs.map((job, i) => (
           <JobRow
             key={job.id}
@@ -347,10 +357,10 @@ function TodayPreview({ firstName }: { firstName: string }) {
           />
         ))}
         <JobRowSkeleton />
-      </div>
+      </Panel>
 
-      <details className="group mt-8 border-y border-rule">
-        <summary className="flex h-12 cursor-pointer list-none items-center justify-between text-sm font-medium text-ink">
+      <details className="group relative red-rule-top mt-6 rounded-panel border border-rule bg-sheet px-4 md:px-6">
+        <summary className="flex h-12 cursor-pointer list-none items-center justify-between pt-0.5 text-sm font-medium text-ink">
           <span>
             Eligibility unclear <span className="text-graphite tabular">(7)</span>
           </span>
@@ -360,7 +370,7 @@ function TodayPreview({ firstName }: { firstName: string }) {
             className="text-graphite transition-transform duration-200 ease-ink group-open:rotate-180"
           />
         </summary>
-        <p className="measure border-l-2 border-caution pb-4 pl-3 text-sm text-ink/85">
+        <p className="measure mb-4 border-l-2 border-caution pl-3 text-sm text-body">
           These say remote but do not say where you can work from. They are kept apart so you can check each one.
         </p>
       </details>
@@ -411,7 +421,8 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
 
           <nav aria-label="Style tile sections" className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
             {[
-              ["desk", "Proofing desk"],
+              ["desk", "Tailoring desk"],
+              ["reading", "Long post"],
               ["today", "Today rows"],
               ["color", "Color"],
               ["type", "Type"],
@@ -434,16 +445,28 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
 
           <Section
             id="desk"
-            title="Proofing desk"
-            intro="The signature moment. Matched terms get the highlighter in reading order while the score counts up from the master CV score; missing terms get the magenta proofreader's mark at the end."
+            title="The tailoring desk"
+            intro="The signature moment. A blue pen circles each matched word in reading order while the score counts up from the master CV score; red pen underlines land on the missing words at the end."
           >
             <ProofingDesk cv={cv} />
           </Section>
 
           <Section
+            id="reading"
+            title="Reading a long job post"
+            intro="The full post at its reading width, marked up. Running text in --body at 16 px, with a 28 px line height so pen marks never touch the next line, 72 characters a line."
+          >
+            <Panel className="px-5 pt-7 pb-6 md:px-10 md:pt-9 md:pb-8">
+              <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
+              <p className="mb-5 text-sm text-graphite">Lumen Labs. Direct from careers page (Ashby)</p>
+              <MarkedText text={sampleJd.text} marks={findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing)} />
+            </Panel>
+          </Section>
+
+          <Section
             id="today"
             title="Today rows"
-            intro="Rows, not cards. Fit in tabular figures with a thin bar. Click a row to expand it."
+            intro="Rows on a white index card, separated by blue ruled lines, with the red rule across the top. Fit in tabular figures with a thin bar. Click a row to expand it."
           >
             <TodayPreview firstName={firstName} />
           </Section>
@@ -451,7 +474,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           <Section
             id="color"
             title="Color"
-            intro="Both themes, side by side. The dark theme is deep ink blue, and the CV sheet stays white in it."
+            intro="Both themes, side by side. Light is an index card on a desk; dark is carbon paper. The CV sheet stays white in both."
           >
             <div className="grid gap-6 md:grid-cols-2">
               <TokenPanel theme="light" />
@@ -478,21 +501,21 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 [
                   "text-2xl",
                   "31 / 38",
-                  <span key="a" className="text-2xl font-semibold">
+                  <span key="a" className="text-2xl font-semibold text-ink">
                     Good afternoon, {firstName}
                   </span>,
                 ],
                 [
                   "text-xl",
                   "25 / 32",
-                  <span key="b" className="text-xl font-semibold">
+                  <span key="b" className="text-xl font-semibold text-ink">
                     Companies
                   </span>,
                 ],
                 [
                   "text-lg",
                   "20 / 28",
-                  <span key="c" className="text-lg font-semibold">
+                  <span key="c" className="text-lg font-semibold text-ink">
                     Senior Frontend Engineer
                   </span>,
                 ],
@@ -521,7 +544,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 [
                   "text-score",
                   "48 / 48",
-                  <span key="g" className="text-score tabular">
+                  <span key="g" className="text-score text-ink tabular">
                     74
                   </span>,
                 ],
@@ -546,10 +569,27 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                     <span className="block font-medium text-ink">{token}</span>
                     <span className="text-graphite tabular">{size}</span>
                   </dt>
-                  <dd className="min-w-0 text-ink">{sample}</dd>
+                  <dd className="min-w-0 text-body">{sample}</dd>
                 </div>
               ))}
             </dl>
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
+              <div>
+                <p className="text-sm text-graphite">--ink: headings, titles, fit score, links</p>
+                <p className="mt-2 text-lg font-semibold text-ink">Senior Frontend Engineer</p>
+              </div>
+              <div>
+                <p className="text-sm text-graphite">--body: all running text</p>
+                <p className="mt-2 text-base text-body">
+                  You will work with our product designer and one backend engineer to split the booking flow into
+                  smaller steps.
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-graphite">--graphite: secondary lines</p>
+                <p className="mt-2 text-sm text-graphite">Lumen Labs. Direct from careers page (Ashby). 2 days ago</p>
+              </div>
+            </div>
           </Section>
 
           <Section id="controls" title="Controls">
@@ -592,8 +632,9 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   <Tag>New company</Tag>
                   <Tag tone="ok">Eligible</Tag>
                   <Tag tone="caution">Eligibility unclear</Tag>
-                  <Tag tone="proofmark">Staffing agency</Tag>
+                  <Tag tone="redpen">Staffing agency</Tag>
                   <Tag tone="new">New</Tag>
+                  <Stamp>Applied</Stamp>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {titles.map((t) => (
@@ -878,7 +919,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                       {r.flags.map((f) => (
                         <Tag
                           key={f}
-                          tone={f === "Staffing agency" ? "proofmark" : f === "Paused" ? "caution" : "neutral"}
+                          tone={f === "Staffing agency" ? "redpen" : f === "Paused" ? "caution" : "neutral"}
                         >
                           {f}
                         </Tag>

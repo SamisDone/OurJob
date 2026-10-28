@@ -19,18 +19,27 @@ const light = block(":root,");
 const media = block(':root:not([data-theme="light"])');
 const dark = block('[data-theme="dark"] {');
 
-// docs/DESIGN.md section 3, Color.
+// docs/DESIGN.md section 3, Color ("index card and ballpoint").
+// --control-edge light is #6F7EA5, one step darker than the brief's #7685AE,
+// which measured 2.88:1 on --paper (see DECISIONS.md).
 const spec: Record<string, [string, string]> = {
-  paper: ["#F3F5F7", "#0F1522"],
-  sheet: ["#FFFFFF", "#161D2C"],
-  ink: ["#1A2233", "#E6EAF0"],
-  graphite: ["#5A6476", "#98A2B3"],
-  rule: ["#D9DEE6", "#273046"],
-  highlight: ["#F9E55A", "#E9D34A"],
-  proofmark: ["#C2185B", "#F06292"],
-  ok: ["#2E7D4F", "#5CC48A"],
-  caution: ["#A15C00", "#F0A63C"],
+  paper: ["#E6E4DF", "#10162A"],
+  sheet: ["#FFFFFF", "#182039"],
+  ink: ["#1F3A93", "#DCE4F7"],
+  body: ["#2A3145", "#C9D0E0"],
+  graphite: ["#4F5D80", "#9AA6C4"],
+  rule: ["#C9D8F0", "#2A3557"],
+  "control-edge": ["#6F7EA5", "#6878A6"],
+  "red-rule": ["#D7263D", "#FF6B7A"],
+  redpen: ["#C41E3A", "#FF6B7A"],
+  "circle-fill": ["#DCE6FA", "#2A3A6E"],
+  "circle-stroke": ["#1F3A93", "#8FB0FF"],
+  ok: ["#186A41", "#5CC48A"],
+  caution: ["#8A5100", "#F0A63C"],
 };
+
+const TEXT = ["ink", "body", "graphite", "redpen", "ok", "caution"];
+const SURFACES = ["paper", "sheet"];
 
 describe("design tokens", () => {
   it("match DESIGN.md in both themes", () => {
@@ -40,27 +49,43 @@ describe("design tokens", () => {
     }
   });
 
+  it("no longer define the highlighter or proofmark", () => {
+    expect(css).not.toMatch(/--(highlight|proofmark)/);
+  });
+
   it("keep the OS dark theme identical to [data-theme=dark]", () => {
     expect(media).toEqual(dark);
   });
 
-  it("pass WCAG AA for every text pair the UI uses", () => {
-    for (const theme of [light, dark]) {
-      for (const fg of ["ink", "graphite", "proofmark", "ok", "caution"]) {
-        for (const bg of ["paper", "sheet"]) {
-          expect(contrastRatio(theme[fg], theme[bg]), `${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+  it("pass WCAG AA (4.5:1) for every text color on paper and sheet", () => {
+    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+      for (const fg of TEXT) {
+        for (const bg of SURFACES) {
+          expect(contrastRatio(theme[fg], theme[bg]), `${name}: ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
         }
       }
-      expect(contrastRatio(theme.sheet, theme.ink), "primary button").toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(theme.sheet, theme.proofmark), "destructive button").toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio("#1A2233", theme.highlight), "text on highlight").toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  it("give text fields a 3:1 edge (WCAG 1.4.11)", () => {
-    for (const theme of [light, dark]) {
-      for (const bg of ["paper", "sheet"]) {
-        expect(contrastRatio(theme["control-edge"], theme[bg]), `control edge on ${bg}`).toBeGreaterThanOrEqual(3);
+  it("pass AA for circled words, buttons and the focus ring", () => {
+    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+      // A circled keyword keeps --body text on --circle-fill.
+      expect(contrastRatio(theme.body, theme["circle-fill"]), `${name}: body on circle-fill`).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.ink, theme["circle-fill"]), `${name}: ink on circle-fill`).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.sheet, theme.ink), `${name}: primary button`).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.sheet, theme.redpen), `${name}: destructive button`).toBeGreaterThanOrEqual(4.5);
+      // Non-text marks need 3:1 against what they sit on (WCAG 1.4.11).
+      expect(contrastRatio(theme["circle-stroke"], theme.sheet), `${name}: pen circle on sheet`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(theme["circle-stroke"], theme["circle-fill"]), `${name}: pen circle on fill`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(theme.redpen, theme.sheet), `${name}: red underline`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(theme.ink, theme.paper), `${name}: focus outline`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("give text fields a 3:1 edge on paper and sheet (WCAG 1.4.11)", () => {
+    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+      for (const bg of SURFACES) {
+        expect(contrastRatio(theme["control-edge"], theme[bg]), `${name}: control edge on ${bg}`).toBeGreaterThanOrEqual(3);
       }
     }
   });

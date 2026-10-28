@@ -9,20 +9,7 @@ const twMerge = extendTailwindMerge({
       "font-size": [{ text: ["xs", "sm", "base", "lg", "xl", "2xl", "score"] }],
       "text-color": [
         {
-          text: [
-            "paper",
-            "sheet",
-            "ink",
-            "graphite",
-            "rule",
-            "control-edge",
-            "highlight",
-            "highlight-ink",
-            "proofmark",
-            "ok",
-            "caution",
-            "cv-ink",
-          ],
+          text: ["paper", "sheet", "ink", "body", "graphite", "rule", "control-edge", "red-rule", "redpen", "circle-fill", "circle-stroke", "ok", "caution", "cv-ink"],
         },
       ],
       rounded: [{ rounded: ["control", "panel", "sheet", "pill"] }],

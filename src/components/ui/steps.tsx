@@ -23,7 +23,7 @@ export function ProgressSteps({ steps, current }: { steps: string[]; current: nu
             </span>
             <span
               className={cn(
-                state === "current" ? "font-medium text-ink" : state === "done" ? "text-ink" : "text-graphite",
+                state === "current" ? "font-medium text-ink" : state === "done" ? "text-body" : "text-graphite",
               )}
             >
               {label}
@@ -55,11 +55,11 @@ export function TaskSteps({
               <span className="size-2 animate-[skeleton-breathe_1.2s_ease-in-out_infinite] rounded-pill bg-ink" />
             )}
             {s.state === "todo" && <span className="size-2 rounded-pill border border-graphite" />}
-            {s.state === "failed" && <span className="size-2 rounded-pill bg-proofmark" />}
+            {s.state === "failed" && <span className="size-2 rounded-pill bg-redpen" />}
           </span>
           <span className="min-w-0">
             <span
-              className={cn(s.state === "todo" ? "text-graphite" : "text-ink", s.state === "running" && "font-medium")}
+              className={cn(s.state === "todo" ? "text-graphite" : "text-body", s.state === "running" && "font-medium")}
             >
               {s.label}
               <span className="sr-only">

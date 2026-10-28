@@ -141,13 +141,17 @@ export const sampleCv: CvDocument = {
 export const sampleJd = {
   title: "Senior Frontend Engineer",
   company: "Lumen Labs",
-  text: `Lumen Labs builds scheduling software for community clinics in 14 countries. We are hiring a Senior Frontend Engineer to own the patient booking flow end to end.
+  text: `Lumen Labs builds scheduling software for community clinics in 14 countries. Nurses, front-desk staff and patients use it every day to book, move and confirm appointments, often on old Android phones and slow connections. We are a team of 31, fully remote across eight time zones, and we are hiring a Senior Frontend Engineer to own the patient booking flow end to end.
 
-You will build product features in React and TypeScript, work closely with our design systems team, and ship weekly. Our API is GraphQL over Node.js, backed by PostgreSQL. Real-time updates reach clinic staff through WebSockets.
+In your first months you will rebuild the booking flow that patients see when a clinic shares a link by text message. Today it is a single page that loads every clinic's full calendar before showing anything, which makes the first screen slow on mid-range phones and confusing for people who only want the next free slot. You will work with our product designer and one backend engineer to split it into smaller steps, load availability as the patient moves through them, and keep the whole thing usable with a screen reader. You will build product features in React and TypeScript, work closely with our design systems team, and ship weekly behind feature flags, so a change reaches a few clinics first and everyone a week later.
 
-Requirements: 4+ years building web applications with React and TypeScript. Experience with GraphQL. A habit of writing tests; we use Playwright and Vitest. Care for accessibility.
+Our API is GraphQL over Node.js, backed by PostgreSQL. Real-time updates reach clinic staff through WebSockets, so when a patient books, the slot disappears from the front desk's screen within a second. Most of our frontend code is covered by tests, and we expect new features to be as well.
 
-Nice to have: Next.js, Storybook, experience working in a remote, async team.`,
+Requirements: 4+ years building web applications with React and TypeScript. Experience with GraphQL. A habit of writing tests; we use Playwright and Vitest. Care for accessibility, including keyboard and screen reader use.
+
+Nice to have: Next.js, Storybook, experience working in a remote, async team.
+
+Pay is $95,000 to $130,000 a year, or the local equivalent. We hire anywhere between UTC-3 and UTC+8.`,
   matched: ["React", "TypeScript", "Node.js", "PostgreSQL", "WebSockets", "Playwright", "Vitest", "Next.js"],
   missing: ["GraphQL", "design systems", "accessibility", "Storybook"],
 };
