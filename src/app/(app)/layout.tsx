@@ -7,7 +7,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   return (
     <TooltipProvider>
-      <AppShell user={{ name: user.name }}>{children}</AppShell>
+      <AppShell user={{ name: user.name, email: user.email, image: user.image }}>{children}</AppShell>
     </TooltipProvider>
   );
 }

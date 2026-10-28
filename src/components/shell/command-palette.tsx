@@ -7,6 +7,7 @@ import {
   KanbanIcon,
   MagnifyingGlassIcon,
   PlayIcon,
+  SignOutIcon,
   SunHorizonIcon,
   UserCircleIcon,
 } from "@phosphor-icons/react/ssr";
@@ -34,10 +35,12 @@ export function CommandPalette({
   open: controlledOpen,
   onOpenChange,
   onRunSearch,
+  onSignOut,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onRunSearch?: () => void;
+  onSignOut?: () => void;
 }) {
   const router = useRouter();
   const [uncontrolled, setUncontrolled] = useState(false);
@@ -96,6 +99,15 @@ export function CommandPalette({
                   <PlayIcon size={16} aria-hidden />
                   Run search now
                 </Command.Item>
+                {onSignOut && (
+                  <Command.Item
+                    className={item}
+                    onSelect={() => go({ id: "s", label: "", icon: null, run: onSignOut })}
+                  >
+                    <SignOutIcon size={16} aria-hidden />
+                    Sign out
+                  </Command.Item>
+                )}
               </Command.Group>
               <Command.Group
                 heading="Go to"

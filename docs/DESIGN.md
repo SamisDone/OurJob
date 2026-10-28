@@ -118,7 +118,10 @@ Mobile (< 768 px): bottom bar with Today, Tailor, Tracker, More.
 ```
 
 - Rail: 220 px with labels, collapsible to 64 px icons. Active item: ink text with a 3 px ink bar on the left.
-- Command palette (`Ctrl/Cmd + K`): jump to pages, "Tailor CV", "Run search now", search jobs and companies.
+- Account item at the bottom of the rail: his Google avatar (24 px, initial on `--circle-fill` if there is no photo) and display name; avatar only when the rail is collapsed. It opens a small menu (an index card with the red rule) showing the signed-in email, "Settings" and "Sign out".
+- Mobile: the "More" sheet ends with "Signed in as {email}" and a full-width "Sign out" secondary button.
+- Sign out: no confirmation (nothing is lost). It clears the client data cache, ends the session and lands on /sign-in with a quiet "Signed out." note in `--graphite`. Never red: it is a secondary action, not a destructive one.
+- Command palette (`Ctrl/Cmd + K`): jump to pages, "Tailor CV", "Run search now", "Sign out", search jobs and companies.
 - Toasts bottom right (bottom center on mobile), auto-dismiss in 5 s, with Undo for dismiss and status changes.
 
 ## 5. Screens
@@ -212,11 +215,11 @@ Table: name, website, ATS (or "careers site"), open roles, last checked, discove
 A document-like editor that looks close to a CV, not a form dump. Sections: basics, experience, projects, education, skills, certifications. Every item shows small source badges (CV, LinkedIn, GitHub, portfolio, added by you). Inline edit, drag to reorder bullets, add item. Version history in a side sheet with restore. Conflicts banner at the top until resolved.
 
 ### 5.9 Settings
-Plain sections: Search preferences, CV defaults, AI provider (with the privacy note in a calm callout: "On Gemini's free tier, Google can use what you send to improve its products. Use a paid key or another provider if you would rather it did not."), Sources (tier toggles, keys status shown as set or not set, never the key), Theme, Data (export, delete all).
+Plain sections: Account (the signed-in email and a "Sign out" secondary button), Search preferences, CV defaults, AI provider (with the privacy note in a calm callout: "On Gemini's free tier, Google can use what you send to improve its products. Use a paid key or another provider if you would rather it did not."), Sources (tier toggles, keys status shown as set or not set, never the key), Theme, Data (export, delete all).
 
 ## 6. Components to build (restyled shadcn/ui where possible)
 
-Button (primary, secondary, ghost, destructive; sizes sm/md), Input, Textarea (auto-grow), Select, Combobox, Segmented control, Chip (filter chip; keyword chip: matched is a pen-circled word, missing is a red-underlined word), Stamp (Applied), Panel (white card with the red rule), Tabs, Dialog, Sheet, Popover, Tooltip, Toast, Accordion row (for job rows), Data table (Companies), Kanban column and card, Progress steps, Skeletons for every list and panel, Score display (number + breakdown bars), Marked text renderer (pen circles for matched ranges, red underlines for missing ranges, with the drawing animation), Pen circle and Pen underline (seeded SVG paths, so each word gets its own slightly irregular stroke), Diff view, Code view, CV sheet preview, Empty state, Error state, Command palette.
+Button (primary, secondary, ghost, destructive; sizes sm/md), Input, Textarea (auto-grow), Select, Combobox, Segmented control, Chip (filter chip; keyword chip: matched is a pen-circled word, missing is a red-underlined word), Stamp (Applied), Panel (white card with the red rule), Tabs, Dialog, Sheet, Popover, Tooltip, Toast, Accordion row (for job rows), Data table (Companies), Kanban column and card, Account menu (avatar, display name, Settings, Sign out), Progress steps, Skeletons for every list and panel, Score display (number + breakdown bars), Marked text renderer (pen circles for matched ranges, red underlines for missing ranges, with the drawing animation), Pen circle and Pen underline (seeded SVG paths, so each word gets its own slightly irregular stroke), Diff view, Code view, CV sheet preview, Empty state, Error state, Command palette.
 
 ## 7. States checklist (every screen)
 

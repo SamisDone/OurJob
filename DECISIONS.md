@@ -196,3 +196,19 @@ Style tile approval for this direction. Real screens stay paused until Sam appro
 
 ### What is wired now and what waits
 Done: the client factory, the provider in the app shell, the server prefetch and hydration helper, every query and mutation key, the optimistic mutation hook with rollback and Undo, and the tailoring progress hook. The per-screen query and mutation hooks (feed, tracker, companies, profile edits, tailoring history) are written with those screens, which stay paused until the new style tile is approved. Each screen uses these helpers rather than calling `useQuery` or `useMutation` directly.
+
+## 2026-10-29: style tile approved; sign out
+
+### Style tile approved
+Pratik approved the "index card and ballpoint" style tile. Sam accepted all six departures listed in the review: light `--control-edge` #6F7EA5, 28 px line height for marked job descriptions, sentence-case "Applied" stamp, the ink dot as the new marker, the red rule on dialogs, sheets and error panels, and the edits to DESIGN.md sections 8 and 10.1. Real screens can now be built.
+
+### Sign-in checked
+A real Google sign-in by an allowed account created a `users` row on 2026-10-28 (15:37 UTC). Earlier, a headless run confirmed Google accepts the OAuth client and the `http://localhost:3000/api/auth/callback/google` redirect URI.
+
+### Sign out (Sam's request)
+- One server action, `signOutAction`, calls Auth.js `signOut({ redirectTo: "/sign-in?signedOut=1" })`. The client hook `useSignOut` clears the TanStack Query cache first, so no data from the session stays in memory, then calls the action inside a transition.
+- Entry points: the account item at the bottom of the rail (avatar and display name; a menu with the signed-in email, Settings and Sign out), the bottom of the mobile More sheet, Settings > Account, and the command palette. No confirmation dialog.
+- Styled as a secondary action (never red: it is not destructive). The sign-in page shows "Signed out." as a quiet `role="status"` line in `--graphite`.
+- The Google avatar is a plain `<img>` with `referrerPolicy="no-referrer"` rather than next/image, to avoid adding googleusercontent.com to remote image patterns for one 24 px picture. Without a photo, the initial sits on `--circle-fill`.
+- Playwright: signs out from the rail menu (desktop) and the More sheet (phone), checks the session cookie is gone and `/today`, `/profile`, `/settings` redirect to `/sign-in`; a second test signs out from the command palette.
+- DESIGN.md sections 4, 5.9 and 6 and PRD F8 updated.

@@ -20,9 +20,9 @@ function googleConfigured() {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string; signedOut?: string }>;
 }) {
-  const { error, callbackUrl } = await searchParams;
+  const { error, callbackUrl, signedOut } = await searchParams;
 
   if (googleConfigured()) {
     const session = await auth();
@@ -56,6 +56,12 @@ export default async function SignInPage({
             Continue with Google
           </Button>
         </form>
+
+        {signedOut && !message && (
+          <p role="status" className="mt-5 text-sm text-graphite">
+            Signed out.
+          </p>
+        )}
 
         {message && (
           <p role="alert" className="mt-5 border-l-2 border-redpen py-1 pl-3 text-sm text-body">

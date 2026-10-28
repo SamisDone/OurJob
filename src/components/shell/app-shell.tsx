@@ -19,7 +19,9 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { Sheet, SheetContent } from "@/components/ui/overlay";
 import { setStored, useStored } from "@/lib/use-stored";
 import { cn } from "@/lib/utils";
+import { AccountMenu, type AccountUser } from "./account-menu";
 import { CommandPalette, Kbd } from "./command-palette";
+import { SignOutButton, useSignOut } from "./sign-out";
 import { Wordmark } from "./wordmark";
 
 type NavItem = { href: string; label: string; icon: Icon };
@@ -64,11 +66,12 @@ function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean;
  * Rail on desktop (220 px, collapsible to 64 px), bottom bar on phones.
  * The page itself carries the content; the chrome stays quiet.
  */
-export function AppShell({ children, user }: { children: ReactNode; user?: { name?: string | null } }) {
+export function AppShell({ children, user }: { children: ReactNode; user?: AccountUser }) {
   const pathname = usePathname() ?? "";
   const collapsed = useStored("ourjob-rail", "open") === "collapsed";
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const { signOut } = useSignOut();
 
   const toggle = () => setStored("ourjob-rail", collapsed ? "open" : "collapsed");
 
@@ -144,8 +147,10 @@ export function AppShell({ children, user }: { children: ReactNode; user?: { nam
               </button>
             </li>
           </ul>
-          {user?.name && !collapsed && (
-            <p className="mt-3 truncate px-3 text-xs text-graphite max-lg:hidden">{user.name}</p>
+          {user && (
+            <div className="mt-2 border-t border-rule pt-2">
+              <AccountMenu user={user} collapsed={collapsed} />
+            </div>
           )}
         </nav>
 
@@ -206,10 +211,16 @@ export function AppShell({ children, user }: { children: ReactNode; user?: { nam
                 );
               })}
             </ul>
+            {user && (
+              <div className="mt-5 border-t border-rule pt-5">
+                {user.email && <p className="mb-3 text-sm text-graphite">Signed in as {user.email}</p>}
+                <SignOutButton className="w-full" />
+              </div>
+            )}
           </SheetContent>
         </Sheet>
 
-        <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+        <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={user ? signOut : undefined} />
       </div>
     </QueryProvider>
   );

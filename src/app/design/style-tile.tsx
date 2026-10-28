@@ -8,6 +8,7 @@ import { MarkedText } from "@/components/marks/marked-text";
 import { penTiming } from "@/components/marks/sweep";
 import { ScoreDisplay } from "@/components/score/score";
 import { AppShell } from "@/components/shell/app-shell";
+import { AccountMenu } from "@/components/shell/account-menu";
 import { Kbd } from "@/components/shell/command-palette";
 import { ThemeControl } from "@/components/shell/theme-control";
 import { KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
@@ -403,7 +404,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
 
   return (
     <TooltipProvider>
-      <AppShell user={{ name: label }}>
+      <AppShell user={{ name: label, email: viewer?.email ?? "arif.rahman@example.com", image: null }}>
         <div className="mx-auto max-w-[1240px] px-4 pt-8 pb-16 md:px-8 lg:px-12">
           <header className="flex flex-wrap items-end justify-between gap-4 pb-8">
             <div>
@@ -739,7 +740,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           <Section
             id="overlays"
             title="Overlays"
-            intro="Dialog, sheet, popover, tooltip, toast and the command palette."
+            intro="Dialog, sheet, popover, tooltip, toast, the command palette and the account menu (it also sits at the bottom of the rail)."
           >
             <div className="flex flex-wrap gap-2">
               <Dialog>
@@ -813,6 +814,9 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 </PopoverContent>
               </Popover>
 
+              <div className="w-56 rounded-panel border border-dashed border-rule p-1">
+                <AccountMenu user={{ name: label, email: viewer?.email ?? "arif.rahman@example.com", image: null }} />
+              </div>
               <Tooltip content="Real ATS systems differ. This is an estimate.">
                 <Button variant="secondary">Hover for a tooltip</Button>
               </Tooltip>

@@ -1,18 +1,5 @@
-import { expect, test, type BrowserContext } from "@playwright/test";
-import { encode } from "next-auth/jwt";
-
-// Must match playwright.config.ts webServer env.
-const SECRET = "e2e-test-secret-not-for-production-0123456789";
-const COOKIE = "authjs.session-token";
-
-async function signInAs(context: BrowserContext, baseURL: string, email: string) {
-  const token = await encode({
-    salt: COOKIE,
-    secret: SECRET,
-    token: { email, name: "Test Person", sub: "e2e", uid: "00000000-0000-4000-8000-000000000001" },
-  });
-  await context.addCookies([{ name: COOKIE, value: token, url: baseURL, httpOnly: true, sameSite: "Lax" }]);
-}
+import { expect, test } from "@playwright/test";
+import { signInAs } from "./helpers";
 
 test("signed-out visitors are sent to sign in", async ({ page }) => {
   await page.goto("/today");

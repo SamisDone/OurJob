@@ -141,6 +141,7 @@ Columns: Saved, Applied, Interviewing, Offer, Closed. Drag between columns. Each
 
 ### F8. Settings
 
+- Account: shows the signed-in email and a Sign out button. Sign out is also in the account menu at the bottom of the desktop rail, at the bottom of the mobile "More" sheet and in the command palette. Signing out needs no confirmation, clears all client-side cached data, and returns to the sign-in page with a "Signed out" note.
 - Profile sources (re-import).
 - Search preferences (F2).
 - LLM provider and model, with a clear privacy note: on Gemini's free tier, submitted content can be used by Google to improve its products. Offer a paid key or another provider for people who do not want that.
