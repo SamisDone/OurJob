@@ -1,0 +1,54 @@
+% FICTIONAL LinkedIn "Save to PDF" style export for OurJob fixtures.
+% Nadia Chowdhury does not exist. Layout imitates the two-column export:
+% a sidebar (Contact, Top Skills, Languages, Certifications) and a main column.
+% Deliberate differences from her CV, to exercise conflicts in P1:
+%   - Taka Pay end date is April 2023 here, May 2023 on the CV.
+%   - Terraform appears here and not on the CV.
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{xcolor}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\begin{document}
+\noindent
+\begin{minipage}[t]{0.28\textwidth}
+\textbf{Contact}\\[2pt]
+\small nadia.chowdhury@example.com\\
+www.linkedin.com/in/example-nadia (LinkedIn)\\[8pt]
+\normalsize\textbf{Top Skills}\\[2pt]
+\small Go\\
+PostgreSQL\\
+Terraform\\[8pt]
+\normalsize\textbf{Languages}\\[2pt]
+\small Bengali (Native or Bilingual)\\
+English (Full Professional)\\[8pt]
+\normalsize\textbf{Certifications}\\[2pt]
+\small AWS Certified Developer – Associate
+\end{minipage}\hfill
+\begin{minipage}[t]{0.66\textwidth}
+{\LARGE Nadia Chowdhury}\\[4pt]
+Backend Engineer at Parcelwise | Go, PostgreSQL, Kafka\\
+\small Sylhet, Sylhet, Bangladesh\\[10pt]
+\normalsize\textbf{Summary}\\[2pt]
+\small I design backend services and data pipelines for logistics and payments.\\[10pt]
+\normalsize\textbf{Experience}\\[4pt]
+\textbf{Parcelwise}\\
+\small Senior Backend Engineer\\
+June 2023 - Present (1 year 5 months)\\
+Remote\\
+Rate-quote service in Go. Event pipeline on Kafka for billing. Infrastructure in Terraform.\\[8pt]
+\normalsize\textbf{Taka Pay}\\
+\small Backend Developer\\
+February 2020 - April 2023 (3 years 3 months)\\
+Dhaka, Bangladesh\\
+Merchant settlement API in Python and Django.\\[10pt]
+\normalsize\textbf{Education}\\[4pt]
+\textbf{Shahjalal University of Science and Technology}\\
+\small Bachelor of Science - BS, Computer Science · (2015 - 2019)
+\end{minipage}
+\end{document}

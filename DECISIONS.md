@@ -96,3 +96,20 @@ The review line in Sam's message was the unfilled template ("[approved / approve
 
 ### Style tile shows the signed-in person's name
 Sam asked for the sample to say Pratik instead of Arif. The style tile now takes the name from the signed-in session and falls back to the fictional sample when nobody is signed in. Pratik's name is not written into the sample CV, `templates/resume-sample.tex` or any fixture: golden rule 5 keeps his data out of the repo, and a committed CV under his name with invented employers would be published with the open-source code. The real app shows his name from his own profile once he imports his CV (Phase 1).
+
+## 2026-10-29: Phase 1, ingestion
+
+### PDF text: unpdf (not pdf-parse)
+Compared unpdf 1.9.1 and pdf-parse 2.4.5 on three PDFs: the fictional LaTeX CV (`tests/fixtures/cvs/mei-lin-tan.pdf`), the fictional LinkedIn-style export, and the compiled `templates/resume-sample.tex`. Both gave the same text in the same reading order. unpdf was faster on a cold start (134 ms vs 666 ms), needs no worker setup on serverless, and pdf-parse could not run in the same process as unpdf (their bundled pdf.js versions, 5.4 and 6.4, clash on the global worker). pdf-parse was removed.
+
+### DOCX: mammoth's HTML, not its raw text
+`extractRawText` drops headings, list markers and bold. The importer converts DOCX to HTML with `externalFileAccess: false` (untrusted files must not pull in other files), then to Markdown-like text (`#` headings, `-` items, `**bold**`), so P1 can keep bold phrases and section structure.
+
+### Line-end hyphens
+PDF exports hyphenate across lines ("Ter-\nraform"). A hyphen at a line end is joined only when the joined word appears elsewhere in the same document; otherwise the hyphen is kept ("Asso-ciate"). Real hyphens such as "Full-Stack" are never touched.
+
+### .tex importer and the shared accent table
+`src/lib/ingest/tex.ts` parses CVs in the template's macros (header, sections, subheadings, project headings, bullets with bold spans, Tech lines, links) and returns null for other LaTeX, so the caller falls back to plain text. Accent and symbol commands live in one table (`src/lib/latex/accents.ts`); the importer decodes them and `escapeLatex()` (Phase 2) will encode with the same table. A round-trip test covers both directions. `---` imports as an en dash because em dashes are not allowed in generated text.
+
+### Fixtures
+All fictional: Nadia Chowdhury (Markdown CV plus a LinkedIn-style PDF with a deliberate end-date conflict and an extra skill), Tomás Herrera Núñez (DOCX generated from Markdown with pandoc; accents, `&`, hedged metrics), Mei Lin Tan (PDF compiled from LaTeX in the template layout; `&`, `%`, `#`), and an image-only PDF of Mei Lin's CV for the "no selectable text" path. Sources for the generated files are in `tests/fixtures/**/sources/`.
