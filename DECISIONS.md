@@ -113,3 +113,13 @@ PDF exports hyphenate across lines ("Ter-\nraform"). A hyphen at a line end is j
 
 ### Fixtures
 All fictional: Nadia Chowdhury (Markdown CV plus a LinkedIn-style PDF with a deliberate end-date conflict and an extra skill), Tomás Herrera Núñez (DOCX generated from Markdown with pandoc; accents, `&`, hedged metrics), Mei Lin Tan (PDF compiled from LaTeX in the template layout; `&`, `%`, `#`), and an image-only PDF of Mei Lin's CV for the "no selectable text" path. Sources for the generated files are in `tests/fixtures/**/sources/`.
+
+### HTTP: two clients
+- `politeFetch` (`src/lib/http/polite.ts`) is for fixed hosts we call (GitHub API, later ATS boards and job boards): User-Agent `OurJob/<version> (+https://github.com/SamisDone/OurJob)`, one request per second per host by default with per-host overrides (Workable will get 3 s), 3 retries with exponential backoff and jitter on 429 and 5xx that honor `Retry-After` (capped at 60 s), and a per-client cache so a URL is fetched once per run.
+- `safeFetch` (`src/lib/http/ssrf.ts`) is for URLs a person types in. Only http(s), standard ports (80, 443, 8080, 8443), no credentials in the URL, max 3 redirects (each hop re-checked), 2 MB, 10 s. Every resolved address must be public unicast (ipaddr.js `range() === "unicast"`, IPv4-mapped IPv6 unwrapped). The check runs inside the socket's own DNS `lookup`, so a hostname cannot pass a pre-check and then connect to a private address (DNS rebinding). It uses `node:http(s)` rather than global fetch because fetch does not expose a per-request lookup hook without adding undici as a dependency.
+
+### GitHub import (verified against the live API, 2026-10-29)
+`GET /versions` lists `2026-03-10` and `2022-11-28`; requests send `X-GitHub-Api-Version: 2026-03-10`. Real unauthenticated responses for `octocat` (GitHub's demo account, not a real person) are saved in `tests/fixtures/sources/github/octocat/`: user, repos, languages per repo, READMEs fetched with `Accept: application/vnd.github.raw+json`, and the 404 body for repos without a README. All expected fields were present under the new version. Rules: owned non-fork repos only, newest push first, top 20; READMEs for 8 repos (4 by stars, then most recently pushed), first 4,000 characters. Pinned repos need the GraphQL API with a token, so they are not used. `GITHUB_TOKEN` is optional; without it GitHub allows 60 requests an hour, enough for about two imports.
+
+### Portfolio import
+Readability on linkedom, links read before Readability mutates the page. Under 300 visible characters means the site likely renders in the browser; the result is flagged `thin` so onboarding can offer a paste box.
