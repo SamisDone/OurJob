@@ -57,7 +57,7 @@ Latin Modern Roman 2.004 (GUST Font License, which allows redistribution) is the
 ### CV preview matches what pdflatex actually renders
 `templates/resume-sample.tex` was compiled with pdflatex (MiKTeX, 1 page). The template uses OT1 Computer Modern (no `fontenc`), which has no bold small caps, so LaTeX substitutes bold upright for `\scshape\bfseries` section titles (log: "Font shape OT1/cmr/bx/sc undefined, using OT1/cmr/bx/n"). The HTML preview copies the real output (bold upright section titles, small caps only for the name), not the macro's intent. Dimensions come from the template: letter paper, 0.3in and 0.4in margins, 10pt base, `\small` 9pt, `\large` 12pt, `\huge` 20.74pt.
 
-Open question for Phase 2: ARCHITECTURE.md section 6 mentions `inputenc utf8` + `fontenc T1`, but the template loads neither. Modern LaTeX defaults to UTF-8 input, so accented Latin letters work, but with OT1 they are built from accents (worse copy and paste for ATS). Adding `\usepackage[T1]{fontenc}` would change the look to cm-super. Decide with a compile test in Phase 2.
+The font encoding question is settled below ("Font encoding: keep the template exactly as it is").
 
 ### Auth: JWT sessions, no adapter tables
 Auth.js uses JWT sessions, so the proxy can check sessions without a database call and the schema stays as ARCHITECTURE.md lists it (no accounts, sessions or verification token tables). The `users` row is upserted at sign-in. The allowlist is checked three times: in the `signIn` callback (Google email must be verified and listed), in the proxy's `authorized` callback on every request, and in `requireUser()` used by every page and action. Removing an email from `ALLOWED_EMAILS` signs that person out on the next request.
@@ -84,5 +84,15 @@ No job product called OurJob turned up in a web search or on GitHub. Small near-
 ### GitHub Actions versions (checked 2026-10-28)
 actions/checkout v7, actions/setup-node v7, pnpm/action-setup v6 (supports pnpm 10, reads the version from `packageManager`).
 
-### Style tile review
-Waiting for Sam and Pratik. Feedback will be recorded here.
+## 2026-10-28: after the Phase 0 review
+
+### Font encoding: keep the template exactly as it is (Sam's decision)
+No `fontenc T1` and no `inputenc` line, so the output matches Pratik's current CV. Non-ASCII Latin letters are handled by `escapeLatex()`, which maps them to LaTeX accent and symbol commands. ARCHITECTURE.md section 6 is updated to match.
+
+Checked with pdflatex (MiKTeX) using the template preamble unchanged: José Müller, Peña, François, Ørsted, Straße, Škoda, Łódź and Jiří compile with no errors and no missing characters, written either as accent commands or as raw UTF-8. Trade-off, measured with pdftotext: OT1 builds an accented letter from two glyphs, so extracted text splits it ("José" becomes "Jos´e"). ASCII text extracts cleanly. If this ever matters for an ATS, the fix that keeps the look is `accsupp` ActualText around each accented letter; that adds a package to the preamble, so it needs Sam's approval first.
+
+### Style tile approval: not given yet
+The review line in Sam's message was the unfilled template ("[approved / approved with these changes: ...]"). UI work stays paused; non-UI Phase 1 work continues.
+
+### Style tile shows the signed-in person's name
+Sam asked for the sample to say Pratik instead of Arif. The style tile now takes the name from the signed-in session and falls back to the fictional sample when nobody is signed in. Pratik's name is not written into the sample CV, `templates/resume-sample.tex` or any fixture: golden rule 5 keeps his data out of the repo, and a committed CV under his name with invented employers would be published with the open-source code. The real app shows his name from his own profile once he imports his CV (Phase 1).

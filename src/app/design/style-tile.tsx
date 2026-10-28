@@ -36,6 +36,7 @@ import { Combobox, Select } from "@/components/ui/select";
 import { ProgressSteps, TaskSteps } from "@/components/ui/steps";
 import { Segmented, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
+import type { CvDocument } from "@/lib/cv/document";
 import { findSampleMarks, sampleAts, sampleCompanies, sampleCv, sampleJd, sampleJobs } from "@/lib/design/sample";
 import { cn } from "@/lib/utils";
 
@@ -123,7 +124,7 @@ function TokenPanel({ theme }: { theme: "light" | "dark" }) {
   );
 }
 
-function ProofingDesk() {
+function ProofingDesk({ cv }: { cv: CvDocument }) {
   const marks = useMemo(() => findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing), []);
   const [phase, setPhase] = useState<"static" | "pending" | "run">("static");
   const [run, setRun] = useState(0);
@@ -167,7 +168,7 @@ function ProofingDesk() {
             <TabsTrigger value="changes">Changes</TabsTrigger>
           </TabsList>
           <TabsContent value="preview">
-            <CvSheet doc={sampleCv} />
+            <CvSheet doc={cv} />
             <p className="mt-3 text-sm text-graphite">1 page, US Letter</p>
           </TabsContent>
           <TabsContent value="latex">
@@ -303,13 +304,13 @@ function IHaveThis({ term }: { term: string }) {
   );
 }
 
-function TodayPreview() {
+function TodayPreview({ firstName }: { firstName: string }) {
   const [chips, setChips] = useState({ remote: true, pay: false, direct: false });
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div>
-          <p className="text-2xl font-semibold text-ink">Good morning, Arif</p>
+          <p className="text-2xl font-semibold text-ink">Good morning, {firstName}</p>
           <p className="mt-1 text-lg text-ink">24 new remote jobs that fit you</p>
         </div>
         <div className="flex items-center gap-4 text-sm text-graphite">
@@ -367,7 +368,23 @@ function TodayPreview() {
   );
 }
 
-export function StyleTile() {
+export type Viewer = { name: string; email: string } | null;
+
+/** Puts the signed-in person's name on the sample. Nothing about them is stored or committed. */
+function personalize(viewer: Viewer): { cv: CvDocument; firstName: string; label: string } {
+  if (!viewer) return { cv: sampleCv, firstName: "Arif", label: "Arif Rahman (sample)" };
+  const contact = sampleCv.contact.map((c) =>
+    c.url?.startsWith("mailto:") ? { text: viewer.email, url: `mailto:${viewer.email}` } : c,
+  );
+  return {
+    cv: { ...sampleCv, name: viewer.name, contact },
+    firstName: viewer.name.split(/\s+/)[0],
+    label: viewer.name,
+  };
+}
+
+export function StyleTile({ viewer }: { viewer: Viewer }) {
+  const { cv, firstName, label } = personalize(viewer);
   const [country, setCountry] = useState("BD");
   const [scope, setScope] = useState("region");
   const [seniority, setSeniority] = useState<string>();
@@ -376,14 +393,17 @@ export function StyleTile() {
 
   return (
     <TooltipProvider>
-      <AppShell user={{ name: "Arif Rahman (sample)" }}>
+      <AppShell user={{ name: label }}>
         <div className="mx-auto max-w-[1240px] px-4 pt-8 pb-16 md:px-8 lg:px-12">
           <header className="flex flex-wrap items-end justify-between gap-4 pb-8">
             <div>
               <h1 className="text-2xl font-semibold text-ink">Style tile</h1>
               <p className="mt-1 measure text-graphite">
-                Tokens, type and every component in their states, with fictional content. For review before real screens
-                are built.
+                Tokens, type and every component in their states.{" "}
+                {viewer
+                  ? "Your name is on the sample; everything else in it is fictional."
+                  : "All content is fictional."}{" "}
+                For review before real screens are built.
               </p>
             </div>
             <ThemeControl />
@@ -417,7 +437,7 @@ export function StyleTile() {
             title="Proofing desk"
             intro="The signature moment. Matched terms get the highlighter in reading order while the score counts up from the master CV score; missing terms get the magenta proofreader's mark at the end."
           >
-            <ProofingDesk />
+            <ProofingDesk cv={cv} />
           </Section>
 
           <Section
@@ -425,7 +445,7 @@ export function StyleTile() {
             title="Today rows"
             intro="Rows, not cards. Fit in tabular figures with a thin bar. Click a row to expand it."
           >
-            <TodayPreview />
+            <TodayPreview firstName={firstName} />
           </Section>
 
           <Section
@@ -441,7 +461,7 @@ export function StyleTile() {
               {(["light", "dark"] as const).map((t) => (
                 <div key={t} data-theme={t} className="rounded-panel border border-rule bg-paper p-6">
                   <div className="max-w-[340px]">
-                    <CvSheet doc={sampleCv} />
+                    <CvSheet doc={cv} />
                   </div>
                 </div>
               ))}
@@ -459,7 +479,7 @@ export function StyleTile() {
                   "text-2xl",
                   "31 / 38",
                   <span key="a" className="text-2xl font-semibold">
-                    Good afternoon, Arif
+                    Good afternoon, {firstName}
                   </span>,
                 ],
                 [

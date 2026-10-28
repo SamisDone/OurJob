@@ -45,8 +45,16 @@ test("the refusal message names the allowlist", async ({ page }) => {
   );
 });
 
+test("the style tile puts the signed-in person's name on the sample", async ({ page, context, baseURL }) => {
+  await signInAs(context, baseURL!, "allowed@example.com");
+  await page.goto("/design");
+  await expect(page.getByText("Good morning, Test")).toBeVisible();
+  await expect(page.getByText("Arif")).toHaveCount(0);
+});
+
 test("the style tile renders when enabled", async ({ page }) => {
   await page.goto("/design");
   await expect(page.getByRole("heading", { name: "Style tile" })).toBeVisible();
+  await expect(page.getByText("Good morning, Arif")).toBeVisible();
   await expect(page.locator("mark[data-kind=matched]").first()).toBeVisible();
 });
