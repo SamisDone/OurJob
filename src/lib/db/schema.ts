@@ -118,6 +118,8 @@ export const masterProfiles = pgTable(
     data: jsonb("data").$type<MasterProfile>().notNull(),
     isCurrent: boolean("is_current").notNull().default(false),
     confirmedAt: tz("confirmed_at"),
+    /** What changed in this version, for the history sheet: "Added GraphQL to Ledgerly". */
+    note: text("note"),
   },
   (t) => [
     uniqueIndex("master_profiles_user_version_uq").on(t.userId, t.version),

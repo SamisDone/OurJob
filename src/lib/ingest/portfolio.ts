@@ -45,7 +45,10 @@ export function extractMainText(html: string, pageUrl: string): Omit<PortfolioIm
 export async function importPortfolio(url: string): Promise<PortfolioImport> {
   const res = await safeFetch(url);
   if (!/html|xml/i.test(res.contentType)) {
-    throw new IngestError("unsupported_type", "That address is not a web page. Use the link to your portfolio's home page.");
+    throw new IngestError(
+      "unsupported_type",
+      "That address is not a web page. Use the link to your portfolio's home page.",
+    );
   }
   const main = extractMainText(res.body, res.url);
   return { url: res.url, ...main, thin: visibleCharCount(main.text) < MIN_USEFUL_CHARS };

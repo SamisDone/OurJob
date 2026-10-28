@@ -35,7 +35,8 @@ export function assertFetchableUrl(raw: string): URL {
   if (url.protocol !== "https:" && url.protocol !== "http:") {
     throw new IngestError("blocked_url", "Only http and https addresses can be fetched.");
   }
-  if (url.username || url.password) throw new IngestError("blocked_url", "Remove the username and password from the address.");
+  if (url.username || url.password)
+    throw new IngestError("blocked_url", "Remove the username and password from the address.");
   if (!ALLOWED_PORTS.has(url.port)) throw new IngestError("blocked_url", "Only standard web ports can be fetched.");
   const host = url.hostname.replace(/^\[|\]$/g, "");
   if (ipaddr.isValid(host) && !isPublicAddress(host)) {
@@ -57,7 +58,8 @@ export const guardedLookup: LookupFunction = (hostname, options, callback) => {
       const e = new IngestError("blocked_url", "That address points to a private network and cannot be fetched.");
       return callback(e as unknown as NodeJS.ErrnoException, "", 4);
     }
-    if ((options as { all?: boolean }).all) return (callback as unknown as (e: null, a: LookupAddress[]) => void)(null, list);
+    if ((options as { all?: boolean }).all)
+      return (callback as unknown as (e: null, a: LookupAddress[]) => void)(null, list);
     callback(null, list[0].address, list[0].family);
   });
 };
@@ -66,7 +68,10 @@ export type SafeFetchResult = { url: string; status: number; contentType: string
 
 type Options = { maxBytes?: number; timeoutMs?: number; maxRedirects?: number; accept?: string };
 
-function requestOnce(url: URL, opts: Required<Options>): Promise<{ status: number; headers: http.IncomingHttpHeaders; body: Buffer }> {
+function requestOnce(
+  url: URL,
+  opts: Required<Options>,
+): Promise<{ status: number; headers: http.IncomingHttpHeaders; body: Buffer }> {
   return new Promise((resolve, reject) => {
     const mod = url.protocol === "https:" ? https : http;
     const req = mod.request(
@@ -98,11 +103,15 @@ function requestOnce(url: URL, opts: Required<Options>): Promise<{ status: numbe
           }
           chunks.push(chunk);
         });
-        stream.on("end", () => resolve({ status: res.statusCode ?? 0, headers: res.headers, body: Buffer.concat(chunks) }));
+        stream.on("end", () =>
+          resolve({ status: res.statusCode ?? 0, headers: res.headers, body: Buffer.concat(chunks) }),
+        );
         stream.on("error", reject);
       },
     );
-    req.on("timeout", () => req.destroy(new IngestError("fetch_failed", "That site took longer than 10 seconds to answer.")));
+    req.on("timeout", () =>
+      req.destroy(new IngestError("fetch_failed", "That site took longer than 10 seconds to answer.")),
+    );
     req.on("error", reject);
     req.end();
   });

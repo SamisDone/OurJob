@@ -97,7 +97,8 @@ export async function importGitHub(
   opts: { client?: PoliteClient; token?: string } = {},
 ): Promise<GitHubImport> {
   const login = parseGitHubUsername(input);
-  if (!login) throw new IngestError("not_found", "That is not a GitHub username. Use the name from github.com/your-name.");
+  if (!login)
+    throw new IngestError("not_found", "That is not a GitHub username. Use the name from github.com/your-name.");
   const client = opts.client ?? createPoliteClient();
   const token = opts.token ?? process.env.GITHUB_TOKEN;
   const headers: Record<string, string> = {
@@ -131,7 +132,9 @@ export async function importGitHub(
     throw e;
   }
 
-  const apiRepos = await call<ApiRepo[]>(`/users/${encodeURIComponent(login)}/repos?type=owner&sort=pushed&per_page=100`);
+  const apiRepos = await call<ApiRepo[]>(
+    `/users/${encodeURIComponent(login)}/repos?type=owner&sort=pushed&per_page=100`,
+  );
   const own = apiRepos
     .filter((r) => !r.fork)
     .sort((a, b) => (b.pushed_at ?? "").localeCompare(a.pushed_at ?? ""))
@@ -139,7 +142,9 @@ export async function importGitHub(
 
   const repos: GitHubRepo[] = [];
   for (const r of own) {
-    const langs = await call<Record<string, number>>(`/repos/${encodeURIComponent(login)}/${encodeURIComponent(r.name)}/languages`);
+    const langs = await call<Record<string, number>>(
+      `/repos/${encodeURIComponent(login)}/${encodeURIComponent(r.name)}/languages`,
+    );
     repos.push({
       name: r.name,
       description: r.description,
@@ -161,10 +166,9 @@ export async function importGitHub(
   for (const repo of repos) {
     if (!wanted.has(repo.name)) continue;
     try {
-      const text = await call<string>(
-        `/repos/${encodeURIComponent(login)}/${encodeURIComponent(repo.name)}/readme`,
-        { accept: "application/vnd.github.raw+json" },
-      );
+      const text = await call<string>(`/repos/${encodeURIComponent(login)}/${encodeURIComponent(repo.name)}/readme`, {
+        accept: "application/vnd.github.raw+json",
+      });
       repo.readme = text.slice(0, README_CHARS);
     } catch (e) {
       if (!(e instanceof PoliteHttpError && e.status === 404)) throw e;

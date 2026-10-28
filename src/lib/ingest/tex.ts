@@ -43,7 +43,10 @@ export type ParsedTexCv = {
 function toBullet(segments: Segment[]): TexBullet {
   return {
     text: segments.map((s) => s.text).join(""),
-    boldPhrases: segments.filter((s) => s.bold).map((s) => s.text.trim()).filter(Boolean),
+    boldPhrases: segments
+      .filter((s) => s.bold)
+      .map((s) => s.text.trim())
+      .filter(Boolean),
   };
 }
 
@@ -75,7 +78,10 @@ function parseEntries(body: string): TexEntry[] {
       const org = latexInline(r.args[0]);
       current = {
         kind: "role",
-        org: org.segments.map((x) => x.text).join("").trim(),
+        org: org.segments
+          .map((x) => x.text)
+          .join("")
+          .trim(),
         orgUrl: org.links[0]?.url,
         title: latexToPlain(r.args[1]).trim(),
         right: latexToPlain(r.args[2]).trim(),
@@ -207,9 +213,7 @@ export function parseTexCv(tex: string): ParsedTexCv | null {
 export function texCvToText(cv: ParsedTexCv): string {
   const lines: string[] = [`# ${cv.name}`];
   const c = cv.contact;
-  lines.push(
-    [c.location, c.email, c.phone, ...c.links.map((l) => `${l.label}: ${l.url}`)].filter(Boolean).join(" | "),
-  );
+  lines.push([c.location, c.email, c.phone, ...c.links.map((l) => `${l.label}: ${l.url}`)].filter(Boolean).join(" | "));
   const bold = (b: TexBullet) => b.boldPhrases.reduce((t, p) => t.replace(p, `**${p}**`), b.text);
   for (const s of cv.sections) {
     lines.push("", `## ${s.title}`);
@@ -218,7 +222,10 @@ export function texCvToText(cv: ParsedTexCv): string {
     if (s.kind === "entries") {
       for (const e of s.entries) {
         if (e.kind === "role") lines.push(`### ${e.org}${e.orgUrl ? ` (${e.orgUrl})` : ""} | ${e.title} | ${e.right}`);
-        else lines.push(`### ${e.name}${e.links.length ? ` | ${e.links.map((l) => `${l.label}: ${l.url}`).join(" | ")}` : ""}`);
+        else
+          lines.push(
+            `### ${e.name}${e.links.length ? ` | ${e.links.map((l) => `${l.label}: ${l.url}`).join(" | ")}` : ""}`,
+          );
         for (const b of e.bullets) lines.push(`- ${bold(b)}`);
         if (e.tech.length) lines.push(`Tech: ${e.tech.join(", ")}`);
       }

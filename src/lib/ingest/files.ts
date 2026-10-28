@@ -36,10 +36,7 @@ export async function extractPdf(bytes: Uint8Array): Promise<{ text: string; pag
   }
   const text = normalizeExtractedText(result.text);
   if (visibleCharCount(text) < MIN_CHARS_PER_PAGE * Math.max(1, result.totalPages)) {
-    throw new IngestError(
-      "no_text_layer",
-      "This PDF has no selectable text. Upload the DOCX or a text-based PDF.",
-    );
+    throw new IngestError("no_text_layer", "This PDF has no selectable text. Upload the DOCX or a text-based PDF.");
   }
   return { text, pages: result.totalPages };
 }
@@ -104,7 +101,10 @@ export async function extractDocx(bytes: Uint8Array): Promise<string> {
     );
     return normalizeExtractedText(docxHtmlToText(value));
   } catch {
-    throw new IngestError("unreadable", "This DOCX could not be read. Save it again from Word or Google Docs and retry.");
+    throw new IngestError(
+      "unreadable",
+      "This DOCX could not be read. Save it again from Word or Google Docs and retry.",
+    );
   }
 }
 
@@ -160,7 +160,9 @@ export async function extractUpload(
     const source = decodeText(bytes);
     const tex = parseTexCv(source);
     // Fall back to the raw source when the file does not follow the template's macros.
-    return tex ? { kind: "cv_tex", text: texCvToText(tex), tex } : { kind: "cv_tex", text: normalizeExtractedText(source) };
+    return tex
+      ? { kind: "cv_tex", text: texCvToText(tex), tex }
+      : { kind: "cv_tex", text: normalizeExtractedText(source) };
   }
   throw new IngestError("unsupported_type", "Upload a PDF, DOCX, Markdown or LaTeX (.tex) file.");
 }
