@@ -104,16 +104,22 @@ describe("extractUpload", () => {
   });
 
   it("rejects files over 5 MB before reading them", async () => {
-    await expect(extractUpload("big.pdf", new Uint8Array(MAX_UPLOAD_BYTES + 1))).rejects.toMatchObject({ code: "too_large" });
+    await expect(extractUpload("big.pdf", new Uint8Array(MAX_UPLOAD_BYTES + 1))).rejects.toMatchObject({
+      code: "too_large",
+    });
   });
 
   it("rejects a renamed file whose bytes do not match its extension", async () => {
     await expect(extractUpload("cv.pdf", fixture("cvs/tomas-herrera.docx"))).rejects.toBeInstanceOf(IngestError);
-    await expect(extractUpload("cv.docx", fixture("cvs/mei-lin-tan.pdf"))).rejects.toMatchObject({ code: "unreadable" });
+    await expect(extractUpload("cv.docx", fixture("cvs/mei-lin-tan.pdf"))).rejects.toMatchObject({
+      code: "unreadable",
+    });
   });
 
   it("rejects unsupported types and non-PDF LinkedIn uploads", async () => {
-    await expect(extractUpload("cv.pages", new Uint8Array([1, 2, 3]))).rejects.toMatchObject({ code: "unsupported_type" });
+    await expect(extractUpload("cv.pages", new Uint8Array([1, 2, 3]))).rejects.toMatchObject({
+      code: "unsupported_type",
+    });
     await expect(extractUpload("li.md", fixture("cvs/nadia-chowdhury.md"), { linkedin: true })).rejects.toMatchObject({
       code: "unsupported_type",
     });
@@ -123,7 +129,10 @@ describe("extractUpload", () => {
     const tex = await extractUpload("cv.tex", new Uint8Array(readFileSync("templates/resume-sample.tex")));
     expect(tex.tex?.name).toBe("Arif Rahman");
     expect(tex.text).toContain("**35%**");
-    const other = await extractUpload("notes.tex", new TextEncoder().encode("\\begin{document}Just notes\\end{document}"));
+    const other = await extractUpload(
+      "notes.tex",
+      new TextEncoder().encode("\\begin{document}Just notes\\end{document}"),
+    );
     expect(other.tex).toBeUndefined();
     expect(other.text).toContain("Just notes");
   });

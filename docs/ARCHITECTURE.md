@@ -218,7 +218,7 @@ interface LLMProvider {
 
 ## 10. Security
 
-- Auth on every page and API route; allowlist check on sign-in.
+- Auth on every page and API route; allowlist check on sign-in. The proxy only reads the session token (`getToken`) and never re-issues the cookie, so a late request cannot undo a sign-out; sessions last a fixed 30 days.
 - All job HTML sanitized on write; rendered through a whitelist renderer.
 - SSRF guard for every user-supplied URL (portfolio, careers URL, add company).
 - Rate limit tailoring endpoints (for example 30 per hour) to protect the free LLM quota.

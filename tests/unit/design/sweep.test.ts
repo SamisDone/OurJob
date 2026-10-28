@@ -31,7 +31,9 @@ describe("pen paths", () => {
   });
 
   it("keeps the underline inside its 100 x 6 box", () => {
-    const nums = penUnderlinePath("GraphQL").match(/-?\d+(\.\d+)?/g)!.map(Number);
+    const nums = penUnderlinePath("GraphQL")
+      .match(/-?\d+(\.\d+)?/g)!
+      .map(Number);
     const ys = nums.filter((_, i) => i % 2 === 1);
     expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
     expect(Math.max(...ys)).toBeLessThanOrEqual(6);

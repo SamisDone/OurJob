@@ -8,6 +8,7 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
  */
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -27,6 +28,8 @@ export default defineConfig({
       AUTH_GOOGLE_SECRET: "e2e-google-secret",
       ALLOWED_EMAILS: "allowed@example.com",
       ENABLE_DESIGN_TILE: "1",
+      // Fixture answers for P1 and P5; the real model is never called in e2e.
+      LLM_PROVIDER: "mock",
       DATABASE_URL: process.env.DATABASE_URL ?? "postgres://ourjob:ourjob@localhost:5433/ourjob",
     },
   },

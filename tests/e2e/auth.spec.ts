@@ -10,9 +10,9 @@ test("signed-out visitors are sent to sign in", async ({ page }) => {
 
 test("an allowed email gets the app", async ({ page, context, baseURL }) => {
   await signInAs(context, baseURL!, "allowed@example.com");
-  await page.goto("/today");
-  await expect(page).toHaveURL(/\/today$/);
-  await expect(page.getByRole("heading", { name: "Today" })).toBeVisible();
+  await page.goto("/settings");
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 });
 
 test("an email that is not on the allowlist is refused, even with a valid session", async ({

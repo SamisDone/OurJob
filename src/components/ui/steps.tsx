@@ -4,35 +4,40 @@ import { cn } from "@/lib/utils";
 /** Onboarding progress: step names, current one in ink, done ones with a check. */
 export function ProgressSteps({ steps, current }: { steps: string[]; current: number }) {
   return (
-    <ol className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm" aria-label="Onboarding progress">
-      {steps.map((label, i) => {
-        const state = i < current ? "done" : i === current ? "current" : "todo";
-        return (
-          <li key={label} className="flex items-center gap-2" aria-current={state === "current" ? "step" : undefined}>
-            {i > 0 && <span className="h-px w-6 bg-rule" aria-hidden />}
-            <span
-              className={cn(
-                "inline-flex size-6 items-center justify-center rounded-pill text-xs tabular",
-                state === "done" && "bg-ink text-sheet",
-                state === "current" && "border-2 border-ink font-semibold text-ink",
-                state === "todo" && "border border-rule text-graphite",
-              )}
-              aria-hidden
-            >
-              {state === "done" ? <CheckIcon size={12} weight="bold" /> : i + 1}
-            </span>
-            <span
-              className={cn(
-                state === "current" ? "font-medium text-ink" : state === "done" ? "text-body" : "text-graphite",
-              )}
-            >
-              {label}
-              {state === "done" && <span className="sr-only"> (done)</span>}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+    <>
+      <p className="text-sm text-graphite sm:hidden">
+        Step {current + 1} of {steps.length}: <span className="font-medium text-ink">{steps[current]}</span>
+      </p>
+      <ol className="hidden flex-wrap items-center gap-x-2 gap-y-2 text-sm sm:flex" aria-label="Onboarding progress">
+        {steps.map((label, i) => {
+          const state = i < current ? "done" : i === current ? "current" : "todo";
+          return (
+            <li key={label} className="flex items-center gap-2" aria-current={state === "current" ? "step" : undefined}>
+              {i > 0 && <span className="h-px w-6 bg-rule" aria-hidden />}
+              <span
+                className={cn(
+                  "inline-flex size-6 items-center justify-center rounded-pill text-xs tabular",
+                  state === "done" && "bg-ink text-sheet",
+                  state === "current" && "border-2 border-ink font-semibold text-ink",
+                  state === "todo" && "border border-rule text-graphite",
+                )}
+                aria-hidden
+              >
+                {state === "done" ? <CheckIcon size={12} weight="bold" /> : i + 1}
+              </span>
+              <span
+                className={cn(
+                  state === "current" ? "font-medium text-ink" : state === "done" ? "text-body" : "text-graphite",
+                )}
+              >
+                {label}
+                {state === "done" && <span className="sr-only"> (done)</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }
 

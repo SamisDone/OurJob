@@ -1,24 +1,44 @@
 "use client";
 
 import { SignOutIcon } from "@phosphor-icons/react/ssr";
+import type { QueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
-import { signOutAction } from "@/app/actions/auth";
+import { signOut as authSignOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { getQueryClient } from "@/lib/query/client";
 
 /**
- * Signs out: first clears the TanStack Query cache so nothing from this
- * session stays in memory, then ends the Auth.js session on the server,
- * which redirects to /sign-in. No confirmation: signing out loses nothing.
+ * Signs out: settles running requests, clears the TanStack Query cache, ends
+ * the session through Auth.js, then loads /sign-in fresh so nothing from the
+ * session stays in memory. No confirmation: signing out loses nothing.
  */
 export function useSignOut() {
   const [pending, startTransition] = useTransition();
   const signOut = () =>
     startTransition(async () => {
+      await settleRequests(getQueryClient());
       getQueryClient().clear();
-      await signOutAction();
+      // Auth.js's sign-out endpoint (with its CSRF token) clears the session
+      // cookie. Not a server action: those also re-render the page being left,
+      // which made signing out take seconds on a busy server.
+      await authSignOut({ redirect: false });
+      window.location.replace("/sign-in?signedOut=1");
     });
   return { signOut, pending };
+}
+
+/**
+ * Every authenticated response refreshes the session cookie. A request that
+ * started before sign-out and finished after it would set the cookie again
+ * and quietly sign him back in. So: abort running queries (their fetches use
+ * the abort signal) and give running mutations up to 5 s to finish first.
+ */
+export async function settleRequests(qc: QueryClient, timeoutMs = 5000) {
+  await qc.cancelQueries();
+  const started = Date.now();
+  while (qc.isMutating() > 0 && Date.now() - started < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
 }
 
 export function SignOutButton({ className }: { className?: string }) {

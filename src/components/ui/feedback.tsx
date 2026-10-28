@@ -32,7 +32,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "relative red-rule-top ruled rounded-panel border border-rule px-6 pt-8 pb-8 leading-8 [background-position:0_-7px]",
+        "red-rule-top relative rounded-panel border border-rule ruled [background-position:0_-7px] px-6 pt-8 pb-8 leading-8",
         className,
       )}
     >
@@ -46,7 +46,7 @@ export function EmptyState({
 /** A white sheet with the index card's red rule across the top. Borders, not shadows. */
 export function Panel({ children, className, ...props }: ComponentProps<"section">) {
   return (
-    <section className={cn("relative red-rule-top rounded-panel border border-rule bg-sheet", className)} {...props}>
+    <section className={cn("red-rule-top relative rounded-panel border border-rule bg-sheet", className)} {...props}>
       {children}
     </section>
   );
@@ -67,7 +67,13 @@ export function ErrorState({
   className?: string;
 }) {
   return (
-    <div role="alert" className={cn("relative red-rule-top rounded-panel border border-redpen/35 bg-redpen-wash px-5 pt-5 pb-4", className)}>
+    <div
+      role="alert"
+      className={cn(
+        "red-rule-top relative rounded-panel border border-redpen/35 bg-redpen-wash px-5 pt-5 pb-4",
+        className,
+      )}
+    >
       <div className="flex gap-3">
         <WarningIcon size={20} aria-hidden className="mt-0.5 shrink-0 text-redpen" />
         <div className="min-w-0">

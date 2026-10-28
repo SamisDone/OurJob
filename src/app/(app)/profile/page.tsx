@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/shell/page-placeholder";
+import { ProfilePage } from "./profile-page";
 
 export const metadata: Metadata = { title: "Profile" };
 
 export default function Page() {
-  return <PagePlaceholder title="Profile">The profile editor arrives in Phase 1.</PagePlaceholder>;
+  return <ProfilePage />;
 }

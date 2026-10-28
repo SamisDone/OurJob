@@ -24,9 +24,9 @@ describe("latexInline", () => {
   });
 
   it("decodes accent commands to Unicode", () => {
-    expect(latexToPlain(String.raw`Jos\'{e} M\"uller, Pe\~{n}a, Fran\c{c}ois, Stra\ss{}e, Ji\v{r}\'{\i}, \L{}\'{o}d\'{z}`)).toBe(
-      "José Müller, Peña, François, Straße, Jiří, Łódź",
-    );
+    expect(
+      latexToPlain(String.raw`Jos\'{e} M\"uller, Pe\~{n}a, Fran\c{c}ois, Stra\ss{}e, Ji\v{r}\'{\i}, \L{}\'{o}d\'{z}`),
+    ).toBe("José Müller, Peña, François, Straße, Jiří, Łódź");
   });
 
   it("turns -- into an en dash and never outputs an em dash", () => {
@@ -145,7 +145,9 @@ describe("parseTexCv on templates/resume-sample.tex", () => {
 
   it("renders readable text for P1 with bold marked", () => {
     const text = texCvToText(cv);
-    expect(text).toContain("### Brightfield Software (https://example.com/brightfield) | Full-Stack Engineer | Mar 2024 – Present");
+    expect(text).toContain(
+      "### Brightfield Software (https://example.com/brightfield) | Full-Stack Engineer | Mar 2024 – Present",
+    );
     expect(text).toContain("**40 client teams**");
     expect(text).not.toMatch(/\\[a-zA-Z]/);
   });

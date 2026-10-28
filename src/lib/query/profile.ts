@@ -34,7 +34,7 @@ export type VersionSummary = Omit<ProfileVersionDto, "data">;
 export function useSources() {
   return useQuery({
     queryKey: queryKeys.profile.sources,
-    queryFn: () => api<{ sources: SourceSummary[] }>("/api/sources").then((r) => r.sources),
+    queryFn: ({ signal }) => api<{ sources: SourceSummary[] }>("/api/sources", { signal }).then((r) => r.sources),
   });
 }
 
@@ -91,7 +91,8 @@ export function useRemoveSource() {
 export function useProfile() {
   return useQuery({
     queryKey: queryKeys.profile.current,
-    queryFn: () => api<{ profile: ProfileVersionDto | null }>("/api/profile").then((r) => r.profile),
+    queryFn: ({ signal }) =>
+      api<{ profile: ProfileVersionDto | null }>("/api/profile", { signal }).then((r) => r.profile),
   });
 }
 
@@ -141,7 +142,8 @@ export function useEditProfile(opts: { success?: string; undo?: () => void } = {
 export function useProfileVersions(enabled = true) {
   return useQuery({
     queryKey: queryKeys.profile.versions,
-    queryFn: () => api<{ versions: VersionSummary[] }>("/api/profile/versions").then((r) => r.versions),
+    queryFn: ({ signal }) =>
+      api<{ versions: VersionSummary[] }>("/api/profile/versions", { signal }).then((r) => r.versions),
     enabled,
   });
 }
@@ -174,7 +176,7 @@ export function useConfirmProfile() {
 export function usePreferences(enabled = true) {
   return useQuery({
     queryKey: queryKeys.preferences,
-    queryFn: () => api<{ data: SearchPreferences; suggested: boolean }>("/api/preferences"),
+    queryFn: ({ signal }) => api<{ data: SearchPreferences; suggested: boolean }>("/api/preferences", { signal }),
     enabled,
     // The first load may run P5 on the server; do not repeat it on focus.
     refetchOnWindowFocus: false,

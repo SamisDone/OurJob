@@ -81,7 +81,9 @@ describe("polite client", () => {
 
   it("does not retry a 404", async () => {
     const f = fakeFetch([new Response("", { status: 404 })]);
-    await expect(createPoliteClient({ fetch: f.fn, ...fakeTime() }).get("https://x.example.com/")).rejects.toMatchObject({
+    await expect(
+      createPoliteClient({ fetch: f.fn, ...fakeTime() }).get("https://x.example.com/"),
+    ).rejects.toMatchObject({
       status: 404,
     });
     expect(f.calls).toHaveLength(1);

@@ -47,7 +47,10 @@ type KeywordChipProps = {
  */
 export function KeywordChip({ kind, importance, className, children }: KeywordChipProps) {
   return (
-    <span data-kind={kind} className={cn("inline-flex h-8 items-center gap-1.5 px-1 text-sm whitespace-nowrap text-body", className)}>
+    <span
+      data-kind={kind}
+      className={cn("inline-flex h-8 items-center gap-1.5 px-1 text-sm whitespace-nowrap text-body", className)}
+    >
       <span className="sr-only">{kind === "matched" ? "Matched keyword: " : "Missing keyword: "}</span>
       {kind === "matched" ? (
         <PenCircle seed={children}>{children}</PenCircle>

@@ -4,6 +4,7 @@ import { SignOutButton } from "@/components/shell/sign-out";
 import { ThemeControl } from "@/components/shell/theme-control";
 import { Callout } from "@/components/ui/feedback";
 import { requireUser } from "@/lib/auth/session";
+import { PreferencesSection } from "./preferences-section";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -29,6 +30,10 @@ export default async function SettingsPage() {
           Signed in as <span className="font-medium">{user.email}</span>
         </p>
         <SignOutButton className="mt-4" />
+      </SettingsSection>
+
+      <SettingsSection id="preferences" title="Search preferences">
+        <PreferencesSection />
       </SettingsSection>
 
       <SettingsSection id="ai" title="AI provider">

@@ -108,7 +108,10 @@ function Sub({ title, children, className }: { title: string; children: ReactNod
 
 function TokenPanel({ theme }: { theme: "light" | "dark" }) {
   return (
-    <div data-theme={theme} className="relative red-rule-top overflow-hidden rounded-panel border border-rule bg-paper text-body">
+    <div
+      data-theme={theme}
+      className="red-rule-top relative overflow-hidden rounded-panel border border-rule bg-paper text-body"
+    >
       <div className="flex items-baseline justify-between border-b border-rule bg-sheet px-4 py-3">
         <span className="font-medium text-ink">{theme === "light" ? "Light" : "Dark, carbon paper"}</span>
         <span className="text-sm text-graphite">tokens.css</span>
@@ -360,7 +363,7 @@ function TodayPreview({ firstName }: { firstName: string }) {
         <JobRowSkeleton />
       </Panel>
 
-      <details className="group relative red-rule-top mt-6 rounded-panel border border-rule bg-sheet px-4 md:px-6">
+      <details className="group red-rule-top relative mt-6 rounded-panel border border-rule bg-sheet px-4 md:px-6">
         <summary className="flex h-12 cursor-pointer list-none items-center justify-between pt-0.5 text-sm font-medium text-ink">
           <span>
             Eligibility unclear <span className="text-graphite tabular">(7)</span>
@@ -371,7 +374,7 @@ function TodayPreview({ firstName }: { firstName: string }) {
             className="text-graphite transition-transform duration-200 ease-ink group-open:rotate-180"
           />
         </summary>
-        <p className="measure mb-4 border-l-2 border-caution pl-3 text-sm text-body">
+        <p className="mb-4 measure border-l-2 border-caution pl-3 text-sm text-body">
           These say remote but do not say where you can work from. They are kept apart so you can check each one.
         </p>
       </details>
@@ -460,7 +463,10 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             <Panel className="px-5 pt-7 pb-6 md:px-10 md:pt-9 md:pb-8">
               <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
               <p className="mb-5 text-sm text-graphite">Lumen Labs. Direct from careers page (Ashby)</p>
-              <MarkedText text={sampleJd.text} marks={findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing)} />
+              <MarkedText
+                text={sampleJd.text}
+                marks={findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing)}
+              />
             </Panel>
           </Section>
 
@@ -921,10 +927,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   cell: (r) => (
                     <span className="flex flex-wrap gap-1">
                       {r.flags.map((f) => (
-                        <Tag
-                          key={f}
-                          tone={f === "Staffing agency" ? "redpen" : f === "Paused" ? "caution" : "neutral"}
-                        >
+                        <Tag key={f} tone={f === "Staffing agency" ? "redpen" : f === "Paused" ? "caution" : "neutral"}>
                           {f}
                         </Tag>
                       ))}

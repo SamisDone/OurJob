@@ -3,3 +3,4 @@ drizzle/
 docs/
 templates/
 .next/
+tests/fixtures/

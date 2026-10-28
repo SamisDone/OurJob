@@ -52,7 +52,9 @@ export function JobRow({
       aria-label={`${job.title} at ${job.company}`}
     >
       {/* New since the last visit: a small ink dot in the margin, like a pen tick. */}
-      {job.isNew && <span className="absolute top-[27px] left-1.5 size-1.5 rounded-pill bg-ink md:left-2.5" aria-hidden />}
+      {job.isNew && (
+        <span className="absolute top-[27px] left-1.5 size-1.5 rounded-pill bg-ink md:left-2.5" aria-hidden />
+      )}
       <button
         type="button"
         aria-expanded={open}

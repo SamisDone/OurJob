@@ -134,9 +134,9 @@ Centered, minimal. App name, one sentence ("Tailored CVs and fresh remote jobs, 
 2. **Add more sources (optional).** LinkedIn PDF (with a short how-to: on your LinkedIn profile, More, then Save to PDF), GitHub username, portfolio URL. Each shows what was found ("12 public repos, 6 with READMEs").
 3. **Review your profile.** The profile editor (5.8) in a guided mode. Conflicts first, as a short list to resolve.
 4. **Set what you are looking for.** Pre-filled preferences from P5. Plain-language controls: "Where can you work from?" with country and timezone, "What kind of remote?" segmented control (Worldwide / My region / Also on-site in...).
-5. **First search.** Live progress ("Checking 214 companies... 38 jobs found, scoring the best ones") and jobs appearing as they are scored. Then go to Today.
+5. **First search.** (Needs the job pipeline. Until it exists, the last screen says the daily search is not switched on yet.) Live progress ("Checking 214 companies... 38 jobs found, scoring the best ones") and jobs appearing as they are scored. Then go to Today.
 
-Progress indicator at the top: step names, current one in ink, done ones with a check.
+Progress indicator at the top: step names, current one in ink, done ones with a check. On phones it is one line: "Step 4 of 5: What you want".
 
 ### 5.3 Today (the daily feed)
 
@@ -212,7 +212,7 @@ Columns Saved, Applied, Interviewing, Offer, Closed. Compact cards with the red 
 Table: name, website, ATS (or "careers site"), open roles, last checked, discovered via, flags (staffing agency, paused, muted). Row actions: mute, confirm ATS match, remove. "Add a company" dialog: paste a careers or website URL, show detection result live ("Found a Greenhouse board with 23 open roles"), then "Track this company".
 
 ### 5.8 Profile
-A document-like editor that looks close to a CV, not a form dump. Sections: basics, experience, projects, education, skills, certifications. Every item shows small source badges (CV, LinkedIn, GitHub, portfolio, added by you). Inline edit, drag to reorder bullets, add item. Version history in a side sheet with restore. Conflicts banner at the top until resolved.
+A document-like editor that looks close to a CV, not a form dump. Sections: basics, experience, projects, education, skills, certifications. Every item shows small source badges (CV, LinkedIn, GitHub, portfolio, added by you); a bullet shows its own badges only when they differ from its item's. Bullets reorder by drag or with Move up / Move down buttons. Removing anything shows an Undo toast. Inline edit, drag to reorder bullets, add item. Version history in a side sheet with restore. Conflicts banner at the top until resolved.
 
 ### 5.9 Settings
 Plain sections: Account (the signed-in email and a "Sign out" secondary button), Search preferences, CV defaults, AI provider (with the privacy note in a calm callout: "On Gemini's free tier, Google can use what you send to improve its products. Use a paid key or another provider if you would rather it did not."), Sources (tier toggles, keys status shown as set or not set, never the key), Theme, Data (export, delete all).

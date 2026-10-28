@@ -42,7 +42,10 @@ export async function rebuildProfile(userId: string) {
     sources.map((s) => ({ kind: s.kind, text: s.text! })),
     { provider: getLLMProvider(), cache: dbCacheStore },
   );
-  const labels = [...new Set(sources.map((s) => SOURCE_LABEL[s.kind]))];
+  const order = ["CV", "LinkedIn", "GitHub", "portfolio", "notes"];
+  const labels = [...new Set(sources.map((s) => SOURCE_LABEL[s.kind]))].sort(
+    (a, b) => order.indexOf(a) - order.indexOf(b),
+  );
   const note = `Built from your ${labels.length > 1 ? `${labels.slice(0, -1).join(", ")} and ${labels.at(-1)}` : labels[0]}`;
   return store.saveProfileVersion(d(), userId, profile, { note });
 }

@@ -41,8 +41,9 @@ describe("parseGitHubUsername", () => {
     ["  www.github.com/octocat?tab=repositories ", "octocat"],
   ])("reads %s", (input, expected) => expect(parseGitHubUsername(input)).toBe(expected));
 
-  it.each(["", "-octocat", "octo--cat", "octo cat", "a".repeat(40), "https://gitlab.com/x/y z"])("rejects %j", (input) =>
-    expect(parseGitHubUsername(input)).toBeNull(),
+  it.each(["", "-octocat", "octo--cat", "octo cat", "a".repeat(40), "https://gitlab.com/x/y z"])(
+    "rejects %j",
+    (input) => expect(parseGitHubUsername(input)).toBeNull(),
   );
 });
 

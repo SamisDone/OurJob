@@ -29,7 +29,9 @@ const f = (n: number) => n.toFixed(2);
 
 /** Catmull-Rom points to a smooth cubic path. */
 function smoothPath(points: [number, number][], closed: boolean): string {
-  const p = closed ? [points[points.length - 1], ...points, points[0], points[1]] : [points[0], ...points, points[points.length - 1]];
+  const p = closed
+    ? [points[points.length - 1], ...points, points[0], points[1]]
+    : [points[0], ...points, points[points.length - 1]];
   let d = `M${f(p[1][0])} ${f(p[1][1])}`;
   for (let i = 1; i < p.length - 2; i++) {
     const [p0, p1, p2, p3] = [p[i - 1], p[i], p[i + 1], p[i + 2]];

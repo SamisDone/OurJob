@@ -232,3 +232,36 @@ The model returns the profile without ids or skill evidence. `normalizeProfile` 
 
 ### How "complete profile" is checked
 Each fictional fixture CV has hand-written expected facts in `tests/fixtures/expected/` (roles with titles and dates, bullet counts, projects, education, skills by canonical name, certifications, metrics, hedges, conflicts), written from the source document, not from the mock answer. `compareProfile` reports what is missing. Unit tests run each fixture file through extraction, the P1 prompt, the mock and normalization; `pnpm eval:prompts` runs the same comparison with the real model.
+
+## 2026-10-29: Phase 1, screens and data
+
+### Profile storage
+- Every save is a new `master_profiles` row; nothing is overwritten. Restoring copies an old version forward as the newest one, so history only grows. A partial unique index keeps one current version per user.
+- New nullable column `master_profiles.note` (migration 0001) holds what changed ("Resolved end for Taka Pay; Edited a bullet in Parcelwise"), for the history sheet DESIGN.md 5.8 describes. Additive; drops nothing.
+- Edits are typed operations (`src/lib/profile/edit.ts`), validated with Zod at the API. The server applies them to the current version and saves the result; the browser runs the same function for an optimistic update and rolls back if the server refuses. Ids and sources cannot be edited. Items and bullets he adds get ids with a random suffix (`exp_u3k9x2`) and the `user_added` source, so ids are never reused.
+- Conflicts are never picked silently: the profile cannot be confirmed while any remain (API returns 409, the button is disabled with the reason next to it).
+- Only the newest source of each kind feeds P1; a CV upload in any format replaces the previous CV. Older uploads stay in `profile_sources` for re-import diffs later.
+- The store is tested on PGlite (Postgres compiled to WebAssembly) with the real migrations, so tests need no database server.
+
+### API shape
+Route handlers under `/api/sources`, `/api/profile`, `/api/profile/versions` and `/api/preferences`, each re-checking the session (`withUser`) and returning errors as JSON with copy that can be shown as is. `/api/profile/build` is limited to 10 runs an hour per user to protect the free LLM quota. Uploads are checked for size (5 MB), extension and magic bytes.
+
+### Screens
+- Onboarding steps 1 to 4 as DESIGN.md 5.2 describes, with the step in the URL (`?step=`) so back and forward work. Step 5 (live first search) needs the job pipeline (Phase 3/5); until then the last screen says the daily search is not switched on yet, rather than pretending.
+- /today sends anyone without a confirmed profile to onboarding, so a first sign-in lands in the right place.
+- The profile editor is a document on an index card: header like the top of a CV, sections with headings, items with source badges, inline editing on click, bullets reordered by drag or with Move up / Move down buttons (the keyboard path), item edit forms, removal with an Undo toast (Undo restores the previous version), skills grouped by category with a dashed border for skills no bullet mentions, and version history in a side sheet.
+- A bullet shows its own source badges only when they differ from its item's; repeating "CV, LinkedIn" under every line was noise.
+- Search preferences are one form used in onboarding step 4 and in Settings. Country names come from `Intl.DisplayNames`; "My region" maps to the continent plus APAC or EMEA (`src/lib/geo.ts`).
+- On phones the onboarding progress is one line ("Step 4 of 5: What you want") instead of a wrapping list.
+- `(app)/loading.tsx` gives every app page a designed loading state. It also limits Next's link prefetching to that boundary, so the rail no longer renders six full pages on every page view.
+
+### Sign out: what changed while testing it
+Stress-testing the sign-out e2e test exposed two real problems:
+1. **Sign-out could be undone.** Auth.js's proxy wrapper re-issues the session cookie on every request it passes. A link prefetch that finished just after sign-out set the cookie again and signed him back in. The proxy (`src/proxy.ts`) now only decodes the token with `getToken` and checks the allowlist; it never sets a cookie. Consequence: sessions last a fixed 30 days from sign-in instead of extending with use. Route handlers still go through Auth.js. Also, a JWT session cannot be revoked server-side; a copied cookie would stay valid until it expires. Acceptable for a single-owner deployment; a per-user "signed out at" check could close it later.
+2. **Sign-out could hang for seconds.** A server action also re-renders the page being left; on a busy server that took over 5 s. Sign-out now aborts in-flight queries (their fetches pass the abort signal), waits up to 5 s for running mutations, clears the query cache, calls Auth.js's own sign-out endpoint (`next-auth/react` `signOut`, with its CSRF token), and then does a full page load to `/sign-in?signedOut=1`, which also wipes everything in browser memory.
+The test now passes 20 out of 20 repeated runs on a loaded machine.
+
+### Tooling
+- `tests/fixtures/` is excluded from Prettier: fixtures must stay byte-for-byte as committed (a formatting pass changed the fictional CVs and broke a test).
+- `pnpm llm:smoke` makes one real structured-output call; `pnpm eval:prompts` runs P1 and P5 on the fictional fixtures with the real model and grades them against the expected facts (`--record` saves answers as mock fixtures).
+- `tests/e2e/shots.spec.ts` takes review screenshots of the Phase 1 screens when `SHOTS_DIR` is set; it seeds the fictional profile through the real API.

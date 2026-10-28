@@ -58,7 +58,10 @@ describe("design tokens", () => {
   });
 
   it("pass WCAG AA (4.5:1) for every text color on paper and sheet", () => {
-    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+    for (const [name, theme] of [
+      ["light", light],
+      ["dark", dark],
+    ] as const) {
       for (const fg of TEXT) {
         for (const bg of SURFACES) {
           expect(contrastRatio(theme[fg], theme[bg]), `${name}: ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
@@ -68,24 +71,40 @@ describe("design tokens", () => {
   });
 
   it("pass AA for circled words, buttons and the focus ring", () => {
-    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+    for (const [name, theme] of [
+      ["light", light],
+      ["dark", dark],
+    ] as const) {
       // A circled keyword keeps --body text on --circle-fill.
-      expect(contrastRatio(theme.body, theme["circle-fill"]), `${name}: body on circle-fill`).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(theme.body, theme["circle-fill"]), `${name}: body on circle-fill`).toBeGreaterThanOrEqual(
+        4.5,
+      );
       expect(contrastRatio(theme.ink, theme["circle-fill"]), `${name}: ink on circle-fill`).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(theme.sheet, theme.ink), `${name}: primary button`).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(theme.sheet, theme.redpen), `${name}: destructive button`).toBeGreaterThanOrEqual(4.5);
       // Non-text marks need 3:1 against what they sit on (WCAG 1.4.11).
-      expect(contrastRatio(theme["circle-stroke"], theme.sheet), `${name}: pen circle on sheet`).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio(theme["circle-stroke"], theme["circle-fill"]), `${name}: pen circle on fill`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(theme["circle-stroke"], theme.sheet), `${name}: pen circle on sheet`).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(
+        contrastRatio(theme["circle-stroke"], theme["circle-fill"]),
+        `${name}: pen circle on fill`,
+      ).toBeGreaterThanOrEqual(3);
       expect(contrastRatio(theme.redpen, theme.sheet), `${name}: red underline`).toBeGreaterThanOrEqual(3);
       expect(contrastRatio(theme.ink, theme.paper), `${name}: focus outline`).toBeGreaterThanOrEqual(3);
     }
   });
 
   it("give text fields a 3:1 edge on paper and sheet (WCAG 1.4.11)", () => {
-    for (const [name, theme] of [["light", light], ["dark", dark]] as const) {
+    for (const [name, theme] of [
+      ["light", light],
+      ["dark", dark],
+    ] as const) {
       for (const bg of SURFACES) {
-        expect(contrastRatio(theme["control-edge"], theme[bg]), `${name}: control edge on ${bg}`).toBeGreaterThanOrEqual(3);
+        expect(
+          contrastRatio(theme["control-edge"], theme[bg]),
+          `${name}: control edge on ${bg}`,
+        ).toBeGreaterThanOrEqual(3);
       }
     }
   });

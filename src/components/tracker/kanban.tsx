@@ -57,7 +57,7 @@ export function KanbanCard({
   return (
     <article
       className={cn(
-        "group relative red-rule-top rounded-control border border-rule bg-sheet px-3 pt-3.5 pb-3 transition-shadow duration-200 ease-ink",
+        "group red-rule-top relative rounded-control border border-rule bg-sheet px-3 pt-3.5 pb-3 transition-shadow duration-200 ease-ink",
         dragging && "shadow-pop",
       )}
     >

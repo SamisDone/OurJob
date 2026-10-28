@@ -22,7 +22,8 @@ describe("extractMainText", () => {
   });
 
   it("returns little text for a page that renders in the browser", () => {
-    const spa = '<html><head><title>Portfolio</title></head><body><div id="root"></div><script src="/app.js"></script></body></html>';
+    const spa =
+      '<html><head><title>Portfolio</title></head><body><div id="root"></div><script src="/app.js"></script></body></html>';
     expect(visibleCharCount(extractMainText(spa, "https://example.org/").text)).toBeLessThan(300);
   });
 });
