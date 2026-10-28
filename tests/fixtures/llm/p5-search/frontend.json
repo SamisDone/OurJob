@@ -1,0 +1,10 @@
+{
+  "_note": "FICTIONAL. A model-style P5 answer for frontend fixtures (Mei Lin Tan, Tomás Herrera Núñez).",
+  "match": ["React"],
+  "output": {
+    "targetTitles": ["Frontend Engineer", "Full Stack Developer", "Product Engineer"],
+    "stretchTitles": ["Design Systems Engineer"],
+    "coreSkills": ["React", "TypeScript", "Next.js", "Node.js", "PostgreSQL", "Playwright", "Vitest", "Storybook"],
+    "seniority": ["mid", "senior"]
+  }
+}

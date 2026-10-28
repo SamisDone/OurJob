@@ -1,0 +1,17 @@
+{
+  "_note": "Hand-written from tests/fixtures/cvs/sources/tomas-herrera.md (the DOCX is generated from it). Not generated.",
+  "sources": ["cvs/tomas-herrera.docx"],
+  "name": "Tomás Herrera Núñez",
+  "email": "tomas.herrera@example.com",
+  "experience": [
+    { "company": "Cerro Alegre Studio", "title": "Full Stack Developer", "start": "2022-03", "end": "present", "bullets": 3 },
+    { "company": "Puerto Digital", "title": "Junior Web Developer", "start": "2021-01", "end": "2022-02", "bullets": 2 }
+  ],
+  "projects": ["Feria"],
+  "education": [{ "institution": "Universidad Técnica del Pacífico", "end": "2020" }],
+  "skills": ["TypeScript", "JavaScript", "PHP", "C#", "SQL", "React", "Next.js", "Node.js", "Express.js", "Vitest", "Playwright", "Git", "GitHub Actions", "Docker", "PostgreSQL"],
+  "certifications": [],
+  "metrics": ["~25%", "15k tickets a month", "20+"],
+  "hedges": [{ "value": "~25%", "hedge": "an estimated" }],
+  "conflicts": []
+}

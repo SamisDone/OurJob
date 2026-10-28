@@ -1,0 +1,17 @@
+{
+  "_note": "Hand-written from tests/fixtures/cvs/sources/mei-lin-tan.tex (the PDF is compiled from it). Not generated.",
+  "sources": ["cvs/mei-lin-tan.pdf"],
+  "name": "Mei Lin Tan",
+  "email": "meilin.tan@example.com",
+  "experience": [
+    { "company": "Kopi Health", "title": "Senior Frontend Engineer", "start": "2022-08", "end": "present", "bullets": 2 },
+    { "company": "Lantern & Ledger", "title": "Frontend Developer", "start": "2019-01", "end": "2022-07", "bullets": 2 }
+  ],
+  "projects": ["Contrast Kit"],
+  "education": [{ "institution": "Universiti Sains Contoh", "end": "2018" }],
+  "skills": ["TypeScript", "JavaScript", "HTML", "CSS", "React", "Next.js", "Vue.js", "Storybook", "Jest", "React Testing Library", "Figma", "GraphQL", "WCAG 2.2"],
+  "certifications": [],
+  "metrics": ["60+", "1.3 s", "12,000", "35%", "80%"],
+  "hedges": [],
+  "conflicts": []
+}

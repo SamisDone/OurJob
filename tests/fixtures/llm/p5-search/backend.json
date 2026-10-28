@@ -1,0 +1,10 @@
+{
+  "_note": "FICTIONAL. A model-style P5 answer for Nadia Chowdhury. Includes one skill not in her profile (Rust) to exercise the code check.",
+  "match": ["Parcelwise"],
+  "output": {
+    "targetTitles": ["Backend Engineer", "Senior Backend Engineer", "Platform Engineer", "Software Engineer, Payments"],
+    "stretchTitles": ["Staff Backend Engineer"],
+    "coreSkills": ["Go", "PostgreSQL", "Kafka", "Python", "Django", "Rust", "Kubernetes", "gRPC", "Redis", "Docker"],
+    "seniority": ["mid", "senior"]
+  }
+}

@@ -212,7 +212,8 @@ interface LLMProvider {
 
 - Gemini implementation uses the official Google Gen AI SDK for JavaScript (check the current package name and structured-output API in Google's docs). Model id from `LLM_MODEL`; choose a model that is listed as free-tier eligible on Google's pricing page at build time.
 - Retries on 429 with backoff; respect per-minute limits with a small token bucket.
-- Mock provider for tests reads `tests/fixtures/llm/<promptId>/<hash>.json`.
+- Mock provider for tests reads `tests/fixtures/llm/<promptId>/<hash>.json` (an exact recording of the prompt, written by the recording provider during `pnpm eval:prompts --record`), and otherwise the first fixture in that folder whose `match` strings all appear in the prompt, so fixtures survive prompt wording changes.
+- Model: `LLM_MODEL` (default `gemini-3.8-flash`), with `LLM_FALLBACK_MODEL` (default `gemini-3.5-flash-lite`) tried when the main model keeps answering 503 or 429. The SDK's own retries are turned off so a busy model cannot block a request for minutes.
 - Never log prompt inputs that contain CV text; log prompt id, token counts, latency.
 
 ## 10. Security

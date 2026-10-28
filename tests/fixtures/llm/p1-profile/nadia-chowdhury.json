@@ -1,0 +1,154 @@
+{
+  "_note": "FICTIONAL. A model-style P1 answer for tests/fixtures/cvs/nadia-chowdhury.md plus her LinkedIn-style export, with the kind of noise real answers have (alias skill names, a duplicate skill, ** markers, month names in dates, a metric not in its bullet).",
+  "match": ["Nadia Chowdhury"],
+  "output": {
+    "basics": {
+      "name": "Nadia Chowdhury",
+      "headline": "Backend Engineer",
+      "email": "nadia.chowdhury@example.com",
+      "phone": "+880 1700 000000",
+      "location": "Sylhet, Bangladesh",
+      "links": [
+        { "label": "GitHub", "url": "https://github.com/example-nadia" },
+        { "label": "LinkedIn", "url": "https://www.linkedin.com/in/example-nadia" }
+      ],
+      "summary": {
+        "text": "Backend engineer with 5+ years of experience designing Go and Python services, PostgreSQL schemas and event pipelines for logistics and payments products.",
+        "sources": ["cv"]
+      }
+    },
+    "experience": [
+      {
+        "company": "Parcelwise",
+        "title": "Senior Backend Engineer",
+        "location": "Remote",
+        "start": "Jun 2023",
+        "end": "Present",
+        "bullets": [
+          {
+            "text": "Designed the **rate-quote service** in Go that answers about 1,200 requests per second at p99 under 80 ms.",
+            "boldPhrases": [],
+            "skills": ["Go"],
+            "metrics": [{ "value": "1,200 requests per second", "hedge": "about" }, { "value": "p99 under 80 ms" }],
+            "sources": ["cv", "linkedin"]
+          },
+          {
+            "text": "Moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.",
+            "boldPhrases": ["Kafka"],
+            "skills": ["Kafka"],
+            "metrics": [{ "value": "60%", "hedge": "roughly" }, { "value": "99.9% uptime" }],
+            "sources": ["cv", "linkedin"]
+          },
+          {
+            "text": "Mentor 3 junior engineers and run the weekly architecture review.",
+            "boldPhrases": [],
+            "skills": [],
+            "metrics": [{ "value": "3" }],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["Go", "PostgreSQL", "Kafka", "Redis", "Docker", "Kubernetes", "gRPC"],
+        "sources": ["cv", "linkedin"]
+      },
+      {
+        "company": "Taka Pay",
+        "title": "Backend Developer",
+        "location": "Dhaka, Bangladesh",
+        "start": "Feb 2020",
+        "end": "May 2023",
+        "bullets": [
+          {
+            "text": "Built the merchant settlement API in Python (Django) used by 2,000+ merchants.",
+            "boldPhrases": ["Python (Django)"],
+            "skills": ["Python", "Django"],
+            "metrics": [{ "value": "2,000+" }],
+            "sources": ["cv", "linkedin"]
+          },
+          {
+            "text": "Wrote the reconciliation job that matches bank statements to ledger entries, with 98% automatic matches.",
+            "boldPhrases": [],
+            "skills": [],
+            "metrics": [{ "value": "98%" }],
+            "sources": ["cv"]
+          },
+          {
+            "text": "Added Postgres row-level security for multi-tenant reporting.",
+            "boldPhrases": [],
+            "skills": ["Postgres"],
+            "metrics": [],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["Python", "Django", "PostgreSQL", "Celery", "AWS"],
+        "sources": ["cv", "linkedin"]
+      }
+    ],
+    "projects": [
+      {
+        "name": "pgwatch-lite",
+        "sourceUrl": "https://github.com/example-nadia/pgwatch-lite",
+        "description": "Small CLI that samples pg_stat_statements and flags slow queries in CI.",
+        "bullets": [
+          {
+            "text": "Small CLI that samples pg_stat_statements and flags slow queries in CI.",
+            "boldPhrases": [],
+            "skills": [],
+            "metrics": [],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["Go", "PostgreSQL"],
+        "sources": ["cv"]
+      }
+    ],
+    "education": [
+      {
+        "institution": "Shahjalal University of Science and Technology",
+        "degree": "B.Sc. in Computer Science",
+        "field": "Computer Science",
+        "location": "Sylhet, Bangladesh",
+        "start": "2015",
+        "end": "2019",
+        "highlights": [],
+        "sources": ["cv", "linkedin"]
+      }
+    ],
+    "skills": [
+      { "name": "Golang", "aliases": [], "category": "language", "sources": ["cv", "linkedin"] },
+      { "name": "Python", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "SQL", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "Django", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "gRPC", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "REST APIs", "aliases": ["REST"], "category": "practice", "sources": ["cv"] },
+      { "name": "Kafka", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Celery", "aliases": [], "category": "library", "sources": ["cv"] },
+      { "name": "PostgreSQL", "aliases": [], "category": "database", "sources": ["cv", "linkedin"] },
+      { "name": "Postgres", "aliases": [], "category": "database", "sources": ["cv"] },
+      { "name": "Redis", "aliases": [], "category": "database", "sources": ["cv"] },
+      { "name": "Docker", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Kubernetes", "aliases": ["K8s"], "category": "cloud", "sources": ["cv"] },
+      { "name": "AWS", "aliases": [], "category": "cloud", "sources": ["cv"] },
+      { "name": "GitHub Actions", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Terraform", "aliases": [], "category": "tool", "sources": ["linkedin"] }
+    ],
+    "certifications": [
+      { "name": "AWS Certified Developer - Associate", "issuer": "Amazon Web Services", "date": "2022", "sources": ["cv", "linkedin"] }
+    ],
+    "awards": [],
+    "languages": [
+      { "name": "Bengali", "level": "Native or Bilingual", "sources": ["linkedin"] },
+      { "name": "English", "level": "Full Professional", "sources": ["linkedin"] }
+    ],
+    "conflicts": [
+      {
+        "section": "experience",
+        "itemRef": "Taka Pay",
+        "attribute": "end",
+        "values": [
+          { "value": "May 2023", "source": "cv" },
+          { "value": "April 2023", "source": "linkedin" }
+        ]
+      }
+    ]
+  }
+}

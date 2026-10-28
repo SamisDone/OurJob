@@ -15,7 +15,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "jobs:daily": "tsx scripts/daily-jobs.ts"
+    "jobs:daily": "tsx scripts/daily-jobs.ts",
+    "llm:smoke": "tsx scripts/llm-smoke.ts",
+    "eval:prompts": "tsx scripts/eval-prompts.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",

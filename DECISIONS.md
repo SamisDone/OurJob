@@ -212,3 +212,23 @@ A real Google sign-in by an allowed account created a `users` row on 2026-10-28 
 - The Google avatar is a plain `<img>` with `referrerPolicy="no-referrer"` rather than next/image, to avoid adding googleusercontent.com to remote image patterns for one 24 px picture. Without a photo, the initial sits on `--circle-fill`.
 - Playwright: signs out from the rail menu (desktop) and the More sheet (phone), checks the session cookie is gone and `/today`, `/profile`, `/settings` redirect to `/sign-in`; a second test signs out from the command palette.
 - DESIGN.md sections 4, 5.9 and 6 and PRD F8 updated.
+
+## 2026-10-29: Phase 1, LLM layer and profile extraction
+
+### Model: gemini-3.8-flash, fallback gemini-3.5-flash-lite (Sam's choice)
+Google's pricing page (checked 2026-10-29) lists Free Tier input and output for gemini-3.8-flash (the newest Flash), gemini-3.6-flash, gemini-3.5-flash-lite and the 2.5 models; Gemini 4 Argon has no free tier. The rate-limits page does not publish free-tier numbers ("can be viewed in Google AI Studio"), so `LLM_RPM` (default 8) is a conservative token bucket; raise it to match what AI Studio shows. Sam asked for gemini-3.8-flash with the lite model as fallback: after 3 retries on 503 or 429, the provider tries `LLM_FALLBACK_MODEL` (default gemini-3.5-flash-lite) and logs which model answered. Free-tier content may be used by Google to improve its products; Settings says so.
+
+### Verified against reality
+- The first key in `.env.local` was rejected by every endpoint (401 `ACCESS_TOKEN_TYPE_UNSUPPORTED`, including the model-independent list call), so it was not a valid Gemini API key. The replacement key works.
+- `pnpm llm:smoke` made a real structured-output call. gemini-3.5-flash-lite answered in 2.4 s. gemini-3.8-flash answered 503 "high demand" for several minutes, then answered correctly; that response is saved as `tests/fixtures/llm/gemini/structured-response.json` (headers removed). It shows the model thinks (303 `thoughtsTokenCount`), so output usage counts thinking tokens.
+- The SDK (@google/genai 2.31) retries 408, 429 and 5xx up to 5 times with delays of up to 60 s by default (`HttpRetryOptions`), which made one call take 379 s. The provider sets `retryOptions: { attempts: 1 }` and a 90 s request timeout, so its own bounded retries and the fallback decide.
+- Structured output: `responseMimeType: "application/json"` plus `responseJsonSchema`, which accepts a listed subset of JSON Schema. Zod 4's `toJSONSchema` (input shape, so defaulted fields are optional for the model) is filtered to that subset; Zod still validates the full answer, with one retry that includes the validation errors.
+
+### Mock provider fixtures: exact hash, then match strings
+ARCHITECTURE.md said the mock reads `tests/fixtures/llm/<promptId>/<hash>.json`. Hash-only fixtures break on every prompt wording change. The mock now checks the exact hash first (what `createRecordingProvider` writes during evals), then falls back to fixtures with `match` strings that must all appear in the prompt (for example the fictional person's name). ARCHITECTURE.md section 9 updated.
+
+### P1 leaves ids and evidence to code
+The model returns the profile without ids or skill evidence. `normalizeProfile` assigns ids (exp_1, b_1_2, proj_1, b_p1_1, edu_1, sk_go, ...), normalizes dates, maps skills to canonical names from `data/skill-synonyms.json` and merges duplicates, computes evidence by matching skill names and aliases in bullet text and tech lines (word boundaries: "Java" never matches "JavaScript"), keeps metrics and bold phrases only when they are literally in the bullet, keeps a hedge only when its word is in the text, and points conflicts at the item id (`experience.exp_2.end`). The model cannot create references to things that do not exist.
+
+### How "complete profile" is checked
+Each fictional fixture CV has hand-written expected facts in `tests/fixtures/expected/` (roles with titles and dates, bullet counts, projects, education, skills by canonical name, certifications, metrics, hedges, conflicts), written from the source document, not from the mock answer. `compareProfile` reports what is missing. Unit tests run each fixture file through extraction, the P1 prompt, the mock and normalization; `pnpm eval:prompts` runs the same comparison with the real model.

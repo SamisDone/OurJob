@@ -1,0 +1,119 @@
+{
+  "_note": "FICTIONAL. A model-style P1 answer for tests/fixtures/cvs/mei-lin-tan.pdf.",
+  "match": ["Mei Lin Tan"],
+  "output": {
+    "basics": {
+      "name": "Mei Lin Tan",
+      "headline": "Frontend Engineer",
+      "email": "meilin.tan@example.com",
+      "location": "Penang, Malaysia",
+      "links": [
+        { "label": "Github", "url": "https://github.com/example-meilin" },
+        { "label": "Portfolio", "url": "https://example.net/meilin" }
+      ],
+      "summary": {
+        "text": "Frontend Engineer with 6 years of experience building accessible design systems and data-dense React interfaces for fintech and health products.",
+        "sources": ["cv"]
+      }
+    },
+    "experience": [
+      {
+        "company": "Kopi Health",
+        "companyUrl": "https://example.net/kopi",
+        "title": "Senior Frontend Engineer",
+        "start": "Aug 2022",
+        "end": "Present",
+        "bullets": [
+          {
+            "text": "Lead the design system used by 5 product teams: 60+ components in Storybook with WCAG 2.2 AA checks in CI.",
+            "boldPhrases": ["design system", "WCAG 2.2 AA"],
+            "skills": ["Storybook", "WCAG 2.2"],
+            "metrics": [{ "value": "5" }, { "value": "60+" }],
+            "sources": ["cv"]
+          },
+          {
+            "text": "Rebuilt the clinician schedule view with virtualised lists; first render went from 4.1 s to 1.3 s on mid-range Android phones.",
+            "boldPhrases": ["1.3 s"],
+            "skills": [],
+            "metrics": [{ "value": "4.1 s" }, { "value": "1.3 s" }],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["React", "TypeScript", "Storybook", "GraphQL", "Jest"],
+        "sources": ["cv"]
+      },
+      {
+        "company": "Lantern & Ledger",
+        "title": "Frontend Developer",
+        "start": "Jan 2019",
+        "end": "Jul 2022",
+        "bullets": [
+          {
+            "text": "Built the portfolio dashboard for 12,000 retail investors in Vue.js, with charts for 30% of daily active users on mobile.",
+            "boldPhrases": ["portfolio dashboard"],
+            "skills": ["Vue.js"],
+            "metrics": [{ "value": "12,000" }, { "value": "30%" }],
+            "sources": ["cv"]
+          },
+          {
+            "text": "Introduced React Testing Library and raised frontend test coverage from 35% to 80%.",
+            "boldPhrases": [],
+            "skills": ["React Testing Library"],
+            "metrics": [{ "value": "35%" }, { "value": "80%" }],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["Vue.js", "JavaScript", "React", "React Testing Library"],
+        "sources": ["cv"]
+      }
+    ],
+    "projects": [
+      {
+        "name": "Contrast Kit",
+        "liveUrl": "https://example.net/contrast-kit",
+        "sourceUrl": "https://github.com/example-meilin/contrast-kit",
+        "description": "Browser extension that checks colour contrast of any page against WCAG 2.2.",
+        "bullets": [
+          {
+            "text": "Browser extension that checks colour contrast of any page against WCAG 2.2 and suggests the nearest passing colour; #3 on a design newsletter's weekly picks.",
+            "boldPhrases": [],
+            "skills": ["WCAG 2.2"],
+            "metrics": [{ "value": "#3" }],
+            "sources": ["cv"]
+          }
+        ],
+        "tech": ["TypeScript", "Chrome Extensions API"],
+        "sources": ["cv"]
+      }
+    ],
+    "education": [
+      {
+        "institution": "Universiti Sains Contoh",
+        "degree": "B.Sc. in Software Engineering",
+        "start": "2014",
+        "end": "2018",
+        "highlights": [],
+        "sources": ["cv"]
+      }
+    ],
+    "skills": [
+      { "name": "TypeScript", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "JavaScript", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "HTML", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "CSS", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "React", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "Next.js", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "Vue", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "Storybook", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Jest", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "React Testing Library", "aliases": [], "category": "library", "sources": ["cv"] },
+      { "name": "Figma", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "GraphQL", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "WCAG 2.2", "aliases": ["accessibility"], "category": "practice", "sources": ["cv"] }
+    ],
+    "certifications": [],
+    "awards": [],
+    "languages": [],
+    "conflicts": []
+  }
+}

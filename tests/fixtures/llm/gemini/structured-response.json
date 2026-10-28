@@ -1,0 +1,32 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"title\":\"Senior Go engineer\",\"skills\":[\"Go\",\"PostgreSQL\",\"Kafka\"],\"remoteScopeText\":\"Remote within EU\"}",
+            "thoughtSignature": "ErIJCq8JAWkUfRNaWQcY2BdeKP2PawhtzqyBmx9hfsFwNjoRT2WaFui3ZD53JIaScjJmFBB8/mmond66NNEItFcIp4A4jyAIiz21EX/9kcaZ951+jgVG76ejHKx77L3hepMz6MHYLqm1MDbq+0f43F2LJCPBCOoyNaGsnrXyIW9gFGuMQvjJlt424Ef+HVbnUjv60ccaVuxS30xptdIxkhRI+fbFYddMbRoNZoAzls5VISLQDp7oEgrdevylIBhplXnmj5RgCflo/Ds/xQKmRVifblpRhOy3A7FXK9j57HHfLe+M50zX4mmBjS2cUylk6gm8yDU+3skbAtrrkKqbZGRzXxCQEq/a82fOPJlnuMI80+0ONR1FmeXGinXmtFrkwQlc8E0vR9yDIRusSB1s40zNztM9WDbE/k1m6ZxbrqDQ+ytIdcddSUk3PlzWQW8bp5yt8SSwqJCL5vYH9pnLxH46ZszYHMmfiy7ONuyT8KQD17im20oFf6oPIJOqTuvZjY3Cto154uv8qO75UVjDRdgMa5EArNBPh79OGk0B6Vg4Jh3YXhvNYo8BxX6cGlf7IAX7IoM6zKAz7bfNGHZEvVGDu79EDgJiFqdKDMe5OcDsU7iiNcatgbohWlnzdD2+6Xv8aJqPlTdnVUBJWZ1+XVy+bnwmkHzj1+2rA/WpD+/IFB+XQiXoiSrrXO5oHIPhI2/729Ros5tg/8WJ/59I55xN9qrJfdXqWft7knBV3eFY0pxtgZF5p020FM/PWUfuM4yysZjvCPxirU/9xqz/p8V11/IfZWYnnbHt+FZmMrvzqrWHj/R4y1iGanIhtqtKbZK2dQ7RAoGHyMob60ClQgYLbAm1k58lpSRRFmS8hsOqq2778f+HpLAeY4QFHoAiFJu3ACERYIdJqPUW2l8PwzaFjx+jxW8x+opmRqxRC+JON8gUZYv4l9gKufgaW9QqXun8ou5faro680COHaWkMTWmXjutNeJJB1sA4iLFrOmO89PM5fuiEk8fNgY/wVHxLgTFuXBzC/4cVYoIQvV3TclA5N1WkXJlMO2M5qBBmZQatWojTQCGp48bfhUPR3+QR4J7uRfdr4jgRBmqV44FtSr7bVznzljKsf2GRYZzDtGFKnkZmScUqYIrAifBnSzp6aUBokbmcf20xQW/UEsuzaVJTChUvjmeF3/Y1jMZB8X3GJlmhSn4YApk4NwCLbyyVT65XMwN0lF00HGgQu2LBK2ABKpcrhFs2ruibD8B1X0VgxAooam48Hy1TwiN8PDWiDBxVedbz+3Pm3NnGknU15jSmTXCe0Jybf9Nicbupz3xZO0rIAvtWpLzLHnM4Y1BAmWAknHGRgTjn+Ts4CdQ614tEECLciVJvUpdwbNFtMFvG/d2snUV6PgBKadAHZAWhi23J2mIhQUJu70MIl4BD6sPPjlgGYqtuGV7xnUA1G5C9KVy0KVmK9xam2HSNOPYHNHpOZ7QGaUBiMb+DOsTo0nrTqnJbUiPiKK5ajkm+9niup3QvdFUVYRjyBYmrMVolFz0ZjWCxU8i+wmwfdBQzYgmfHcIuTWyleAf9EzcNZw+xJGu+LhCoy0M5EJmv7mmWsONho4="
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "modelVersion": "gemini-3.8-flash",
+  "responseId": "J1TiasLvDvzs694Pwdip4AM",
+  "usageMetadata": {
+    "promptTokenCount": 47,
+    "candidatesTokenCount": 24,
+    "totalTokenCount": 374,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 47
+      }
+    ],
+    "thoughtsTokenCount": 303,
+    "serviceTier": "standard"
+  }
+}

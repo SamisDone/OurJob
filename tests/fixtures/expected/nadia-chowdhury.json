@@ -1,0 +1,17 @@
+{
+  "_note": "Hand-written from tests/fixtures/cvs/nadia-chowdhury.md and tests/fixtures/linkedin/nadia-chowdhury-linkedin.pdf. Not generated.",
+  "sources": ["cvs/nadia-chowdhury.md", "linkedin/nadia-chowdhury-linkedin.pdf"],
+  "name": "Nadia Chowdhury",
+  "email": "nadia.chowdhury@example.com",
+  "experience": [
+    { "company": "Parcelwise", "title": "Senior Backend Engineer", "start": "2023-06", "end": "present", "bullets": 3 },
+    { "company": "Taka Pay", "title": "Backend Developer", "start": "2020-02", "end": "2023-05", "bullets": 3 }
+  ],
+  "projects": ["pgwatch-lite"],
+  "education": [{ "institution": "Shahjalal University of Science and Technology", "end": "2019" }],
+  "skills": ["Go", "Python", "SQL", "Django", "gRPC", "Kafka", "Celery", "PostgreSQL", "Redis", "Docker", "Kubernetes", "GitHub Actions", "Terraform"],
+  "certifications": ["AWS Certified Developer - Associate"],
+  "metrics": ["p99 under 80 ms", "60%", "2,000+", "98%"],
+  "hedges": [{ "value": "60%", "hedge": "roughly" }],
+  "conflicts": ["experience.exp_2.end"]
+}
