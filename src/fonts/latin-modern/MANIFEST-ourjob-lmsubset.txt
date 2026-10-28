@@ -1,0 +1,8 @@
+Derived from Latin Modern Roman 2.004 (lmroman10-regular, -bold, -italic,
+-bolditalic, lmromancaps10-regular), distributed under the GUST Font License
+(GUST-FONT-LICENSE.TXT in this folder).
+
+Changes: subset to Latin (Basic Latin, Latin-1, Latin Extended-A, general
+punctuation) and converted to WOFF2 for use in the CV preview. Files are
+renamed with the prefix "ourjob-lmsubset-" as the license requests for
+derived works.

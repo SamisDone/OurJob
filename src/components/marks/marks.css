@@ -1,0 +1,68 @@
+/*
+ * The highlighter and the proofreader's mark.
+ * The highlighter is a pseudo-element behind the word so it can sweep left to
+ * right with a transform. Text on it stays dark (--highlight-ink) in both
+ * themes.
+ */
+
+.jd-mark {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  color: inherit;
+  padding: 0 0.12em;
+  margin: 0 -0.12em;
+}
+
+.jd-mark[data-kind="matched"] {
+  color: var(--highlight-ink);
+}
+
+.jd-mark[data-kind="matched"]::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0.06em 0 0.02em;
+  background: var(--highlight);
+  /* Slightly uneven ends, like a felt tip. */
+  border-radius: 0.14em 0.24em 0.2em 0.3em / 0.3em 0.2em 0.26em 0.18em;
+  transform-origin: left center;
+}
+
+.jd-mark[data-kind="missing"] {
+  text-decoration: none;
+}
+
+.jd-mark[data-kind="missing"]::after {
+  content: "";
+  position: absolute;
+  left: 0.12em;
+  right: 0.12em;
+  bottom: -0.08em;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--proofmark);
+  transform-origin: left center;
+}
+
+/* Pending: nothing marked yet. */
+.jd-text[data-phase="pending"] .jd-mark[data-kind="matched"] {
+  color: inherit;
+}
+.jd-text[data-phase="pending"] .jd-mark::before,
+.jd-text[data-phase="pending"] .jd-mark::after {
+  transform: scaleX(0);
+}
+
+/* Run: fill in reading order, underlines land at the end. */
+.jd-text[data-phase="run"] .jd-mark[data-kind="matched"] {
+  transition: color 1ms linear calc(var(--i) * var(--sweep-stagger) + var(--sweep-fill) * 0.35);
+}
+.jd-text[data-phase="run"] .jd-mark::before {
+  transform: scaleX(1);
+  transition: transform var(--sweep-fill) var(--ease-ink) calc(var(--i) * var(--sweep-stagger));
+}
+.jd-text[data-phase="run"] .jd-mark::after {
+  transform: scaleX(1);
+  transition: transform 200ms var(--ease-ink) var(--sweep-underline-delay);
+}

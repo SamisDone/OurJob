@@ -1,0 +1,185 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Dark variant follows the resolved token theme, not only the OS. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]) *, :root:not([data-theme="light"])) {
+      @slot;
+    }
+  }
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+}
+
+/*
+ * Theme. Tailwind's default palette, type scale, radii and shadows are
+ * cleared so only OurJob tokens exist. A stock class like bg-zinc-100 or
+ * rounded-lg does not compile, which keeps the default shadcn look out.
+ */
+@theme {
+  --color-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --font-*: initial;
+  --ease-*: initial;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5625rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 1.9375rem;
+  --text-2xl--line-height: 2.375rem;
+  --text-score: 3rem;
+  --text-score--line-height: 3rem;
+  --text-score--font-weight: 600;
+
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-sheet: 2px;
+  --radius-pill: 999px;
+
+  --ease-ink: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-sheet: var(--sheet);
+  --color-ink: var(--ink);
+  --color-graphite: var(--graphite);
+  --color-rule: var(--rule);
+  --color-control-edge: var(--control-edge);
+  --color-highlight: var(--highlight);
+  --color-highlight-ink: var(--highlight-ink);
+  --color-proofmark: var(--proofmark);
+  --color-ok: var(--ok);
+  --color-caution: var(--caution);
+  --color-caution-wash: var(--caution-wash);
+  --color-proofmark-wash: var(--proofmark-wash);
+  --color-ink-wash: var(--ink-wash);
+  --color-cv-paper: var(--cv-paper);
+  --color-cv-ink: var(--cv-ink);
+  --color-cv-rule: var(--cv-rule);
+  --color-scrim: var(--scrim);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --shadow-sheet: var(--shadow-sheet);
+  --shadow-pop: var(--shadow-pop);
+
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
+  --font-cv: var(--font-lm-roman), "Latin Modern Roman", serif;
+  --font-cv-caps: var(--font-lm-caps), "Latin Modern Roman Caps", serif;
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  ::selection {
+    background: var(--highlight);
+    color: var(--highlight-ink);
+  }
+
+  /* Focus: 2 px ink outline plus a 4 px highlighter halo (DESIGN.md 8). */
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 0;
+    box-shadow: 0 0 0 6px var(--highlight);
+    border-radius: inherit;
+  }
+
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility measure {
+  max-width: 72ch;
+}
+
+/* Motion that answers an action. No entrance animations on page load. */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes skeleton-breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes task-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}

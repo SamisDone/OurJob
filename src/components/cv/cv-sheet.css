@@ -1,0 +1,161 @@
+/*
+ * HTML preview of templates/resume-sample.tex. Units are typographic points
+ * scaled to the sheet width: US Letter is 612pt wide, so 1pt = 100cqw / 612.
+ * Values come from the template (10pt article, \small = 9pt, \large = 12pt,
+ * \huge = 20.74pt, margins 0.3in top and bottom, 0.4in left and right).
+ */
+
+.cv-frame {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.cv-sheet {
+  --pt: calc(100cqw / 612);
+  --page-h: calc(var(--pt) * 792);
+  position: relative;
+  background: var(--cv-paper);
+  color: var(--cv-ink);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sheet);
+  font-family: var(--font-cv);
+  font-size: calc(var(--pt) * 10);
+  line-height: calc(var(--pt) * 12);
+  padding: calc(var(--pt) * 21.6) calc(var(--pt) * 28.8);
+  min-height: var(--page-h);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  hyphens: manual;
+  overflow-wrap: break-word;
+}
+
+.cv-sheet a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--pt) * 0.4);
+  text-underline-offset: calc(var(--pt) * 1.6);
+}
+
+.cv-name {
+  font-family: var(--font-cv-caps);
+  font-size: calc(var(--pt) * 20.74);
+  line-height: calc(var(--pt) * 25);
+  text-align: center;
+}
+
+.cv-contact {
+  margin-top: calc(var(--pt) * 2);
+  font-size: calc(var(--pt) * 9);
+  line-height: calc(var(--pt) * 11);
+  text-align: center;
+}
+
+.cv-bar {
+  padding: 0 calc(var(--pt) * 3.3);
+}
+
+/* Bold small caps do not exist in Computer Modern, so LaTeX falls back to
+   bold upright. The preview does the same. */
+.cv-section-title {
+  margin-top: calc(var(--pt) * 6);
+  font-size: calc(var(--pt) * 12);
+  line-height: calc(var(--pt) * 14);
+  font-weight: 700;
+  border-bottom: calc(var(--pt) * 0.4) solid var(--cv-ink);
+  padding-bottom: calc(var(--pt) * 0.5);
+  margin-bottom: calc(var(--pt) * 3);
+}
+
+.cv-small {
+  font-size: calc(var(--pt) * 9);
+  line-height: calc(var(--pt) * 11);
+}
+
+.cv-skills-line + .cv-skills-line {
+  margin-top: calc(var(--pt) * 0.6);
+}
+
+.cv-entry + .cv-entry {
+  margin-top: calc(var(--pt) * 3);
+}
+
+.cv-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--pt) * 8);
+}
+
+.cv-heading-left {
+  min-width: 0;
+}
+
+.cv-heading-right {
+  flex-shrink: 0;
+  font-style: italic;
+  font-size: calc(var(--pt) * 9);
+}
+
+.cv-subtitle {
+  font-style: italic;
+  font-size: calc(var(--pt) * 9);
+}
+
+.cv-bullets {
+  list-style: none;
+  margin: calc(var(--pt) * 3) 0 calc(var(--pt) * 1);
+  padding-left: calc(var(--pt) * 23);
+}
+
+.cv-bullets li {
+  position: relative;
+  font-size: calc(var(--pt) * 9);
+  line-height: calc(var(--pt) * 11);
+}
+
+.cv-bullets li + li {
+  margin-top: calc(var(--pt) * 1);
+}
+
+.cv-bullets li::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--pt) * -7.6);
+  top: calc(var(--pt) * 4.6);
+  width: calc(var(--pt) * 2.4);
+  height: calc(var(--pt) * 2.4);
+  border-radius: 50%;
+  background: var(--cv-ink);
+}
+
+.cv-sheet b,
+.cv-sheet strong {
+  font-weight: 700;
+}
+
+.cv-sheet [data-bullet][data-flash="true"] {
+  background: var(--highlight);
+  transition: background-color 600ms var(--ease-ink);
+}
+
+/* Page boundary: a dashed rule where page 1 ends. */
+.cv-page-break {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--proofmark);
+  pointer-events: none;
+}
+
+.cv-page-break span {
+  position: absolute;
+  right: calc(var(--pt) * 6);
+  top: 2px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--proofmark);
+  background: var(--cv-paper);
+  padding: 0 4px;
+}
