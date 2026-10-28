@@ -178,3 +178,21 @@ The highlighter (`--highlight`, `--highlight-ink`) and proofmark (`--proofmark`,
 
 ### Still waiting
 Style tile approval for this direction. Real screens stay paused until Sam approves.
+
+## 2026-10-29: TanStack Query for client data (Sam's request)
+
+### Version and guide checked
+`@tanstack/react-query` 5.105.0 (published 2026-10-26; peers React 18 or 19). Setup follows the v5 "Advanced Server Rendering" guide for the App Router, checked against the installed type definitions:
+- In 5.105 the server check is `environmentManager.isServer()`, a function. Older v5 releases exported `isServer` as a boolean constant; code written from memory would treat the function as always truthy and share one client across requests.
+- `dehydrate.shouldRedactErrors` and `defaultShouldDehydrateQuery` exist as the guide describes; pending queries are dehydrated so prefetches can stream.
+- The browser client is a module singleton, not `useState`, because the guide warns React can discard state from a render that suspends with no boundary above the provider.
+
+### Choices
+- Defaults: `staleTime` 60 s (so hydrated data is not refetched at once), query retry 1, mutation retry 0 (a mutation changes his data and must never repeat silently).
+- The tailor workspace turns off refetch on window focus through a shared options object rather than a global default, because the feed and pipeline status should refresh when he comes back to the tab.
+- Optimistic updates are built in a plain function (`createOptimisticHandlers`) so they can be tested against a real `QueryClient` without React; the hook only wires them into `useMutation` and adds the toast with Undo.
+- Feed filters are normalized before they go into the key, so `{ seniority: ["senior", "mid"] }` and `{ seniority: ["mid", "senior"], sort: "fit" }` share one cache entry.
+- Query functions call route handlers, never server actions (server actions run one at a time from the client).
+
+### What is wired now and what waits
+Done: the client factory, the provider in the app shell, the server prefetch and hydration helper, every query and mutation key, the optimistic mutation hook with rollback and Undo, and the tailoring progress hook. The per-screen query and mutation hooks (feed, tracker, companies, profile edits, tailoring history) are written with those screens, which stay paused until the new style tile is approved. Each screen uses these helpers rather than calling `useQuery` or `useMutation` directly.

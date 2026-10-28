@@ -8,6 +8,7 @@
 | Styling | Tailwind CSS + CSS variables for design tokens | Tokens from `DESIGN.md` live in one place. | |
 | Components | shadcn/ui (Radix primitives), restyled to our tokens | Accessible primitives, full control of look. | Never ship shadcn defaults unchanged. |
 | Motion | Motion (formerly Framer Motion) | For the few purposeful animations in `DESIGN.md`. | |
+| Client data | TanStack Query v5 (`@tanstack/react-query`, 5.105 at setup) | Caching, optimistic updates with rollback, and mutation state for progress UI, on top of App Router routing. | Server components prefetch and hydrate; see section 4a. |
 | Database | Postgres (Neon free tier default; Supabase works) | Relational data, JSONB for profiles. | |
 | ORM | Drizzle ORM + drizzle-kit migrations | Typed SQL, light. | |
 | Auth | Auth.js with Google sign-in, allowlist via `ALLOWED_EMAILS` | Single-owner deployments, no passwords to store. | Every page and route except sign-in requires a session. |
@@ -110,6 +111,18 @@ Unique index on (`source`, `source_job_id`). Index on `posted_at`, `canonical_ur
 - **GitHub:** REST API: user profile, public repos (non-fork, sorted by pushed date, top 20), languages per repo, README for the top 8 by stars or recent activity (first 4,000 characters each), pinned repos if obtainable. Unauthenticated rate limits are low; support optional `GITHUB_TOKEN`. The LLM turns this into project entries, clearly marked `source: github`.
 - **Portfolio URL:** server-side fetch with the SSRF guard (block private, loopback and link-local IPs, max 3 redirects, 2 MB limit, 10 s timeout). Extract main text (for example with `@mozilla/readability` + `linkedom`). If under 300 characters of text, tell him the site likely renders in the browser and offer a paste box.
 - **Merge:** P1 runs once over all sources together, producing one `MasterProfile` with item-level `sources` and a `conflicts` list.
+
+## 4a. Client data (TanStack Query)
+
+Next.js App Router does routing and the first load; TanStack Query owns data on the client after that.
+
+- **Setup:** `src/lib/query/client.ts` makes the client: `staleTime` 60 s, query retry 1, mutation retry 0, pending queries dehydrated (so server prefetches can stream), server errors not redacted (Next.js uses them to detect dynamic rendering). On the server every request gets a fresh client; in the browser one client is shared. `QueryProvider` is mounted inside the app shell.
+- **First page from the server:** a server component calls `serverQueryClient().prefetchQuery(...)` with the same key and query function as the client hook, and wraps the client part in `<Hydrate client={qc}>` (`src/lib/query/hydrate.tsx`). The client reads the hydrated cache instead of refetching. Server components only prefetch; they never render query data themselves.
+- **Keys:** every query and mutation key lives in `src/lib/query-keys.ts`. Feed filters are part of the feed key and are normalized (defaults filled, empty values dropped, arrays sorted) so equivalent filters share a cache entry. Keys go from general to specific, so `["feed"]` covers every filtered list.
+- **Queries:** Today feed (filters in the key), pipeline status, companies, tracker board, tailoring history and detail, profile and preferences. Queries in the tailor workspace use `tailorWorkspaceQueryOptions` (`refetchOnWindowFocus: false`), so coming back to the tab never refetches mid-edit.
+- **Mutations with optimistic updates:** save, dismiss, mark applied, tracker moves and profile edits use `useOptimisticMutation` (`src/lib/query/hooks.ts`): cancel in-flight fetches of the target keys, snapshot, apply the change, roll back on error, invalidate when settled. Dismiss and status changes show the toast with Undo, which runs the inverse mutation.
+- **Tailoring progress:** parse and tailor are mutations with fixed mutation keys. `useTailorProgress()` reads their state with `useMutationState` and maps it to the "Reading the job" and "Tailoring your CV" steps, so any component can show progress.
+- **Mutations call route handlers**, not server actions, for anything a query reads back: server actions run one at a time from the client and must not be used as query functions.
 
 ## 5. Tailoring pipeline
 
