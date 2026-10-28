@@ -1,0 +1,168 @@
+%-------------------------
+% OurJob resume template (sample output)
+%
+% Structure copied from the template Pratik uses today, which is based on
+% Jake Gutierrez's resume template (MIT License). Keep this attribution.
+% Verify the upstream repo URL and license text before publishing.
+%
+% Content below is for a FICTIONAL person. Never commit real CV data.
+%
+% Renderer rules:
+% - Reproduce this preamble and these macros exactly.
+% - Every user string goes through escapeLatex() before insertion.
+% - Bold phrases come from TailoredResume bullets' boldPhrases.
+% - Section order comes from TailoredResume.sections.
+% - Must compile with pdflatex on Overleaf without edits.
+%-------------------------
+
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{latexsym}
+\usepackage[letterpaper,top=0.3in,bottom=0.3in,left=0.4in,right=0.4in]{geometry}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+\titlespacing*{\section}{0pt}{8pt}{8pt}
+
+% Make the PDF machine readable / ATS parsable
+\pdfgentounicode=1
+\linespread{1.0}
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+% One-line heading: Company | Role ........ Date or Location
+\newcommand{\resumeSubheading}[3]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} $|$ \textit{\small #2} & \textit{\small #3} \\
+    \end{tabular*}\vspace{-4pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.0\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \small #2 \\
+    \end{tabular*}\vspace{-4pt}
+}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[itemsep=1pt,parsep=0pt,topsep=3pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{1pt}}
+
+% A link shown as underlined text
+\newcommand{\lnk}[2]{\href{#1}{\underline{#2}}}
+% The tech line at the end of an entry
+\newcommand{\tech}[1]{\resumeItem{\textbf{Tech:} \emph{#1}}}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\huge \scshape Arif Rahman} \\ \vspace{2pt}
+    \small Dhaka, Bangladesh $|$ \lnk{mailto:arif.rahman@example.com}{arif.rahman@example.com} $|$
+    \lnk{https://github.com/example-arif}{Github} $|$
+    \lnk{https://www.linkedin.com/in/example-arif}{LinkedIn} $|$
+    \lnk{https://example.com}{Portfolio}
+    \vspace{-4pt}
+\end{center}
+
+%-----------SUMMARY-----------
+\section{Summary}
+\small{Full-Stack Engineer with 4+ years of experience building TypeScript products, REST APIs, and data-heavy dashboards, owning features from database design to production.}
+\vspace{-3pt}
+
+%-----------SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0in, label={}]
+    \small{\item{
+     \textbf{Languages}{: TypeScript, JavaScript, Python, SQL} $|$ \textbf{Frameworks}{: Node.js, Express.js, React.js, Next.js} \\
+     \textbf{Databases}{: PostgreSQL, Redis, Prisma} $|$ \textbf{Testing \& Tools}{: Git, Vitest, Playwright} \\
+     \textbf{DevOps/Infra}{: Docker, GitHub Actions, Vercel, AWS (basic)} \\
+    }}
+ \end{itemize}
+\vspace{-6pt}
+
+%-----------EXPERIENCE-----------
+\section{Professional Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {\lnk{https://example.com/brightfield}{Brightfield Software}}{Full-Stack Engineer}{Mar 2024 -- Present}
+      \resumeItemListStart
+        \resumeItem{Built the \textbf{real-time shipment dashboard} used by \textbf{40 client teams}, moving live order updates from REST polling to WebSockets; cut the main bundle size by \textbf{35\%} through route splitting.}
+        \tech{React, TypeScript, Node.js, PostgreSQL, Redis, WebSockets, Docker}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {\underline{Kite \& Co. Digital}{}}{Web Developer}{Jan 2022 -- Feb 2024}
+      \resumeItemListStart
+        \resumeItem{Delivered \textbf{12 booking and marketing sites} for local businesses with a headless CMS, and wrote Playwright tests for checkout flows that caught \textbf{9 regressions} before release.}
+        \tech{Next.js, TypeScript, Tailwind CSS, Playwright, Vercel}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+\vspace{-5pt}
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+
+      \resumeProjectHeading
+          {\textbf{Ledgerly}}{\lnk{https://example.com/ledgerly}{Live} $|$ \lnk{https://github.com/example-arif/ledgerly}{Source}}
+          \resumeItemListStart
+            \resumeItem{Shared household budgeting app with \textbf{role-based access} for 4 user types and \textbf{offline support} through a service worker and background sync.}
+            \tech{Next.js, TypeScript, PostgreSQL, Prisma, Vitest}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{Queue Lite}}{\lnk{https://github.com/example-arif/queue-lite}{Source}}
+          \resumeItemListStart
+            \resumeItem{Built a \textbf{background job queue} with separate API and worker services, retries with \textbf{exponential backoff}, and integration tests against a real PostgreSQL database.}
+            \tech{Node.js, TypeScript, PostgreSQL, Docker}
+          \resumeItemListEnd
+
+    \resumeSubHeadingListEnd
+\vspace{-5pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Example University of Science and Technology}{B.Sc. in Computer Science and Engineering}{Chattogram, Bangladesh}
+  \resumeSubHeadingListEnd
+
+\end{document}

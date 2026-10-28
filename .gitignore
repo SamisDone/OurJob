@@ -1,0 +1,35 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# real personal data, never commit
+tests/private/
+*.private.tex
+uploads/
+
+# build
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.log
+
+# latex build output
+*.aux
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# next / tooling
+.pnp
+.pnp.*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+*.pem
+.DS_Store
+/build
