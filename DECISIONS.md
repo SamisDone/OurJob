@@ -265,3 +265,11 @@ The test now passes 20 out of 20 repeated runs on a loaded machine.
 - `tests/fixtures/` is excluded from Prettier: fixtures must stay byte-for-byte as committed (a formatting pass changed the fictional CVs and broke a test).
 - `pnpm llm:smoke` makes one real structured-output call; `pnpm eval:prompts` runs P1 and P5 on the fictional fixtures with the real model and grades them against the expected facts (`--record` saves answers as mock fixtures).
 - `tests/e2e/shots.spec.ts` takes review screenshots of the Phase 1 screens when `SHOTS_DIR` is set; it seeds the fictional profile through the real API.
+
+## 2026-10-29: Phase 1 done criteria, real-model results
+
+- `pnpm eval:prompts` with the real model on the three fictional fixtures: all expected facts present for each (roles, titles, dates, bullet counts, projects, education, skills, certifications, numbers, hedges, and Nadia's CV/LinkedIn end-date conflict, which the model found itself). `gemini-3.8-flash` answered P1 in about 43 s when not busy; it often answered 503, and the fallback `gemini-3.5-flash-lite` answered in 3 to 30 s.
+- The eval at first reported "missing" metrics that were in the bullet text, because the model split them differently ("80 ms" instead of "p99 under 80 ms"). The expected-facts check now asks whether the number survives in a bullet's text (what the Phase 2 validator checks); hedges are still checked on metrics.
+- The lite model once left out the email shown in the CV header. `buildProfile` now copies the first email address from the CV text when the model returns none: a copied fact, never an invented one.
+- Onboarding end to end with the real provider: `E2E_LLM_PROVIDER=gemini pnpm exec playwright test tests/e2e/onboarding.spec.ts --project=desktop` passed in 1.5 minutes (real P1 build, the model's own conflict, edits, confirm, real P5 suggestions, version history and restore), using the fictional Nadia Chowdhury files and the e2e test user.
+- Build hygiene: the mock provider reads fixtures from dynamic paths, which made Next's output tracing include the whole project (fixtures included) in every server function. `outputFileTracingExcludes` now drops tests, docs, templates, migrations, scripts and workflows from deployments, and the warning is silenced for `mock.ts` only.

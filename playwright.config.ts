@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { config as loadEnv } from "dotenv";
+
+// E2E_LLM_PROVIDER=gemini runs the suite against the real model once (keys from .env.local).
+const realLlm = process.env.E2E_LLM_PROVIDER === "gemini";
+if (realLlm) loadEnv({ path: ".env.local", quiet: true });
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 
@@ -29,7 +34,14 @@ export default defineConfig({
       ALLOWED_EMAILS: "allowed@example.com",
       ENABLE_DESIGN_TILE: "1",
       // Fixture answers for P1 and P5; the real model is never called in e2e.
-      LLM_PROVIDER: "mock",
+      LLM_PROVIDER: realLlm ? "gemini" : "mock",
+      ...(realLlm
+        ? {
+            GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
+            LLM_MODEL: process.env.LLM_MODEL ?? "gemini-3.8-flash",
+            LLM_FALLBACK_MODEL: process.env.LLM_FALLBACK_MODEL ?? "gemini-3.5-flash-lite",
+          }
+        : {}),
       DATABASE_URL: process.env.DATABASE_URL ?? "postgres://ourjob:ourjob@localhost:5433/ourjob",
     },
   },

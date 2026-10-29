@@ -14,7 +14,8 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   baseURL,
 }, info) => {
   test.skip(info.project.name !== "desktop", "Runs once; it changes the test person's data.");
-  test.setTimeout(120_000);
+  // Generous: with E2E_LLM_PROVIDER=gemini the build and suggestions call the real model.
+  test.setTimeout(900_000);
   await signInAs(context, baseURL!, "allowed@example.com", "Nadia Chowdhury");
 
   // A person with no confirmed profile is sent to onboarding.
@@ -35,7 +36,7 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   await page.getByRole("button", { name: "Build my profile" }).click();
 
   // Step 3: the disagreement is shown first and blocks confirming.
-  await expect(page.getByRole("heading", { name: "Review your profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Review your profile" })).toBeVisible({ timeout: 400_000 });
   await expect(page.getByRole("heading", { name: "Your sources disagree on one thing" })).toBeVisible();
   await expect(page.getByRole("button", { name: "This is right" })).toBeDisabled();
   const conflict = page.getByRole("group", { name: "Taka Pay: end date" });
@@ -69,7 +70,7 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
 
   // Step 4: preferences arrive pre-filled from P5.
   await expect(page.getByRole("heading", { name: "Set what you are looking for" })).toBeVisible();
-  await expect(page.getByText("Suggested from your profile.")).toBeVisible();
+  await expect(page.getByText("Suggested from your profile.")).toBeVisible({ timeout: 400_000 });
   await expect(page.getByRole("button", { name: "Remove Backend Engineer" })).toBeVisible();
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page.getByRole("heading", { name: "Your profile is ready" })).toBeVisible();
