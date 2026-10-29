@@ -1,0 +1,55 @@
+Skip to main content
+Courierly Careers
+Home
+Jobs
+Sign in
+We use cookies to improve your experience. By using this site you agree to our cookie policy.
+Accept all cookies
+Reject all
+Back to all jobs
+Senior Software Engineer, Routing (Go)
+Courierly · Remote · Full time
+Apply now
+Save job
+Share
+
+FICTIONAL job post for tests.
+
+About Courierly
+
+Courierly runs same-day delivery for 1,800 independent shops in 12 cities. Every morning our routing engine plans thousands of stops across bikes and vans.
+
+About the role
+
+We are looking for a Senior Software Engineer to join the routing team. You will work on the services that quote delivery prices, assign drivers and replan routes when traffic changes.
+
+What you will do
+• Build and scale routing and pricing services in Go
+• Design APIs (gRPC internally, REST for partners)
+• Work with PostgreSQL and PostGIS for geospatial queries
+• Publish and consume events with Kafka
+• Keep p99 latency low under peak load; profile and optimize
+• Mentor engineers and take part in architecture reviews
+
+What we are looking for
+• 5+ years of backend experience, 2+ in Go
+• Strong PostgreSQL skills
+• Experience with event-driven architectures and Kafka
+• Experience with Docker and Kubernetes
+• Nice to have: PostGIS, routing or logistics domain experience, Redis
+
+Benefits
+• Remote-first, work from anywhere between UTC and UTC+8
+• Salary range 75,000 to 100,000 USD
+Apply now
+Apply now
+Share this job
+Facebook
+Twitter
+LinkedIn
+Email
+Senior Software Engineer, Routing (Go)
+Courierly · Remote · Full time
+Similar jobs
+View all jobs
+Powered by Workable

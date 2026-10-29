@@ -1,0 +1,14 @@
+Senior Backend Engineer
+Lumen Labs
+
+Lumen Labs builds scheduling software for community clinics in 14 countries. Nurses, front-desk staff and patients use it every day to book, move and confirm appointments, often on old Android phones and slow connections. We are a team of 31, fully remote across eight time zones, and we are hiring a Senior Backend Engineer to own the availability service end to end.
+
+In your first months you will rebuild the service that answers one question thousands of times a minute: which slots are free? Today it reads every clinic's full calendar from PostgreSQL on each request, which makes the first screen slow for patients and puts heavy load on the database at 8 a.m. in every time zone. You will work with our product designer and one frontend engineer to split it into smaller steps, cache availability in Redis, and publish booking changes as events instead of polling. You will write services in Go, keep the schema healthy as clinics grow, and ship weekly behind feature flags, so a change reaches a few clinics first and everyone a week later.
+
+Our services talk over gRPC and run on Kubernetes, packaged with Docker. Booking events flow through Kafka, so when a patient books, the slot disappears from the front desk's screen within a second. Some reporting jobs are still in Python, and we expect new work to be covered by tests.
+
+Requirements: 5+ years building backend services, with production Go. Strong PostgreSQL skills, including query tuning. Experience with event-driven systems such as Kafka. Comfort with Terraform for the infrastructure you own.
+
+Nice to have: GraphQL, OpenTelemetry, load testing, experience working in a remote, async team.
+
+Pay is $95,000 to $130,000 a year, or the local equivalent. We hire anywhere between UTC-3 and UTC+8.

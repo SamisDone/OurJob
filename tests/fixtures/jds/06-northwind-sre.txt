@@ -1,0 +1,28 @@
+Site Reliability Engineer
+Northwind Telehealth
+
+FICTIONAL job post for tests.
+
+Northwind Telehealth connects patients with doctors by video in six countries. Uptime matters: a dropped call is a missed appointment. Our services are written in Go and run on Kubernetes in two regions.
+
+What you'll do
+- Define SLOs with service teams and build the dashboards and alerts that track them.
+- Roll out OpenTelemetry tracing across our Go services and the video gateway.
+- Run Prometheus and Grafana, and reduce noisy alerts.
+- Lead incident response and blameless postmortems; join a fair on-call rotation.
+- Do capacity planning and load testing before big launches.
+- Automate toil with Go and Terraform.
+
+What you bring
+- 4+ years in SRE, platform or backend roles.
+- Production Go.
+- Kubernetes and Docker.
+- Monitoring with Prometheus and Grafana.
+- Experience with PostgreSQL and Redis in production.
+
+Nice to have
+- OpenTelemetry.
+- Experience in healthcare or other regulated industries.
+- gRPC.
+
+Compensation: $85,000 to $115,000. Remote, UTC to UTC+8.

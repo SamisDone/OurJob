@@ -36,3 +36,6 @@ next-env.d.ts
 
 # session hand-off notes (regenerated per session, not part of the repo)
 SESSION_HANDOFF.md
+
+# prompt eval output (fictional data, regenerated)
+eval-output/

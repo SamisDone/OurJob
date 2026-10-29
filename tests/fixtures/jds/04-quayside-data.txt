@@ -1,0 +1,26 @@
+Data Engineer
+Quayside Analytics
+
+FICTIONAL job post for tests.
+
+Quayside Analytics helps mid-size retailers forecast demand for 200,000 products a week. We are a remote team of 22 and we are hiring a Data Engineer to own the pipelines that feed our forecasting models.
+
+You will
+- Build batch pipelines with Apache Airflow and dbt on Snowflake.
+- Process large event datasets with Apache Spark (PySpark).
+- Model clean, tested tables that analysts and data scientists trust.
+- Ingest data from retailers' APIs, SFTP drops and Kafka topics.
+- Keep data quality high with tests, alerts and clear ownership.
+
+You have
+- 3+ years as a data engineer or backend engineer working with data.
+- Strong SQL and Python.
+- Airflow and dbt in production.
+- Experience with a cloud warehouse such as Snowflake or BigQuery.
+
+Bonus
+- Spark at scale.
+- Experience with demand forecasting or retail data.
+- Experience with Docker and Kubernetes.
+
+Pay: $60,000 to $85,000. Remote worldwide with 4 hours overlap with UTC.

@@ -1,0 +1,29 @@
+Backend Engineer, Payments
+Ledgerbird
+
+FICTIONAL job post for tests.
+
+Ledgerbird gives small online shops in South and Southeast Asia one account for card payments, wallets and bank transfers. About 9,000 merchants settle through us every day. Our backend is Python and Django on PostgreSQL, with Celery for background work.
+
+You will join the settlements squad. The squad owns everything between a successful payment and the money landing in a merchant's bank account: payout schedules, fees, reconciliation against bank files, and the reports merchants download at month end.
+
+Responsibilities
+- Build and maintain settlement and payout services in Python (Django).
+- Write reconciliation jobs that match bank statements against our ledger and surface the exceptions.
+- Design PostgreSQL schemas and queries that stay fast as transaction volume grows.
+- Run background jobs with Celery and keep them idempotent and observable.
+- Work with finance and support to explain and fix settlement issues.
+
+Requirements
+- 3+ years of backend development with Python and Django.
+- Strong SQL and PostgreSQL.
+- Experience with payments, banking or accounting systems.
+- REST API design.
+- Experience with AWS.
+
+Nice to have
+- Experience with multi-tenant data isolation (for example row-level security).
+- Familiarity with ISO 20022 or bank file formats.
+- Experience with Kafka.
+
+Salary: $55,000 to $80,000 a year. Remote, Asia time zones preferred.

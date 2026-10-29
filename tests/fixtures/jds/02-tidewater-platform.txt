@@ -1,0 +1,27 @@
+Platform Engineer (Remote, APAC)
+Tidewater Freight
+
+FICTIONAL job post for tests.
+
+Tidewater Freight moves containers between 40 ports in Asia and Oceania. Our booking and tracking platform runs on AWS, and a small platform team of four keeps it fast, cheap and boring. We are hiring a Platform Engineer to own our Kubernetes clusters and the paved road our 30 product engineers use to ship.
+
+What you will do
+- Run and upgrade our EKS clusters and the Helm charts every service deploys with.
+- Manage infrastructure as code with Terraform, including networking, IAM and RDS for PostgreSQL.
+- Build CI/CD pipelines in GitHub Actions so a merge reaches production in under ten minutes.
+- Improve observability with Prometheus and Grafana, and own the alerts that page us.
+- Help product teams containerize services with Docker and tune them for cost.
+
+What we need
+- 4+ years in platform, infrastructure or backend roles.
+- Hands-on Kubernetes in production.
+- Terraform and AWS experience (EKS, RDS, IAM, VPC).
+- Comfortable writing tooling in Go or Python.
+- Experience with Linux and networking basics.
+
+Nice to have
+- Experience with Kafka or other event streaming.
+- AWS certification.
+- Experience joining an on-call rotation.
+
+We pay $70,000 to $95,000 USD a year. Fully remote within UTC+5 to UTC+10.

@@ -1,0 +1,27 @@
+Senior Frontend Engineer
+Pinecrest Learning
+
+FICTIONAL job post for tests.
+
+Pinecrest Learning makes reading practice apps for primary school classrooms. Teachers assign stories, children read aloud, and the app gives gentle feedback. We are hiring a Senior Frontend Engineer for our web app.
+
+The role
+- Build features in React and TypeScript, from design to release.
+- Own our component library in Storybook with our designer.
+- Make every screen accessible, with keyboard and screen reader support (WCAG 2.2 AA).
+- Improve performance on low-end Chromebooks: bundle size, rendering, offline support.
+- Write tests with Jest and React Testing Library, and end-to-end tests with Playwright.
+
+Requirements
+- 5+ years of frontend development.
+- Expert React and TypeScript.
+- Strong HTML and CSS, including responsive layouts.
+- Accessibility experience.
+- Experience with GraphQL clients such as Apollo.
+
+Nice to have
+- Next.js.
+- Experience with education products.
+- Web audio APIs.
+
+$90,000 to $120,000 a year. Remote across Europe and Asia.

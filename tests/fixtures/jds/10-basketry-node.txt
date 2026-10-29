@@ -1,0 +1,29 @@
+Backend Engineer (Node.js)
+Basketry
+
+FICTIONAL job post for tests.
+
+Basketry is a grocery marketplace for neighborhood stores in Dhaka, Karachi and Jakarta. Shoppers order on our app and local stores pack and deliver within the hour.
+
+You will join the orders team and build the services behind checkout, store inventory and delivery tracking.
+
+What you will do
+- Build backend services in Node.js and TypeScript.
+- Design our public GraphQL API and the REST APIs for store tablets.
+- Model orders and inventory in PostgreSQL; cache hot paths in Redis.
+- Run background jobs for order timeouts and refunds.
+- Ship with Docker on AWS, through GitHub Actions.
+
+What you need
+- 3+ years of backend development.
+- Node.js and TypeScript.
+- PostgreSQL and Redis.
+- GraphQL.
+- Experience with AWS.
+
+Nice to have
+- Experience with Python or Go.
+- Marketplace or e-commerce experience.
+- Experience with payments.
+
+Salary: $45,000 to $65,000 USD. Remote within Asia.

@@ -1,0 +1,28 @@
+Staff Engineer, Distributed Systems
+Meridian Ledger
+
+FICTIONAL job post for tests.
+
+Meridian Ledger runs a double-entry ledger as a service for fintech companies. We process 40 million entries a day with strict consistency guarantees.
+
+As a Staff Engineer you will set technical direction for our core ledger team of eight. You will design for correctness first: idempotency, exactly-once processing, and consistent reads across regions.
+
+Responsibilities
+- Lead the design of our next-generation ledger storage on PostgreSQL with logical replication.
+- Own cross-team technical decisions and write the design documents behind them.
+- Build critical services in Go and some performance-sensitive parts in Rust.
+- Design gRPC APIs used by 120 customer integrations.
+- Mentor senior engineers and raise the bar on code review.
+
+Requirements
+- 8+ years of software engineering, including 3+ years at staff or principal level.
+- Deep experience with distributed systems and consensus (Raft or Paxos).
+- Production Go; Rust is a strong plus.
+- PostgreSQL internals.
+- Experience with financial ledgers or payments.
+
+Nice to have
+- Kafka.
+- Formal methods (TLA+).
+
+$150,000 to $190,000 a year. Remote worldwide.
