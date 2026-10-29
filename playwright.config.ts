@@ -16,6 +16,8 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
+  // One production server serves every worker; past 4 it slows enough that desktop tests time out.
+  workers: 4,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },
   projects: [
@@ -38,8 +40,8 @@ export default defineConfig({
       ...(realLlm
         ? {
             GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
-            LLM_MODEL: process.env.LLM_MODEL ?? "gemini-3.8-flash",
-            LLM_FALLBACK_MODEL: process.env.LLM_FALLBACK_MODEL ?? "gemini-3.5-flash-lite",
+            LLM_MODEL: process.env.LLM_MODEL ?? "gemini-3.5-flash-lite",
+            LLM_FALLBACK_MODEL: process.env.LLM_FALLBACK_MODEL ?? "gemini-3.8-flash",
           }
         : {}),
       DATABASE_URL: process.env.DATABASE_URL ?? "postgres://ourjob:ourjob@localhost:5433/ourjob",

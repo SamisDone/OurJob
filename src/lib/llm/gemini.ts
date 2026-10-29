@@ -31,6 +31,19 @@ export type GeminiOptions = {
   log?: (entry: { promptId: string; model: string; ms: number; inputTokens: number; outputTokens: number }) => void;
 };
 
+/**
+ * A 429 for a per-day quota (quotaId "...PerDay...", 20 requests per model on
+ * the free tier, seen 2026-10-29; tests/fixtures/llm/gemini/daily-quota-429.json).
+ * Retrying cannot help, so it skips straight to the fallback. Returns the wait
+ * in ms from RetryInfo, or 0 when it is not a daily quota.
+ */
+export function dailyQuotaWait(e: unknown): number {
+  const text = e instanceof Error ? e.message : "";
+  if (!/"quotaId":\s*"[^"]*PerDay/.test(text)) return 0;
+  const delay = text.match(/"retryDelay":\s*"(\d+)s"/);
+  return delay ? Number(delay[1]) * 1000 : 24 * 3_600_000;
+}
+
 function statusOf(e: unknown): number | undefined {
   return e instanceof ApiError ? e.status : (e as { status?: number } | null)?.status;
 }
@@ -94,6 +107,15 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
           throw new LLMError(
             "auth",
             "Gemini did not accept the API key. Check GEMINI_API_KEY in the deployment's settings.",
+          );
+        }
+        const daily = status === 429 ? dailyQuotaWait(e) : 0;
+        if (daily) {
+          const hours = Math.max(1, Math.round(daily / 3_600_000));
+          throw new LLMError(
+            "rate_limited",
+            `Gemini's free daily limit for this model is used up. It resets in about ${hours} ${hours === 1 ? "hour" : "hours"}.`,
+            daily,
           );
         }
         const busy = status === 429 || (status !== undefined && status >= 500);

@@ -51,8 +51,9 @@ The app runs on Vercel with its functions in Singapore (`vercel.json` sets `sin1
    | `ALLOWED_EMAILS` | comma-separated Google emails allowed to sign in | now |
    | `GEMINI_API_KEY` | from Google AI Studio | now |
    | `LLM_PROVIDER` | `gemini` | now |
-   | `LLM_MODEL` | `gemini-3.8-flash` | now |
-   | `LLM_FALLBACK_MODEL` | `gemini-3.5-flash-lite` | now |
+   | `LLM_MODEL` | `gemini-3.5-flash-lite` | now |
+   | `LLM_FALLBACK_MODEL` | `gemini-3.8-flash` | now |
+   | `LLM_THOROUGH_MODEL` | `gemini-3.8-flash`, offered in Settings for tailoring | optional |
    | `LLM_RPM` | requests per minute, default 8 | optional |
    | `GITHUB_TOKEN` | a token with no scopes, raises GitHub's limits for profile import | optional |
 

@@ -7,7 +7,8 @@ import { useAiSettings, useSaveTailorModel } from "@/lib/query/settings";
 /** Measured in pnpm eval:tailor on ten fictional job posts (DECISIONS.md, 2026-10-29). */
 const TIER_NOTE = {
   standard: "Used for everything. A tailored CV takes about 15 seconds.",
-  thorough: "Used for tailoring only. Rewords more, and takes longer.",
+  thorough:
+    "Writes your tailored CVs; the job post is still read by the standard model. Google's free tier allows a few CVs a day with it, then Standard takes over.",
 } as const;
 
 export function AiSection() {
@@ -50,7 +51,7 @@ export function AiSection() {
             ]}
           />
           <p className="mt-2 text-sm text-graphite" aria-live="polite">
-            Gemini {current === "thorough" ? models.thorough : models.standard}. {TIER_NOTE[current]}
+            Model {current === "thorough" ? models.thorough : models.standard}. {TIER_NOTE[current]}
           </p>
           {save.isError && (
             <p role="alert" className="mt-2 text-sm text-redpen">

@@ -42,7 +42,15 @@ export type TailorResult = {
 
 export type TailorStage = "reading" | "tailoring" | "checking";
 
-type Deps = { provider: LLMProvider; cache: CacheStore; now?: () => number; onStage?: (s: TailorStage) => void };
+type Deps = {
+  /** Writes the CV (P3 and fixes). This is the model he picked in Settings. */
+  provider: LLMProvider;
+  /** Reads the job post (P2). Defaults to `provider`; the app passes the standard model, so Thorough only rewrites. */
+  jobProvider?: LLMProvider;
+  cache: CacheStore;
+  now?: () => number;
+  onStage?: (s: TailorStage) => void;
+};
 
 /** Paste to tailored CV: clean, P2, matched and gaps, P3, validator, fix loop. */
 export async function tailorCv(
@@ -54,7 +62,10 @@ export async function tailorCv(
   const now = deps.now ?? Date.now;
   const t0 = now();
   deps.onStage?.("reading");
-  const { cleaned, spec, dropped } = await parseJob(pasted, deps);
+  const { cleaned, spec, dropped } = await parseJob(pasted, {
+    provider: deps.jobProvider ?? deps.provider,
+    cache: deps.cache,
+  });
   const t1 = now();
 
   const { matched, gaps } = splitKeywords(spec, profile);

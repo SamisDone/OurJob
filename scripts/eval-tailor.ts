@@ -4,8 +4,10 @@
  * once per model, with the real Gemini API.
  *   pnpm eval:tailor
  *   pnpm eval:tailor --models=gemini-3.5-flash-lite --only=03 --out=<dir>
- * Each model runs alone (no fallback), with an empty cache per run, so the
- * times are what a paste would cost. Results go to --out (default
+ * Each model writes the CV alone (no fallback). As in the app, the job post is
+ * read by the standard model (--job-model, default gemini-3.5-flash-lite), once
+ * per post, and every model tailors from that same job spec; a model that
+ * reuses it is charged the time it took, so totals are what a paste would cost. Results go to --out (default
  * eval-output/, git-ignored): a JSON report and each final CV.
  */
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -15,6 +17,7 @@ import { findKeyword } from "../src/lib/ats/match";
 import type { CacheStore } from "../src/lib/llm/cache";
 import { createGeminiProvider } from "../src/lib/llm/gemini";
 import { p1OutputSchema } from "../src/lib/llm/prompts/p1-profile";
+import { P2_PROMPT_ID } from "../src/lib/llm/prompts/p2-job";
 import { normalizeProfile } from "../src/lib/profile/normalize";
 import type { TailoredResume } from "../src/lib/profile/schema";
 import { tailorCv, type TailorResult } from "../src/lib/tailor/pipeline";
@@ -28,6 +31,7 @@ const MODELS = (arg("models") ?? "gemini-3.5-flash-lite,gemini-3.8-flash").split
 const OUT = arg("out") ?? "eval-output";
 const only = arg("only");
 const PAUSE_MS = Number(arg("pause") ?? 15_000);
+const JOB_MODEL = arg("job-model") ?? "gemini-3.5-flash-lite";
 
 const profile = normalizeProfile(
   p1OutputSchema.parse(JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/nadia-chowdhury.json", "utf8")).output),
@@ -97,38 +101,47 @@ async function main() {
     .filter((f) => f.endsWith(".txt") && (!only || f.startsWith(only)))
     .sort();
   const rows: Row[] = [];
+  // One cache for the whole eval: P3 keys include the model, P2 keys the job model, so only P2 is shared.
+  const memory = new Map<string, unknown>();
+  const cache: CacheStore = { get: async (k) => memory.get(k), set: async (k, v) => void memory.set(k, v) };
+  const jobSeconds = new Map<string, number>();
 
   for (const model of MODELS) {
     for (const file of jds) {
       const calls: NonNullable<Row["calls"]> = [];
       let backoffs = 0;
-      const provider = createGeminiProvider({
-        apiKey,
-        model,
-        rpm: Number(process.env.LLM_RPM) || 8,
-        log: (e) => calls.push({ promptId: e.promptId, model: e.model, ms: e.ms, out: e.outputTokens }),
-        sleep: (ms) => {
-          backoffs++;
-          return new Promise((r) => setTimeout(r, ms));
-        },
-      });
-      const memory = new Map<string, unknown>();
-      const cache: CacheStore = { get: async (k) => memory.get(k), set: async (k, v) => void memory.set(k, v) };
+      const make = (m: string) =>
+        createGeminiProvider({
+          apiKey,
+          model: m,
+          rpm: Number(process.env.LLM_RPM) || 8,
+          log: (e) => calls.push({ promptId: e.promptId, model: e.model, ms: e.ms, out: e.outputTokens }),
+          sleep: (ms) => {
+            backoffs++;
+            return new Promise((r) => setTimeout(r, ms));
+          },
+        });
+      const provider = make(model);
+      const jobProvider = make(JOB_MODEL);
       const jd = file.replace(/\.txt$/, "");
       process.stdout.write(`${model} ${jd} ... `);
       try {
         const res = await tailorCv(readFileSync(join("tests/fixtures/jds", file), "utf8"), profile, {
           provider,
+          jobProvider,
           cache,
         });
+        const readJob = calls.some((c) => c.promptId === P2_PROMPT_ID);
+        if (readJob) jobSeconds.set(jd, res.timings.parseMs / 1000);
+        const parseS = readJob ? res.timings.parseMs / 1000 : (jobSeconds.get(jd) ?? 0);
         const { gapLeaks, unsupportedNumbers } = audit(res);
         const covered = res.matched.length - res.finalIssues.filter((i) => i.check === "coverage").length;
         const row: Row = {
           model,
           jd,
           ok: true,
-          totalS: res.timings.totalMs / 1000,
-          parseS: res.timings.parseMs / 1000,
+          totalS: (res.timings.totalMs - res.timings.parseMs) / 1000 + parseS,
+          parseS,
           tailorS: res.timings.tailorMs / 1000,
           fixS: res.timings.fixMs.map((m) => m / 1000),
           calls,

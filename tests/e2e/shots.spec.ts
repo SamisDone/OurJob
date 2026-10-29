@@ -83,7 +83,10 @@ for (const theme of ["light", "dark"] as const) {
         const page = await context.newPage();
         await shoot(page, `today-${kind}`, "/today", suffix);
         if (kind === "fresh") await shoot(page, "onboarding", "/onboarding", suffix);
-        else await shoot(page, "profile", "/profile", suffix);
+        else {
+          await shoot(page, "profile", "/profile", suffix);
+          await shoot(page, "settings", "/settings", suffix);
+        }
         await context.close();
       }
     }

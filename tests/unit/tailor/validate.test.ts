@@ -303,6 +303,16 @@ Requirements: production Go, Kafka and Postgres. Nice to have: OpenTelemetry.`;
     expect(res.removed).toEqual([]);
   });
 
+  it("reads the job post with the job model and writes with the chosen one", async () => {
+    // Each scripted model throws on a prompt it has no answer for.
+    const res = await tailorCv(jd, profile, {
+      provider: scripted({ "p3-tailor": [good()] }),
+      jobProvider: scripted({ "p2-job": [spec] }),
+      cache: memory(),
+    });
+    expect(res.matched.map((m) => m.term)).toEqual(["Go", "Kafka", "Postgres"]);
+  });
+
   it("removes what still fails after two rounds and says why", async () => {
     const bad = good();
     bad.experience[1].bullets[0].text = "Built the merchant settlement API used by 3,000 merchants.";

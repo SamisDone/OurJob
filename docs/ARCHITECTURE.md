@@ -225,7 +225,7 @@ interface LLMProvider {
 - Gemini implementation uses the official Google Gen AI SDK for JavaScript (check the current package name and structured-output API in Google's docs). Model id from `LLM_MODEL`; choose a model that is listed as free-tier eligible on Google's pricing page at build time.
 - Retries on 429 with backoff; respect per-minute limits with a small token bucket.
 - Mock provider for tests reads `tests/fixtures/llm/<promptId>/<hash>.json` (an exact recording of the prompt, written by the recording provider during `pnpm eval:prompts --record`), and otherwise the first fixture in that folder whose `match` strings all appear in the prompt, so fixtures survive prompt wording changes.
-- Model: `LLM_MODEL` (default `gemini-3.8-flash`), with `LLM_FALLBACK_MODEL` (default `gemini-3.5-flash-lite`) tried when the main model keeps answering 503 or 429. The SDK's own retries are turned off so a busy model cannot block a request for minutes. An optional `LLM_THOROUGH_MODEL` is offered in Settings as the "Thorough" model for tailoring (stored per person in `users.tailor_model`); when it is busy, tailoring falls back to `LLM_MODEL`.
+- Model: `LLM_MODEL` (default `gemini-3.5-flash-lite`), with `LLM_FALLBACK_MODEL` (default `gemini-3.8-flash`) tried when the main model keeps answering 503 or 429. A 429 for a per-day quota is not retried; it goes straight to the fallback. The SDK's own retries are turned off so a busy model cannot block a request for minutes. An optional `LLM_THOROUGH_MODEL` (suggested `gemini-3.8-flash`) is offered in Settings as the "Thorough" model for tailoring (stored per person in `users.tailor_model`). It writes the CV (P3 and fixes); the job post (P2) is always read by `LLM_MODEL`. When it is busy or out of daily quota, tailoring falls back to `LLM_MODEL`.
 - Never log prompt inputs that contain CV text; log prompt id, token counts, latency.
 
 ## 10. Security
@@ -254,7 +254,9 @@ DATABASE_URL=
 # LLM
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=
-LLM_MODEL=                      # pick a free-tier eligible model at build time
+LLM_MODEL=gemini-3.5-flash-lite
+LLM_FALLBACK_MODEL=gemini-3.8-flash
+LLM_THOROUGH_MODEL=gemini-3.8-flash
 LLM_DAILY_CALL_BUDGET=40
 
 # Sources (tier 3 optional)
