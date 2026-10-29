@@ -29,7 +29,15 @@ export async function buildProfile(
     schema: p1OutputSchema,
     temperature: 0.1,
   });
-  return { profile: normalizeProfile(res.data), cached: res.cached };
+  const profile = normalizeProfile(res.data);
+  // Backstop for a fact models sometimes skip: an email written in the CV.
+  // Copied from the source text, never made up.
+  if (!profile.basics.email) {
+    const cvText = sources.find((s) => s.kind.startsWith("cv_"))?.text ?? "";
+    const email = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.exec(cvText)?.[0];
+    if (email) profile.basics.email = email;
+  }
+  return { profile, cached: res.cached };
 }
 
 /**

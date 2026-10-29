@@ -51,8 +51,13 @@ export function compareProfile(p: MasterProfile, x: ExpectedFacts): string[] {
   for (const c of x.certifications)
     if (!p.certifications.some((q) => eq(q.name, c))) missing.push(`certification: ${c} missing`);
 
-  const metrics = [...p.experience, ...p.projects].flatMap((i) => i.bullets.flatMap((b) => b.metrics));
-  for (const m of x.metrics) if (!metrics.some((q) => q.value.includes(m))) missing.push(`metric: ${m} missing`);
+  // A number counts as kept when it survives in a bullet's text: the tailoring
+  // validator checks numbers against source text or metrics, so how the model
+  // splits a metric ("p99 under 80 ms" or "80 ms") does not matter. Hedges are
+  // checked on metrics, because losing "roughly" changes the claim.
+  const bullets = [...p.experience, ...p.projects].flatMap((i) => i.bullets);
+  const metrics = bullets.flatMap((b) => b.metrics);
+  for (const m of x.metrics) if (!bullets.some((b) => b.text.includes(m))) missing.push(`metric: ${m} missing`);
   for (const h of x.hedges) {
     if (!metrics.some((q) => q.value.includes(h.value) && eq(q.hedge, h.hedge)))
       missing.push(`hedge: "${h.hedge}" on ${h.value} missing`);

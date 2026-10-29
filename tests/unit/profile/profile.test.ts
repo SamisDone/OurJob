@@ -140,6 +140,21 @@ describe("each fixture CV produces a complete profile (Phase 1 done criterion)",
     expect(compareProfile(profile, expected(name))).toEqual([]);
   });
 
+  it("copies the email from the CV text when the model leaves it out", async () => {
+    const { profile } = await buildProfile([{ kind: "cv_md", text: "# Mei Lin Tan\nmeilin.tan@example.com\nReact" }], {
+      provider: {
+        name: "fake",
+        model: "fake",
+        generateJSON: async ({ schema }) => ({
+          data: schema.parse({ basics: { name: "Mei Lin Tan" } }),
+          usage: { inputTokens: 0, outputTokens: 0 },
+        }),
+      },
+      cache: memoryCache(),
+    });
+    expect(profile.basics.email).toBe("meilin.tan@example.com");
+  });
+
   it("needs a CV before anything else", async () => {
     await expect(buildProfile([{ kind: "github", text: "x" }], deps())).rejects.toThrow("A CV is needed");
   });

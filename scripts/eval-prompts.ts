@@ -3,6 +3,7 @@
  * how close each answer is to the hand-written expected facts.
  *   pnpm eval:prompts            P1 and P5 on tests/fixtures
  *   pnpm eval:prompts --record   also save each answer as an exact-hash mock fixture
+ *   pnpm eval:prompts --only=mei-lin-tan   one fixture
  * Never point this at real CV data unless it lives in tests/private/ (git-ignored),
  * and never use --record with real data.
  */
@@ -46,7 +47,8 @@ async function main() {
   const cache: CacheStore = { get: async (k) => memory.get(k), set: async (k, v) => void memory.set(k, v) };
 
   const rows: string[] = [];
-  for (const fx of FIXTURES) {
+  const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
+  for (const fx of FIXTURES.filter((f) => !only || f.name === only)) {
     const sources = [];
     for (const [file, linkedin] of fx.files) {
       const r = await extractUpload(file.split("/").pop()!, new Uint8Array(readFileSync(`tests/fixtures/${file}`)), {
