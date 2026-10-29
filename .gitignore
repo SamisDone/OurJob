@@ -33,3 +33,6 @@ next-env.d.ts
 *.pem
 .DS_Store
 /build
+
+# session hand-off notes (regenerated per session, not part of the repo)
+SESSION_HANDOFF.md
