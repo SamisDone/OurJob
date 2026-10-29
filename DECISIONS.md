@@ -344,6 +344,48 @@ Checked against current docs: Vercel's region list (`sin1` is Singapore, ap-sout
 - `APP_URL` was listed in `.env.example` but nothing reads it; removed. `DATABASE_URL_UNPOOLED` added.
 - Env vars for Production only, so preview deployments never touch the production database. Google sign-in only works on the production address anyway.
 
+## 2026-10-29: Lite is the default model; Flash is the optional Thorough model
+
+Sam's rule: if the lite model passes the validator as well as the bigger one, make it the default and keep the bigger one optional in Settings; target under 45 s from paste to result. `pnpm eval:tailor` ran the whole pipeline (clean, P2, keyword split, P3, validator, fix loop) on the ten fictional posts in `tests/fixtures/jds` against Nadia's fictional profile.
+- gemini-3.5-flash-lite: 10 of 10 finished, median 13.0 s, slowest 16.8 s (P2 about 5 s, P3 about 7 s). Every first draft passed the validator with nothing to fix: no unsupported numbers, no gap keywords, no em dashes, every matched keyword used. The prompt injection in post 08 was ignored. The weakness the validator cannot see: lite rewrites little (13 of 45 bullets reworded, 23 of 53 matched keywords inside bullets rather than only in skills).
+- gemini-3.8-flash: no result. It answered 503 for the first five posts, then 429. The 429 body says why: the free tier allows 20 requests per day per model for it (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, saved as `tests/fixtures/llm/gemini/daily-quota-429.json`). An hour of retries did not get through.
+- Decision: lite is `LLM_MODEL` (used for everything) and Flash is the fallback and the suggested `LLM_THOROUGH_MODEL`. Even if Flash rewrites better, 20 requests a day is about 5 to 10 tailored CVs, so it cannot be the default on the free tier. Lite has passed 30+ calls in a day with no 429, so its daily limit is higher; AI Studio shows the exact number.
+- The Thorough model only writes the CV (P3 and fixes). The job post is always read by the standard model: P2 is extraction checked in code by `checkJobSpec`, and this halves Thorough's quota use. The eval does the same and shares one P2 answer per post between models, so they tailor from the same job spec.
+- A 429 for a daily quota is no longer retried (retrying cannot help); the provider goes straight to the fallback, and without one it says the limit resets in N hours instead of "wait about a minute".
+- The Settings copy no longer claims Thorough "rewords more": that is unmeasured. To measure it once Flash's quota resets: `pnpm eval:tailor --models=gemini-3.8-flash --out=eval-output/run2` (about 10 to 15 Flash calls), then `pnpm exec tsx scripts/eval-tailor-summary.ts eval-output/run2`.
+
+## 2026-10-30: P3 rewords and places keywords; copied job claims are caught in code
+
+Lite copied most source bullets as they were and left matched keywords in the skills list. p3.2 adds, per source bullet, the matched terms that bullet's own text proves (`<placement>`), the terms proven only by a tech line or skills (`<tech_only>`, kept out of bullets: joining a role's tech line to one of its bullets can invent a claim such as "built the rate-quote service in Go"), a "how to write each bullet" section and one fictional example. A first version also told the model to use the job's words; lite then pasted a job responsibility into a bullet ("Ingest data from APIs, SFTP drops and Kafka topics by..."), an invented claim the validator could not see. That instruction is gone, the prompt now forbids it, and validator check 2b (`copiedJobPhrase`) catches a 5-word run shared with the job post that brings in a content word the bullet's sources never use. On all 79 bullets of both runs below it flags only that one.
+
+Measured on the 10 fictional posts with gemini-3.5-flash-lite, P2 included (`pnpm eval:tailor`, summary by `scripts/eval-tailor-summary.ts`):
+
+| | Before (p3.1) | After (p3.2) |
+|---|---|---|
+| Runs ok | 10/10 | 10/10 |
+| Bullets reworded (any change) | 11/47 (23%) | 19/34 (56%) |
+| Bullets with 20%+ new words | 2 | 0 |
+| Matched keywords in bullets | 24/56 | 20/52 |
+| ...of those a source bullet proves (placeable) | 21 (3 came from tech lines) | 20 of 20 |
+| Validator first pass clean | 10/10 | 10/10 |
+| Gap leaks, unsupported numbers | 0, 0 | 0, 0 |
+| Bullets copying the job post | 0 | 0 |
+| Median time | 56.3 s | 47.7 s |
+| Under 45 s | 3/10 | 2/10 |
+
+- "20%+ new words" stays low by design: the profile allows reordering, trimming and choosing which facts lead, not new vocabulary. Nadia's fixture has five source bullets, so "placeable" is the honest ceiling for keywords in bullets; the rest go to skills and Tech lines, which the ATS score counts as experience.
+- After uses fewer bullets (3.4 per CV against 4.7). The "leave a bullet out rather than bend it" rule likely does this; watch it on a richer profile.
+- Time: lite answered slowly on 2026-10-29 and 30 (15 to 35 s per call against about 6 s in the first run), so both runs miss the 45 s target mostly on API latency; P2 alone took 15 to 50 s.
+
+## 2026-10-30: Tailoring keeps every role bullet; the fallback model is a hedge after 20 s
+
+Sam: tailoring must not drop real experience. p3.2 (and p3.1 before it) cut role bullets to fit the old "1 or 2 bullets per role" length rule, silently: 19 of 60 role bullets left out across the 10 posts with p3.1, 33 of 60 with p3.2, none with a reason.
+- p3.3/p3.4: every role is kept, one tailored bullet per source bullet; one page is reached by shorter bullets and fewer projects. A role bullet may be left out only when it is clearly irrelevant, with a note "Left out <id>: <what it is about> is unrelated to <what the job needs>".
+- Validator check 9 (code, not just prompt): a role's source bullet that no tailored bullet uses goes to the fix loop ("Keep b_1_3 from Parcelwise..."), which adds it back, unless a note names its id with a specific reason of 6 words or more ("irrelevant to this job" was the reason p3.3 gave for leaving out the Go rate-quote bullet on a payments job, so generic reasons do not count). Bullets the fix loop removes for accuracy get such a note automatically. `scripts/eval-tailor-summary.ts` prints source against tailored bullets per role and every left-out bullet with its reason.
+- 10 posts, lite, p3.4: 60 of 60 role bullets kept, 0 left out, 9 of 10 first pass clean (one fixed in one round), 0 gap leaks, 0 unsupported numbers, 0 copied job claims, matched keywords 53 of 53 used and every placeable one in a bullet, median 9.2 s (lite was fast again; every post under 45 s).
+- Speed: when the main model has not answered after `LLM_SLOW_MS` (default 20 s), the fallback is asked as well, the first answer wins and the other request is cancelled (`abortSignal`, client-side; the cancelled call still counts against quota). If the fallback fails, for example Flash's 20-a-day free quota is used up, the main answer is still awaited. Not exercised in the run above: lite answered every call in under 20 s.
+- The workspace shows three steps while tailoring runs, from the pipeline's stages: Reading the job, Tailoring your CV, Checking every fact against your profile (redesign branch, where the Tailor screen is wired).
+
 ## 2026-10-29: Redesign with standard shadcn/ui
 
 Sam and Pratik found the "index card and ballpoint" design confusing and cramped, and the fonts and colors wrong. They asked for a clean, familiar app like the official shadcn examples, Linear and Vercel. This replaces the visual direction in DESIGN.md (sections 1, 3, 4, 6, 10 and 11 rewritten); behavior, accessibility, copy rules and states are unchanged. It reverses the Phase 0 entries "shadcn/ui: primitives written by hand" and "Tailwind theme is cleared".

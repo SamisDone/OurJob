@@ -42,7 +42,15 @@ export type TailorResult = {
 
 export type TailorStage = "reading" | "tailoring" | "checking";
 
-type Deps = { provider: LLMProvider; cache: CacheStore; now?: () => number; onStage?: (s: TailorStage) => void };
+type Deps = {
+  /** Writes the CV (P3 and fixes). This is the model he picked in Settings. */
+  provider: LLMProvider;
+  /** Reads the job post (P2). Defaults to `provider`; the app passes the standard model, so Thorough only rewrites. */
+  jobProvider?: LLMProvider;
+  cache: CacheStore;
+  now?: () => number;
+  onStage?: (s: TailorStage) => void;
+};
 
 /** Paste to tailored CV: clean, P2, matched and gaps, P3, validator, fix loop. */
 export async function tailorCv(
@@ -54,7 +62,10 @@ export async function tailorCv(
   const now = deps.now ?? Date.now;
   const t0 = now();
   deps.onStage?.("reading");
-  const { cleaned, spec, dropped } = await parseJob(pasted, deps);
+  const { cleaned, spec, dropped } = await parseJob(pasted, {
+    provider: deps.jobProvider ?? deps.provider,
+    cache: deps.cache,
+  });
   const t1 = now();
 
   const { matched, gaps } = splitKeywords(spec, profile);
@@ -70,7 +81,7 @@ export async function tailorCv(
   const t2 = now();
 
   deps.onStage?.("checking");
-  const ctx = { profile, matched, gaps, pages: opts.pages };
+  const ctx = { profile, matched, gaps, pages: opts.pages, jobText: cleaned };
   let { resume, issues } = validateTailored(first.data, ctx);
   const firstIssues = issues;
   const fixMs: number[] = [];
@@ -104,6 +115,16 @@ export async function tailorCv(
       ([ref]) => ref === "summary" || /^(experience|projects):[^:]+:\d+$/.test(ref),
     );
     for (const [ref, reasons] of drop) removed.push({ ref, text: textAt(resume, ref) ?? "", reasons });
+    // The kept-experience check (9) then reports these as removed for accuracy instead of asking for them back.
+    const ids = drop.flatMap(([ref]) => bulletAt(resume, ref)?.sourceIds ?? []);
+    if (ids.length)
+      resume = {
+        ...resume,
+        notes: [
+          ...resume.notes,
+          `Left out ${ids.join(", ")}: removed for accuracy, because the fact check could not confirm it from your profile.`,
+        ],
+      };
     resume = removeRefs(
       resume,
       drop.map(([ref]) => ref),

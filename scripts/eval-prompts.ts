@@ -33,12 +33,12 @@ const FIXTURES: { name: string; files: [string, boolean][] }[] = [
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set in .env.local");
-  const model = process.env.LLM_MODEL || "gemini-3.8-flash";
+  const model = process.env.LLM_MODEL || "gemini-3.5-flash-lite";
   const used: string[] = [];
   let provider = createGeminiProvider({
     apiKey,
     model,
-    fallbackModel: process.env.LLM_FALLBACK_MODEL || "gemini-3.5-flash-lite",
+    fallbackModel: process.env.LLM_FALLBACK_MODEL || "gemini-3.8-flash",
     rpm: Number(process.env.LLM_RPM) || 8,
     log: (e) => used.push(`${e.promptId} ${e.model} ${e.ms}ms in=${e.inputTokens} out=${e.outputTokens}`),
   });

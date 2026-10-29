@@ -12,7 +12,7 @@ config({ path: [".env.local", ".env"], quiet: true });
 
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.LLM_MODEL || "gemini-3.8-flash";
+  const model = process.env.LLM_MODEL || "gemini-3.5-flash-lite";
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set in .env.local");
   const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 90_000, retryOptions: { attempts: 1 } } });
   const started = Date.now();

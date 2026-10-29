@@ -54,19 +54,20 @@ The app runs on Vercel with its functions in Singapore (`vercel.json` sets `sin1
 3. **Secret.** Generate a new `AUTH_SECRET` for production (`npx auth secret` or `openssl rand -base64 32`). Do not reuse the local one.
 4. **Vercel.** Import the GitHub repository (framework and pnpm are detected). Before the first deploy, add these environment variables for the **Production** environment only:
 
-   | Variable             | Value                                                             | Needed   |
-   | -------------------- | ----------------------------------------------------------------- | -------- |
-   | `DATABASE_URL`       | Neon **pooled** string                                            | now      |
-   | `AUTH_SECRET`        | from step 3                                                       | now      |
-   | `AUTH_GOOGLE_ID`     | Google OAuth client ID                                            | now      |
-   | `AUTH_GOOGLE_SECRET` | Google OAuth client secret                                        | now      |
-   | `ALLOWED_EMAILS`     | comma-separated Google emails allowed to sign in                  | now      |
-   | `GEMINI_API_KEY`     | from Google AI Studio                                             | now      |
-   | `LLM_PROVIDER`       | `gemini`                                                          | now      |
-   | `LLM_MODEL`          | `gemini-3.8-flash`                                                | now      |
-   | `LLM_FALLBACK_MODEL` | `gemini-3.5-flash-lite`                                           | now      |
-   | `LLM_RPM`            | requests per minute, default 8                                    | optional |
-   | `GITHUB_TOKEN`       | a token with no scopes, raises GitHub's limits for profile import | optional |
+   | Variable | Value | Needed |
+   |---|---|---|
+   | `DATABASE_URL` | Neon **pooled** string | now |
+   | `AUTH_SECRET` | from step 3 | now |
+   | `AUTH_GOOGLE_ID` | Google OAuth client ID | now |
+   | `AUTH_GOOGLE_SECRET` | Google OAuth client secret | now |
+   | `ALLOWED_EMAILS` | comma-separated Google emails allowed to sign in | now |
+   | `GEMINI_API_KEY` | from Google AI Studio | now |
+   | `LLM_PROVIDER` | `gemini` | now |
+   | `LLM_MODEL` | `gemini-3.5-flash-lite` | now |
+   | `LLM_FALLBACK_MODEL` | `gemini-3.8-flash` | now |
+   | `LLM_THOROUGH_MODEL` | `gemini-3.8-flash`, offered in Settings for tailoring | optional |
+   | `LLM_RPM` | requests per minute, default 8 | optional |
+   | `GITHUB_TOKEN` | a token with no scopes, raises GitHub's limits for profile import | optional |
 
    Leave out `ENABLE_DESIGN_TILE` (so `/design` stays a 404), `AUTH_URL` and `AUTH_TRUST_HOST` (Auth.js reads the host from Vercel's headers). The job pipeline variables in `.env.example` are not needed until the daily search exists. Then deploy.
 

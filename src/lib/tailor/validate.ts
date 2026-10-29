@@ -14,7 +14,18 @@ import { extractNumbers, unsupportedReason } from "./numbers";
  */
 
 export type CheckId =
-  "ids" | "source" | "numbers" | "bold" | "tech" | "skills" | "gap" | "coverage" | "style" | "length" | "order";
+  | "ids"
+  | "source"
+  | "numbers"
+  | "bold"
+  | "tech"
+  | "skills"
+  | "gap"
+  | "coverage"
+  | "style"
+  | "length"
+  | "order"
+  | "kept";
 
 export type Issue = {
   check: CheckId;
@@ -29,7 +40,39 @@ export type ValidateContext = {
   matched: MatchedKeyword[];
   gaps: GapKeyword[];
   pages: 1 | 2;
+  /** The cleaned job post. When given, bullets that copy its claims are caught (check 2b). */
+  jobText?: string;
 };
+
+const STOPWORDS = new Set(
+  "a an and are as at be by for from has have in into is it its of on or our that the their this to was we were will with you your".split(
+    " ",
+  ),
+);
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .match(/[a-z0-9+#.%]+/g)
+    ?.map((w) => w.replace(/\.$/, "")) ?? [];
+
+/**
+ * Check 2b: runs of 5 words that a bullet shares with the job post and that
+ * bring in a content word its sources never use. That is the job's claim
+ * pasted into his CV ("Ingest data from APIs, SFTP drops..."), not his
+ * experience reworded. Returns the first such phrase, or null.
+ */
+export function copiedJobPhrase(text: string, sources: string, jobText: string, n = 5): string | null {
+  const job = words(jobText);
+  const jobGrams = new Set(job.map((_, i) => job.slice(i, i + n).join(" ")).filter((g) => g.split(" ").length === n));
+  const sourceWords = new Set(words(sources));
+  const w = words(text);
+  for (let i = 0; i + n <= w.length; i++) {
+    const gram = w.slice(i, i + n);
+    if (!jobGrams.has(gram.join(" "))) continue;
+    if (gram.some((x) => !STOPWORDS.has(x) && x.length > 2 && !sourceWords.has(x))) return gram.join(" ");
+  }
+  return null;
+}
 
 export const BANNED_WORDS = [
   "spearheaded",
@@ -246,6 +289,15 @@ export function validateTailored(
   /* Bullets: 2 source support, 3 numbers, 3b bold and tech, 4 unknown skills, 5 gap leaks, 7 banned words. */
   const checkText = (text: string, sourceIds: string[], ref: string) => {
     const sources = sourceIds.map((id) => src.get(id) ?? "").join("\n");
+    const copied = ctx.jobText ? copiedJobPhrase(text, sources, ctx.jobText) : null;
+    if (copied) {
+      issues.push({
+        check: "source",
+        ref,
+        message: `Copies "${copied}" from the job post; its source items do not describe that. Describe only what the source says.`,
+        action: "fix",
+      });
+    }
     const sourceNumbers = extractNumbers(sources);
     for (const n of extractNumbers(text)) {
       const reason = unsupportedReason(n, sourceNumbers);
@@ -353,19 +405,60 @@ export function validateTailored(
     }
   }
 
-  /* 8. Length. */
+  /* 9. Kept experience: every source bullet of every role is used, unless the notes say why it was left out. */
+  for (const left of leftOutBullets(resume, p)) {
+    // A reason counts only when it says something specific: "irrelevant to this job" does not.
+    const note = resume.notes.find((n) => n.includes(left.bulletId) && reasonWords(n) >= 6);
+    issues.push(
+      note
+        ? {
+            check: "kept",
+            ref: "resume",
+            message: `Left out from ${left.company}: "${left.text}" (${note})`,
+            action: "report",
+          }
+        : {
+            check: "kept",
+            ref: "resume",
+            message: `Keep ${left.bulletId} from ${left.company} ("${left.text}"): add it as a bullet to experience:${left.roleId}. Leave it out only if it is clearly irrelevant to this job, with a note saying what it is about and what the job needs instead.`,
+            action: "fix",
+          },
+    );
+  }
+
+  /* 8. Length. Shorten first: real experience is not dropped to fit (check 9). */
   const lines = estimateLines(resume);
   const budget = LINES_PER_PAGE * ctx.pages;
   if (lines > budget) {
     issues.push({
       check: "length",
       ref: "resume",
-      message: `About ${Math.round(lines)} lines for a ${ctx.pages}-page CV that fits ${budget}. Remove or shorten the least relevant bullets.`,
+      message: `About ${Math.round(lines)} lines for a ${ctx.pages}-page CV that fits ${budget}. Shorten bullets, drop projects, or remove only role bullets that are clearly irrelevant to this job.`,
       action: "fix",
     });
   }
 
   return { resume, issues };
+}
+
+/** Words in a note after its "Left out <id>:" prefix. */
+const reasonWords = (note: string) =>
+  note
+    .replace(/^[^:]*:/, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+export type LeftOutBullet = { roleId: string; company: string; bulletId: string; text: string };
+
+/** Source bullets of the profile's roles that no tailored bullet uses, including those of a role left out entirely. */
+export function leftOutBullets(resume: TailoredResume, p: MasterProfile): LeftOutBullet[] {
+  const used = new Set(resume.experience.flatMap((e) => e.bullets.flatMap((b) => b.sourceIds)));
+  return p.experience.flatMap((e) =>
+    e.bullets
+      .filter((b) => !used.has(b.id))
+      .map((b) => ({ roleId: e.id, company: e.company, bulletId: b.id, text: b.text })),
+  );
 }
 
 /** Bullet refs and the summary that still need the model, with their messages. */

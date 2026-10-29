@@ -10,15 +10,20 @@ export { cachedGenerate } from "./cache";
 export { LLMError } from "./types";
 export type { LLMProvider } from "./types";
 
-/** Default model: the newest Flash model Google lists as free-tier eligible (checked 2026-10-29). */
-export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
-/** Sam's choice for when the main model stays busy (503) or rate limited. Also free-tier eligible. */
-export const DEFAULT_FALLBACK_MODEL = "gemini-3.5-flash-lite";
+/**
+ * Default model: lite passed every validator check on ten fictional posts in
+ * about 13 s, and Flash's free tier allows only 20 requests a day
+ * (DECISIONS.md, 2026-10-29). Both are free-tier eligible.
+ */
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
+/** Tried when the main model stays busy (503) or rate limited. */
+export const DEFAULT_FALLBACK_MODEL = "gemini-3.8-flash";
 
 /**
  * "standard" is LLM_MODEL, used for everything. "thorough" is the optional
- * LLM_THOROUGH_MODEL, which he can pick for tailoring in Settings; when it is
- * busy it falls back to the standard model.
+ * LLM_THOROUGH_MODEL, which he can pick in Settings for writing the tailored
+ * CV (the job post is still read by the standard model); when it is busy or its
+ * daily limit is used up, it falls back to the standard model.
  */
 export type ModelTier = "standard" | "thorough";
 
@@ -50,6 +55,8 @@ export function getLLMProvider(tier: ModelTier = "standard"): LLMProvider {
       model: useTier === "thorough" ? thorough! : standard,
       fallbackModel: useTier === "thorough" ? standard : process.env.LLM_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
       rpm: Number(process.env.LLM_RPM) || undefined,
+      // Ask the fallback too when the main model is this slow (ms); default 20 s.
+      slowMs: Number(process.env.LLM_SLOW_MS) || undefined,
     });
   } else {
     throw new LLMError("auth", `Unknown LLM_PROVIDER "${kind}". Use gemini or mock.`);
