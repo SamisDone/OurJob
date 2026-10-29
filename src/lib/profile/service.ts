@@ -51,10 +51,12 @@ export async function rebuildProfile(userId: string) {
 }
 
 export async function editProfile(userId: string, ops: EditOp[]) {
-  const current = await store.getCurrentProfile(d(), userId);
-  if (!current) throw new Error("There is no profile to edit yet.");
-  const { profile, notes } = applyEdits(current.data, ops);
-  return store.saveProfileVersion(d(), userId, profile, { note: notes.join("; ") });
+  // Read, edit and save under the profile lock, so two quick edits never overwrite each other.
+  return store.updateProfile(d(), userId, (current) => {
+    if (!current) throw new Error("There is no profile to edit yet.");
+    const { profile, notes } = applyEdits(current.data, ops);
+    return { data: profile, note: notes.join("; ") };
+  });
 }
 
 /**

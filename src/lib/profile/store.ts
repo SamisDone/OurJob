@@ -67,16 +67,17 @@ async function lockProfile(tx: Tx, userId: string) {
 }
 
 /**
- * Saves `data` as the newest version and makes it current. A confirmed
- * profile stays confirmed: edits after onboarding do not send him back to it.
+ * Reads the current version, lets `update` derive the next one from it, and
+ * saves that as the newest version, all under the profile lock. Edits must go
+ * through here: an edit computed from a version read outside the lock could
+ * overwrite a change saved in between. A confirmed profile stays confirmed:
+ * edits after onboarding do not send him back to it.
  */
-export async function saveProfileVersion(
+export async function updateProfile(
   db: Db,
   userId: string,
-  data: MasterProfile,
-  opts: { note?: string; confirmed?: boolean } = {},
+  update: (current: ProfileVersion | null) => { data: MasterProfile; note?: string; confirmed?: boolean },
 ): Promise<ProfileVersion> {
-  const valid = masterProfileSchema.parse(data);
   return db.transaction(async (tx) => {
     await lockProfile(tx, userId);
     const [{ latest }] = await tx
@@ -84,9 +85,11 @@ export async function saveProfileVersion(
       .from(schema.masterProfiles)
       .where(eq(schema.masterProfiles.userId, userId));
     const [prev] = await tx
-      .select({ confirmedAt: schema.masterProfiles.confirmedAt })
+      .select()
       .from(schema.masterProfiles)
       .where(and(eq(schema.masterProfiles.userId, userId), eq(schema.masterProfiles.isCurrent, true)));
+    const next = update(prev ? toVersion(prev) : null);
+    const valid = masterProfileSchema.parse(next.data);
     await tx
       .update(schema.masterProfiles)
       .set({ isCurrent: false })
@@ -98,12 +101,22 @@ export async function saveProfileVersion(
         version: (latest ?? 0) + 1,
         data: valid,
         isCurrent: true,
-        note: opts.note?.slice(0, 300) ?? null,
-        confirmedAt: opts.confirmed ? new Date() : (prev?.confirmedAt ?? null),
+        note: next.note?.slice(0, 300) ?? null,
+        confirmedAt: next.confirmed ? new Date() : (prev?.confirmedAt ?? null),
       })
       .returning();
     return toVersion(row);
   });
+}
+
+/** Saves `data` as the newest version and makes it current (a rebuild or a restore, not an edit). */
+export async function saveProfileVersion(
+  db: Db,
+  userId: string,
+  data: MasterProfile,
+  opts: { note?: string; confirmed?: boolean } = {},
+): Promise<ProfileVersion> {
+  return updateProfile(db, userId, () => ({ data, ...opts }));
 }
 
 export async function restoreVersion(db: Db, userId: string, version: number): Promise<ProfileVersion> {

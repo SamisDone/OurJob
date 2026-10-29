@@ -18,6 +18,7 @@ import {
   saveProfileVersion,
   savePreferences,
   saveSource,
+  updateProfile,
   type Db,
 } from "@/lib/profile/store";
 
@@ -65,6 +66,23 @@ describe("profile versions (Postgres via PGlite, real migrations)", () => {
     const current = await getCurrentProfile(db, userId);
     const next = await saveProfileVersion(db, userId, current!.data, { note: "x" });
     expect(next.confirmedAt).not.toBeNull();
+  });
+
+  it("keeps both of two edits sent at the same time", async () => {
+    const [u] = await (db as unknown as ReturnType<typeof drizzle<typeof schema>>)
+      .insert(schema.users)
+      .values({ email: "two-edits@example.com" })
+      .returning();
+    await saveProfileVersion(db, u.id, nadia(), { note: "Built" });
+    const edit = (fields: Record<string, string>) =>
+      updateProfile(db, u.id, (current) => {
+        const { profile, notes } = applyEdits(current!.data, [{ op: "setBasics", fields }]);
+        return { data: profile, note: notes.join("; ") };
+      });
+    await Promise.all([edit({ headline: "Platform engineer" }), edit({ location: "Dhaka, Bangladesh" })]);
+    const current = await getCurrentProfile(db, u.id);
+    expect(current?.data.basics).toMatchObject({ headline: "Platform engineer", location: "Dhaka, Bangladesh" });
+    expect(current?.version).toBe(3);
   });
 
   it("runs simultaneous saves and a confirm one at a time", async () => {
