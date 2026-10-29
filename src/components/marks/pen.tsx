@@ -60,7 +60,8 @@ export function penCirclePaths(seed: string): { stroke: string; fill: string } {
     const t = start + (i / steps) * turns * Math.PI * 2;
     // Radius drifts a little round the loop, and the end sits slightly outside the start.
     const drift = 1 + (rnd() - 0.5) * 0.07 + (i / steps) * 0.05;
-    const rx = 47 * drift;
+    // Widest point stays inside the 100-wide box (drift tops out near 1.08).
+    const rx = 45.5 * drift;
     const ry = 17.5 * drift;
     const x = cx + rx * Math.cos(t);
     const y = cy + ry * Math.sin(t) + x * tilt - 50 * tilt;
@@ -69,7 +70,7 @@ export function penCirclePaths(seed: string): { stroke: string; fill: string } {
   const fill: [number, number][] = [];
   for (let i = 0; i < 12; i++) {
     const t = (i / 12) * Math.PI * 2;
-    fill.push([cx + 45 * Math.cos(t), cy + 16 * Math.sin(t) + (cx + 45 * Math.cos(t)) * tilt - 50 * tilt]);
+    fill.push([cx + 44 * Math.cos(t), cy + 16 * Math.sin(t) + (cx + 44 * Math.cos(t)) * tilt - 50 * tilt]);
   }
   return { stroke: smoothPath(stroke, false), fill: smoothPath(fill, true) };
 }

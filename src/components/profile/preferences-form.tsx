@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Callout, ErrorState, Skeleton } from "@/components/ui/feedback";
 import { MultiToggle, Switch, TokenInput } from "@/components/ui/form-bits";
-import { FieldHint, Input, Label } from "@/components/ui/input";
+import { FieldError, FieldHint, Input, Label } from "@/components/ui/input";
 import { Combobox, Select } from "@/components/ui/select";
 import { Segmented } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
 import { countryOptions, regionsFor, timezoneOptions } from "@/lib/geo";
+import { formatAmount, parseAmountInput } from "@/lib/salary/input";
 import type { SearchPreferences } from "@/lib/profile/schema";
 import { usePreferences, useSavePreferences } from "@/lib/query/profile";
 
@@ -81,6 +82,9 @@ function Form({
     timezone: initial.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   }));
   const [scope, setScope] = useState<Scope>(scopeOf(initial));
+  // What he typed ("40k", "40,000" or "40000"); parsed on every change.
+  const [payText, setPayText] = useState(formatAmount(initial.minAnnualUsd));
+  const payInvalid = parseAmountInput(payText) === null;
   const save = useSavePreferences();
   const countries = useMemo(() => countryOptions(), []);
   const zones = useMemo(() => timezoneOptions(), []);
@@ -236,15 +240,23 @@ function Form({
         >
           <Input
             id="min-pay"
-            inputMode="numeric"
+            inputMode="decimal"
             className="sm:max-w-64"
-            placeholder="Optional"
-            value={p.minAnnualUsd ?? ""}
+            placeholder="Optional, for example 40k"
+            value={payText}
+            aria-invalid={payInvalid || undefined}
+            aria-describedby={payInvalid ? "min-pay-error" : undefined}
             onChange={(e) => {
-              const n = Number(e.target.value.replace(/[^\d]/g, ""));
-              set("minAnnualUsd", e.target.value.trim() === "" || !Number.isFinite(n) ? undefined : n);
+              setPayText(e.target.value);
+              const n = parseAmountInput(e.target.value);
+              if (n !== null) set("minAnnualUsd", n);
+            }}
+            onBlur={() => {
+              const n = parseAmountInput(payText);
+              if (n !== null) setPayText(formatAmount(n));
             }}
           />
+          {payInvalid && <FieldError id="min-pay-error">Enter an amount like 40k, 40,000 or 40000.</FieldError>}
         </Field>
         <Switch
           label="Show jobs that do not list pay"
@@ -308,7 +320,7 @@ function Form({
       </div>
 
       {save.isError && <ErrorState title="Your preferences were not saved.">{save.error.message}</ErrorState>}
-      <Button type="submit" disabled={save.isPending || p.targetTitles.length === 0}>
+      <Button type="submit" disabled={save.isPending || p.targetTitles.length === 0 || payInvalid}>
         {save.isPending ? "Saving" : saveLabel}
       </Button>
       {p.targetTitles.length === 0 && <FieldHint>Add at least one job title to save.</FieldHint>}

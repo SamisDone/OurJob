@@ -73,10 +73,13 @@ function Project({ entry }: { entry: CvProjectEntry }) {
 export function CvSheet({
   doc,
   className,
+  width,
   onPagesChange,
 }: {
   doc: CvDocument;
   className?: string;
+  /** Sheet width in CSS px. Without it the sheet fills its container. */
+  width?: number;
   onPagesChange?: (pages: number) => void;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -109,7 +112,7 @@ export function CvSheet({
   useEffect(() => onPagesChange?.(pages), [pages, onPagesChange]);
 
   return (
-    <div className={cn("cv-frame", className)}>
+    <div className={cn("cv-frame", className)} style={width ? { width, minWidth: width } : undefined}>
       <div
         ref={sheetRef}
         className="cv-sheet"

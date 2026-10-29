@@ -2,7 +2,7 @@
 
 import { DotsSixVerticalIcon, FileTextIcon } from "@phosphor-icons/react/ssr";
 import { DropdownMenu } from "radix-ui";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Stamp } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export function KanbanColumn({
     <section
       aria-label={`${name}, ${count} jobs`}
       className={cn(
-        "flex min-w-64 flex-1 flex-col rounded-panel border border-transparent p-2 transition-colors duration-200 ease-ink",
+        "flex w-full flex-col rounded-panel border border-transparent p-2 transition-colors duration-200 ease-ink md:w-[272px] md:shrink-0 md:snap-start",
         dropping && "border-dashed border-graphite bg-ink-wash",
       )}
     >
@@ -71,47 +71,79 @@ export function KanbanCard({
           <p className="mt-0.5 text-sm text-graphite">{company}</p>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-graphite">
-        <span>{moved}</span>
-        <div className="flex items-center gap-1">
-          {tailoredHref && (
-            <a
-              href={tailoredHref}
-              className="inline-flex items-center gap-1 rounded-[4px] px-1 text-ink hover:underline"
+      <p className="mt-2 text-xs text-graphite">{moved}</p>
+      {/* Actions on their own row so labels never wrap. */}
+      <div className="mt-2 flex items-center gap-1 border-t border-rule pt-2">
+        {tailoredHref && (
+          <a
+            href={tailoredHref}
+            className="inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-sm whitespace-nowrap text-ink hover:bg-ink-wash max-md:h-11"
+          >
+            <FileTextIcon size={16} aria-hidden />
+            Tailored CV
+          </a>
+        )}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger
+            className="ml-auto inline-flex h-8 items-center rounded-control px-2 text-sm whitespace-nowrap text-body hover:bg-ink-wash max-md:h-11"
+            aria-label={`Move ${title}`}
+          >
+            Move to
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              sideOffset={4}
+              align="end"
+              className="relative red-rule-top z-50 min-w-40 rounded-panel border border-rule bg-sheet p-1 text-sm text-body shadow-pop"
             >
-              <FileTextIcon size={14} aria-hidden />
-              Tailored CV
-            </a>
-          )}
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger
-              className="rounded-[4px] px-1.5 py-0.5 text-body hover:bg-ink-wash"
-              aria-label={`Move ${title}`}
-            >
-              Move to
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                sideOffset={4}
-                align="end"
-                className="z-50 min-w-40 rounded-panel border border-rule bg-sheet p-1 text-sm text-body shadow-pop"
-              >
-                {trackerColumns
-                  .filter((c) => c !== column)
-                  .map((c) => (
-                    <DropdownMenu.Item
-                      key={c}
-                      onSelect={() => onMove?.(c)}
-                      className="flex h-9 cursor-default items-center rounded-[6px] px-3 outline-none data-[highlighted]:bg-ink-wash"
-                    >
-                      {c}
-                    </DropdownMenu.Item>
-                  ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        </div>
+              {trackerColumns
+                .filter((c) => c !== column)
+                .map((c) => (
+                  <DropdownMenu.Item
+                    key={c}
+                    onSelect={() => onMove?.(c)}
+                    className="flex h-9 cursor-default items-center rounded-[6px] px-3 outline-none data-[highlighted]:bg-ink-wash max-md:h-11"
+                  >
+                    {c}
+                  </DropdownMenu.Item>
+                ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     </article>
+  );
+}
+
+/**
+ * The board: five columns side by side at a usable fixed width. Where they do
+ * not fit, it scrolls sideways (visible scrollbar, snap to columns) and says
+ * so; on phones the columns stack.
+ */
+export function KanbanBoard({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setOverflows(el.scrollWidth > el.clientWidth + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div>
+      {overflows && <p className="mb-2 hidden text-sm text-graphite md:block">Scroll sideways to see all five columns.</p>}
+      <div
+        ref={ref}
+        tabIndex={overflows ? 0 : undefined}
+        role="region"
+        aria-label="Tracker columns"
+        className="flex flex-col gap-3 pb-3 md:snap-x md:flex-row md:overflow-x-auto [scrollbar-color:var(--control-edge)_transparent]"
+      >
+        {children}
+      </div>
+    </div>
   );
 }

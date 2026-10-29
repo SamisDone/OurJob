@@ -52,12 +52,13 @@ function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean;
       className={cn(
         "relative flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-[120ms] ease-ink",
         active ? "font-medium text-ink" : "text-graphite hover:bg-ink-wash hover:text-ink",
+        "rail-center",
         collapsed && "justify-center px-0",
       )}
     >
       {active && <span className="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r-[2px] bg-ink" aria-hidden />}
       <I size={20} aria-hidden weight={active ? "fill" : "regular"} className="shrink-0" />
-      <span className={cn(collapsed && "sr-only")}>{item.label}</span>
+      <span className={cn("rail-label", collapsed && "sr-only")}>{item.label}</span>
     </Link>
   );
 }
@@ -74,10 +75,12 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
   const { signOut } = useSignOut();
 
   const toggle = () => setStored("ourjob-rail", collapsed ? "open" : "collapsed");
+  const compactRoute = pathname.startsWith("/tailor") || pathname.startsWith("/design");
 
   return (
     <QueryProvider>
-      <div className="min-h-dvh md:flex">
+      {/* The tailoring desk needs the width: there the rail shows icons only below 1440 px. */}
+      <div className="min-h-dvh md:flex" data-compact-rail={compactRoute || undefined}>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-sheet focus:px-3 focus:py-2"
@@ -88,16 +91,16 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
         <nav
           aria-label="Main"
           className={cn(
-            "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-paper px-3 py-4 md:flex",
+            "rail sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-paper px-3 py-4 md:flex",
             "transition-[width] duration-200 ease-ink",
-            collapsed ? "w-16" : "w-[220px] max-lg:w-16",
+            collapsed ? "w-16" : "w-[220px]",
           )}
         >
-          <div className={cn("flex h-10 items-center px-3", collapsed && "justify-center px-0")}>
-            <span className={cn(collapsed ? "hidden" : "max-lg:hidden")}>
+          <div className={cn("rail-center flex h-10 items-center px-3", collapsed && "justify-center px-0")}>
+            <span className={cn("rail-wide-only", collapsed && "hidden")}>
               <Wordmark />
             </span>
-            <span className={cn(collapsed ? "inline" : "hidden max-lg:inline")}>
+            <span className={cn(collapsed ? "inline" : "rail-compact-only")}>
               <Wordmark compact />
             </span>
           </div>
@@ -107,13 +110,14 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
             onClick={() => setPaletteOpen(true)}
             className={cn(
               "mt-4 flex h-9 items-center gap-2 rounded-control border border-rule px-3 text-sm text-graphite hover:border-graphite hover:text-ink",
-              (collapsed && "justify-center px-0") || "max-lg:justify-center max-lg:px-0",
+              "rail-center",
+              collapsed && "justify-center px-0",
             )}
             aria-label="Open command palette"
           >
             <MagnifyingGlassIcon size={16} aria-hidden />
-            <span className={cn("flex-1 text-left", collapsed ? "sr-only" : "max-lg:sr-only")}>Search</span>
-            <span className={cn(collapsed ? "hidden" : "max-lg:hidden")}>
+            <span className={cn("rail-label flex-1 text-left", collapsed && "sr-only")}>Search</span>
+            <span className={cn("rail-wide-only", collapsed && "hidden")}>
               <Kbd>Ctrl K</Kbd>
             </span>
           </button>
@@ -132,7 +136,7 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
                 <RailLink item={item} active={isActive(pathname, item.href)} collapsed={collapsed} />
               </li>
             ))}
-            <li className="max-lg:hidden">
+            <li className="rail-wide-only">
               <button
                 type="button"
                 onClick={toggle}

@@ -117,7 +117,7 @@ Desktop (>= 1024 px)
 Mobile (< 768 px): bottom bar with Today, Tailor, Tracker, More.
 ```
 
-- Rail: 220 px with labels, collapsible to 64 px icons. Active item: ink text with a 3 px ink bar on the left.
+- Rail: 220 px with labels, collapsible to 64 px icons. Active item: ink text with a 3 px ink bar on the left. The rail shows icons only from 768 to 1023 px, and on the tailor workspace below 1440 px, where the three columns need the room.
 - Account item at the bottom of the rail: his Google avatar (24 px, initial on `--circle-fill` if there is no photo) and display name; avatar only when the rail is collapsed. It opens a small menu (an index card with the red rule) showing the signed-in email, "Settings" and "Sign out".
 - Mobile: the "More" sheet ends with "Signed in as {email}" and a full-width "Sign out" secondary button.
 - Sign out: no confirmation (nothing is lost). It clears the client data cache, ends the session and lands on /sign-in with a quiet "Signed out." note in `--graphite`. Never red: it is a secondary action, not a destructive one.
@@ -130,13 +130,15 @@ Mobile (< 768 px): bottom bar with Today, Tailor, Tracker, More.
 Centered, minimal. App name, one sentence ("Tailored CVs and fresh remote jobs, every morning."), "Continue with Google". If the email is not allowed: "This account is not on the allowlist for this deployment. Ask the owner to add your email."
 
 ### 5.2 Onboarding (a real sequence, so numbered steps are fine)
-1. **Add your CV.** Large drop zone (PDF, DOCX, MD). After upload, show extracted text preview with a "Looks right" check.
+1. **Add your CV.** The page heading says what to do; no second heading in the card. The upload area is an index card (white, red rule, ruled lines behind the text, no dashed box) holding one line, "LaTeX (.tex), PDF, Word (.docx) or Markdown, up to 5 MB. Only you can see it.", and a "Choose a file" button below the lines. Dropping a file anywhere on the card works; while a file is dragged over it, the line reads "Drop to upload". Under the card: "Using Overleaf? Open Menu, then Download source, and upload the .tex file." and a link, "Paste your CV as text instead", that opens a text area. After upload, show extracted text preview with a "Looks right" check.
 2. **Add more sources (optional).** LinkedIn PDF (with a short how-to: on your LinkedIn profile, More, then Save to PDF), GitHub username, portfolio URL. Each shows what was found ("12 public repos, 6 with READMEs").
 3. **Review your profile.** The profile editor (5.8) in a guided mode. Conflicts first, as a short list to resolve.
 4. **Set what you are looking for.** Pre-filled preferences from P5. Plain-language controls: "Where can you work from?" with country and timezone, "What kind of remote?" segmented control (Worldwide / My region / Also on-site in...).
 5. **First search.** (Needs the job pipeline. Until it exists, the last screen says the daily search is not switched on yet.) Live progress ("Checking 214 companies... 38 jobs found, scoring the best ones") and jobs appearing as they are scored. Then go to Today.
 
-Progress indicator at the top: step names, current one in ink, done ones with a check. On phones it is one line: "Step 4 of 5: What you want".
+Progress indicator at the top: step names, current one in ink, done ones with a check. Done steps are links back to that step; future steps are plain text. Steps 2 onward have a Back button. The stepper never wraps from 768 px up. On phones it is one line: "Step 4 of 5: What you want".
+
+Layout: header with the wordmark and the account menu (avatar, email, Settings, Sign out). Content at a 640 px reading width inside an 800 px column, placed about 12% down the window on wide screens so it does not hug the top.
 
 ### 5.3 Today (the daily feed)
 
@@ -172,7 +174,7 @@ Empty state: "No new matches today. 412 companies checked at 6:32. Add a company
 
 ### 5.4 Tailor workspace
 
-Desktop, three columns:
+Three columns when the workspace itself is at least 1,180 px wide (260 px job, CV at least 612 px, 260 to 280 px score, 24 px gaps). The layout follows the workspace's width (container queries), not the window's, because the rail takes space:
 
 ```
 ┌──────────────────────┬──────────────────────────────┬─────────────────────┐
@@ -200,13 +202,16 @@ Desktop, three columns:
 - **Right rail:** score with breakdown (from `AtsReport.components`), Matched and Missing chip lists, parseability checks, "Removed for accuracy" panel when the validator dropped anything, options (length 1 or 2 pages, emphasis, tone) with "Re-tailor".
 - **Missing keyword chip actions:** "I have this" opens a small sheet: "Where have you used GraphQL?" with a picker of his roles and projects plus a one-line description. Saved to the master profile as `user_added`, then re-tailor. "Not for this job" hides it.
 - **Open in Overleaf** is the primary button. After click, toast: "Opened in Overleaf in a new tab."
-- Mobile: stacked panes with a segmented control (Job / CV / Score), Overleaf button pinned at the bottom.
+- **916 to 1,179 px of workspace (laptops, tablets in landscape):** two columns, job and CV. The score becomes a panel above both, sticky while scrolling: one line ("Estimated ATS match 74, master CV 54"), the actions, and "Show details" to open the full breakdown.
+- **Narrower, from 768 px:** job above CV, same sticky score panel.
+- **Under 768 px:** one pane at a time with a segmented control (Job / CV / Score). Open in Overleaf, Copy LaTeX and Download are pinned to the bottom above the tab bar while the workspace is on screen.
+- **CV readability:** the CV preview is the widest column and never narrower than 612 px (9 pt text drawn at 9 px). Where the column is narrower, the page scrolls sideways inside its pane, with a note saying so. Controls: Fit width, 100% (816 px, true size), 125%, and "Open full size". The sheet matches the pdflatex output: black text, the name in small caps, section headings bold upright as pdflatex renders them in this template (see DECISIONS.md, 2026-10-29), no app colors.
 
 ### 5.5 Job detail (`/jobs/[id]`)
 Full description (sanitized HTML, typographically styled), source line and attribution link, remote scope with the evidence quote, salary with "approx. annual USD", fit reasons and gaps, history (seen, saved, tailored). Actions as in the feed.
 
 ### 5.6 Tracker
-Columns Saved, Applied, Interviewing, Offer, Closed. Compact cards with the red rule on top: title, company, date moved, link to the tailored CV. Cards in Applied carry a slightly rotated red rubber stamp ("Applied", `--redpen`, 2 px border) in the top-right corner. Drag and drop with keyboard alternative (a "Move to" menu). Column counts in headers.
+Columns Saved, Applied, Interviewing, Offer, Closed. Compact cards with the red rule on top: title, company, date moved, link to the tailored CV. Cards in Applied carry a slightly rotated red rubber stamp ("Applied", `--redpen`, 2 px border) in the top-right corner. Drag and drop with keyboard alternative (a "Move to" menu). Column counts in headers. Columns are 272 px; when they do not fit, the board scrolls sideways with snap points and a note ("Scroll sideways to see all five columns."). Under 768 px the columns stack. Card actions sit in their own row under a hairline and never wrap.
 
 ### 5.7 Companies
 Table: name, website, ATS (or "careers site"), open roles, last checked, discovered via, flags (staffing agency, paused, muted). Row actions: mute, confirm ATS match, remove. "Add a company" dialog: paste a careers or website URL, show detection result live ("Found a Greenhouse board with 23 open roles"), then "Track this company".

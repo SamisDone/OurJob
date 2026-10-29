@@ -28,7 +28,7 @@ const pages: Action[] = [
 ];
 
 const item =
-  "flex h-10 cursor-default items-center gap-3 rounded-[6px] px-3 text-sm text-body outline-none data-[selected=true]:bg-ink-wash [&_svg]:text-graphite";
+  "flex h-10 cursor-default items-center gap-3 rounded-[6px] px-3 text-sm text-body outline-none max-md:h-11 data-[selected=true]:bg-ink-wash [&_svg]:text-graphite";
 
 /** Ctrl/Cmd + K. Jump to pages, run actions, search jobs and companies. */
 export function CommandPalette({

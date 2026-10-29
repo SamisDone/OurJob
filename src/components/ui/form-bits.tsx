@@ -6,6 +6,7 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { TokenChip } from "./chip";
+import { RuledText } from "./feedback";
 import { Input } from "./input";
 
 /** On/off setting with its label and an optional hint. */
@@ -35,6 +36,8 @@ export function Switch({
         onCheckedChange={onCheckedChange}
         className={cn(
           "relative inline-flex h-6 w-10 shrink-0 items-center rounded-pill border border-control-edge bg-paper transition-colors duration-[120ms] ease-ink",
+          // A 44 px tap area around the 24 px switch.
+          "before:absolute before:-inset-x-[4px] before:-inset-y-[10px] before:content-['']",
           "data-[state=checked]:border-ink data-[state=checked]:bg-ink max-md:mt-1",
         )}
       >
@@ -121,7 +124,7 @@ export function MultiToggle<T extends string>({
             aria-pressed={on}
             onClick={() => onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])}
             className={cn(
-              "inline-flex h-8 items-center rounded-pill border px-3 text-sm transition-colors duration-[120ms] ease-ink max-md:h-10",
+              "inline-flex h-8 items-center rounded-pill border px-3 text-sm whitespace-nowrap transition-colors duration-[120ms] ease-ink max-md:h-11",
               on ? "border-ink bg-ink text-sheet" : "border-rule bg-sheet text-body hover:border-graphite",
             )}
           >
@@ -133,31 +136,42 @@ export function MultiToggle<T extends string>({
   );
 }
 
-/** Large drop zone for a file. Click or drop. */
+/**
+ * File upload as an index card: the red rule on top, the instructions on
+ * ruled lines, the button below the lines. Click the button or drop a file
+ * anywhere on the card.
+ */
 export function DropZone({
   accept,
   onFile,
   busy = false,
   title,
   hint,
+  label,
   className,
 }: {
   accept: string;
   onFile: (file: File) => void;
   busy?: boolean;
-  title: string;
+  /** Optional; leave it out when the page heading already says what to drop. */
+  title?: string;
   hint: ReactNode;
+  /** Accessible name of the file input. */
+  label: string;
   className?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   return (
     <div
-      onDragOver={(e) => {
+      onDragEnter={(e) => {
         e.preventDefault();
         setOver(true);
       }}
-      onDragLeave={() => setOver(false)}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
         setOver(false);
@@ -165,23 +179,32 @@ export function DropZone({
         if (f && !busy) onFile(f);
       }}
       className={cn(
-        "relative flex flex-col items-center justify-center rounded-panel border-2 border-dashed px-6 py-12 text-center transition-colors duration-200 ease-ink",
-        over ? "border-ink bg-ink-wash" : "border-control-edge bg-sheet",
+        "relative red-rule-top overflow-hidden rounded-panel border bg-sheet transition-colors duration-200 ease-ink",
+        over ? "border-ink bg-ink-wash" : "border-rule",
         className,
       )}
     >
-      <UploadSimpleIcon size={28} aria-hidden className="text-graphite" />
-      <p className="mt-3 text-lg font-semibold text-ink">{title}</p>
-      <p className="mt-1 max-w-md text-sm text-graphite">{hint}</p>
-      <Button className="mt-5" onClick={() => input.current?.click()} disabled={busy}>
-        {busy ? "Reading the file" : "Choose a file"}
-      </Button>
+      <RuledText className={cn(over && "bg-ink-wash")}>
+        {title && <p className="text-lg leading-8 font-semibold text-ink">{over ? "Drop to upload" : title}</p>}
+        {over && !title ? (
+          <p className="text-base leading-8 font-semibold text-ink">Drop to upload</p>
+        ) : (
+          <p className="text-base leading-8 text-body">{hint}</p>
+        )}
+      </RuledText>
+      <div className="flex flex-wrap items-center gap-3 px-6 pb-6 md:px-8">
+        <Button onClick={() => input.current?.click()} disabled={busy}>
+          <UploadSimpleIcon aria-hidden />
+          {busy ? "Reading the file" : "Choose a file"}
+        </Button>
+      </div>
       <input
         ref={input}
         type="file"
         accept={accept}
         className="sr-only"
-        aria-label={title}
+        aria-label={label}
+        tabIndex={-1}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) onFile(f);

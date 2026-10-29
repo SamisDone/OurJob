@@ -3,6 +3,7 @@
 import { InfoIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
 import { Tooltip } from "@/components/ui/overlay";
+import { wholePoints } from "@/lib/ats/display";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "@/lib/use-stored";
 
@@ -52,6 +53,8 @@ export function ScoreDisplay({
   className?: string;
 }) {
   const shown = useCountUp(masterScore ?? score, score, animate, durationMs);
+  // Whole numbers that add up to the total (DECISIONS.md, score rounding).
+  const whole = wholePoints(components.map((c) => c.points));
   const delta = masterScore === undefined ? null : score - masterScore;
 
   return (
@@ -87,12 +90,12 @@ export function ScoreDisplay({
         )}
       </div>
       <dl className="mt-5 space-y-3">
-        {components.map((c) => (
+        {components.map((c, i) => (
           <div key={c.id}>
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <dt className="text-body">{c.label}</dt>
               <dd className="text-graphite tabular">
-                <span className="text-body">{Number.isInteger(c.points) ? c.points : c.points.toFixed(1)}</span> of{" "}
+                <span className="text-body">{whole.parts[i]}</span> of{" "}
                 {c.max}
               </dd>
             </div>

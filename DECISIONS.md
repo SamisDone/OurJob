@@ -273,3 +273,41 @@ The test now passes 20 out of 20 repeated runs on a loaded machine.
 - The lite model once left out the email shown in the CV header. `buildProfile` now copies the first email address from the CV text when the model returns none: a copied fact, never an invented one.
 - Onboarding end to end with the real provider: `E2E_LLM_PROVIDER=gemini pnpm exec playwright test tests/e2e/onboarding.spec.ts --project=desktop` passed in 1.5 minutes (real P1 build, the model's own conflict, edits, confirm, real P5 suggestions, version history and restore), using the fictional Nadia Chowdhury files and the e2e test user.
 - Build hygiene: the mock provider reads fixtures from dynamic paths, which made Next's output tracing include the whole project (fixtures included) in every server function. `outputFileTracingExcludes` now drops tests, docs, templates, migrations, scripts and workflows from deployments, and the warning is silenced for `mock.ts` only.
+
+## 2026-10-29: Onboarding and style tile review (22 items)
+
+Checked with screenshots at 1440, 1100 and 390 px in light and dark (`tests/e2e/shots.spec.ts`). The measurable items are now tests: `tests/e2e/design.spec.ts` (circle spacing, smallest CV text, desk columns and overflow, phone panes, 44 px tap targets), `tests/unit/ats/display.test.ts` and `tests/unit/salary/input.test.ts`.
+
+### Tailoring desk layout (items 10, 13, 14)
+- The CV preview never draws narrower than 612 px, so 9 pt text is at least 9 px on screen (1 pt = sheet width / 612). True size is 816 px. Below 612 px of column the page scrolls sideways inside its pane, with a note, instead of shrinking the text.
+- Three columns need 260 + 612 + 260 px plus two 24 px gaps: 1,180 px of workspace. The desk uses container queries (`@container`) on its own width, not media queries on the window, because the rail's width changes the space. Thresholds: 1,180 px for three columns, 916 px for two (280 + 612 + gap).
+- At 1440 px with the full 220 px rail the workspace is about 1,188 px, just enough. Between 1024 and 1439 px the rail switches to icons on `/tailor` (and on `/design`, which shows the desk) so a 1,100 px window gets a comfortable two-column layout and three columns start at a window of about 1,310 px (64 px rail, 32 px page padding each side) instead of 1,470 px. Other pages keep the labeled rail.
+- In two columns the score is a sticky panel above both columns with a one-line summary, the actions and "Show details"; in three columns it is the sticky right column. On phones: Job / CV / Score segmented control, and the actions pinned above the tab bar only while the desk is on screen (an IntersectionObserver), so the bar never covers other sections. The pinned bar uses icon buttons for Copy LaTeX and Download so they fit at 390 px.
+
+### CV preview vs. the PDF (item 11)
+The review asked for small-caps section headings. The template is kept exactly (no `fontenc` T1, decided earlier), and in OT1 Computer Modern there is no bold small caps: the pdflatex log for the template says `Font shape OT1/cmr/bx/sc undefined, using OT1/cmr/bx/n`. The real PDF therefore shows section headings in bold upright, and the name (not bold) in small caps. The preview copies the real PDF, so headings stay bold upright and the name stays in small caps. What was wrong was color: the app's global heading color leaked into the sheet and made headings blue. `cv-sheet.css` now forces every element inside the sheet to inherit black. If Pratik wants small-caps headings in the PDF too, that is a template change (T1 encoding or a different font), not a preview change.
+
+### Pen circles (item 12)
+Circles have 0.45 em of padding inside and 0.15 em of margin outside, and the ellipse is drawn inside the padded box (x radius 45.5% with drift, fill 44%), so a stroke never reaches the next word or punctuation. A test measures at least 2 px between each circle and the characters beside it on the same line.
+
+### Score points (item 15)
+Component points are shown as whole numbers using largest-remainder rounding (`wholePoints` in `src/lib/ats/display.ts`), so the parts always add up to the rounded total shown in the big number. The engine keeps its unrounded values.
+
+### Salary input (item 21)
+`parseAmountInput` accepts 40k, 40,000, 40000, $40k, USD 40,000, 40.5k, "40 000" and "120k a year". A bare decimal without k ("40.5") is rejected as ambiguous. The field keeps what was typed while editing, shows "Enter an amount like 40k, 40,000 or 40000." when it cannot read it, formats on blur, and Save is disabled while it is invalid.
+
+### Cards, rules and text (items 2, 7, 16, 17)
+- The red rule on cards is now the card's own 2 px top border instead of a pseudo-element inside an `overflow: hidden` box. The clipped version cut off pen marks and the last paragraph of the long job post.
+- Ruled lines are drawn every 32 px with text at a 32 px line height, so text sits on the lines; the line is 5 px under the baseline so descenders clear it. Buttons sit below the ruled area, never on it.
+- `text-wrap: balance` for headings and `text-wrap: pretty` for paragraphs, list items and labels, app-wide.
+
+### Onboarding (items 1, 3 to 6, 8, 9)
+- Header with the account menu (avatar, email, Settings, Sign out), so sign-out is reachable before the app shell exists for him.
+- The upload card has one line of text (file types once, and "Only you can see it."); the page heading says what to do. The Overleaf hint and "Paste your CV as text instead" sit under the card. Pasted text is stored as a `cv_md` source named "Pasted text", so it goes through the same build path as a Markdown upload.
+- Content at a 640 px reading width inside an 800 px column, about 12% down the window on wide screens.
+- Done steps in the stepper are buttons that go back; future steps are plain text. Back buttons from step 2 on.
+
+### Tracker and controls (items 18 to 20)
+- The board scrolls sideways from 768 px with 272 px columns, snap points and a note when it overflows; on phones the columns stack. Card actions ("Tailored CV", "Move to") have their own row and never wrap.
+- The stepper and segmented controls are `white-space: nowrap`; at 1100 px they fit on one line.
+- Interactive controls are at least 44 px tall below 768 px (buttons, chips, segmented options, chip remove buttons, link buttons, palette items; the switch gets a 44 px invisible hit area).

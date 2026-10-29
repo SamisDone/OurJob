@@ -75,7 +75,7 @@ export function useImportPortfolio() {
 }
 
 export function useSaveTextSource() {
-  return useSourcesMutation((body: { kind: "notes" | "portfolio"; text: string; url?: string }) =>
+  return useSourcesMutation((body: { kind: "notes" | "portfolio" | "cv"; text: string; url?: string }) =>
     api<{ sources: SourceSummary[] }>("/api/sources/text", { method: "POST", json: body }),
   );
 }

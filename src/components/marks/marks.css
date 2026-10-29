@@ -4,13 +4,18 @@
  * (vector-effect: non-scaling-stroke).
  */
 
+/*
+ * Spacing: the loop is drawn inside the word's own box (padding 0.45em each
+ * side, so it never crosses a letter) and the box keeps a 0.15em margin, so a
+ * circle never touches the next word or punctuation. Tested in
+ * tests/e2e/marks.spec.ts.
+ */
 .pen-circle {
   position: relative;
   display: inline-block;
   isolation: isolate;
-  /* Room for the loop: an ellipse needs about 1.4x the box of the word it encloses. */
-  padding: 0 0.42em;
-  margin: 0 -0.2em;
+  padding: 0 0.45em;
+  margin: 0 0.15em;
   white-space: nowrap;
   color: var(--body);
   /* Size the box to the letters, not the line, so marks stay inside their own line. */
@@ -20,9 +25,9 @@
 .pen-circle-svg {
   position: absolute;
   z-index: -1;
-  inset: -0.34em -0.06em -0.3em -0.04em;
-  width: calc(100% + 0.1em);
-  height: calc(100% + 0.64em);
+  inset: -0.32em 0 -0.28em 0;
+  width: 100%;
+  height: calc(100% + 0.6em);
   overflow: visible;
   pointer-events: none;
 }

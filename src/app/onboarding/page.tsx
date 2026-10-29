@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { AccountMenu } from "@/components/shell/account-menu";
 import { Wordmark } from "@/components/shell/wordmark";
 import { TooltipProvider } from "@/components/ui/overlay";
 import { requireUser } from "@/lib/auth/session";
@@ -14,11 +15,12 @@ export default async function OnboardingPage() {
     <QueryProvider>
       <TooltipProvider>
         <div className="min-h-dvh">
-          <header className="mx-auto flex max-w-[880px] items-center justify-between px-4 pt-6 md:px-8">
+          <header className="mx-auto flex max-w-[800px] items-center justify-between gap-4 px-4 pt-4 md:px-8 md:pt-6">
             <Wordmark />
-            <span className="truncate text-sm text-graphite">{user.email}</span>
+            {/* Settings and Sign out stay reachable during onboarding. */}
+            <AccountMenu variant="header" user={{ name: user.name, email: user.email, image: user.image }} />
           </header>
-          <main id="main" className="mx-auto max-w-[880px] px-4 pt-8 pb-20 md:px-8">
+          <main id="main" className="mx-auto max-w-[800px] px-4 pt-6 pb-20 md:px-8 lg:pt-[12vh]">
             <Suspense>
               <OnboardingFlow />
             </Suspense>

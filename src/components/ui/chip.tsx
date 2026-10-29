@@ -20,7 +20,7 @@ export function FilterChip({ pressed = false, menu = false, className, children,
       data-pressed={pressed || undefined}
       className={cn(
         pill,
-        "h-8 border px-3 transition-colors duration-[120ms] ease-ink max-md:h-10",
+        "h-8 border px-3 transition-colors duration-[120ms] ease-ink max-md:h-11",
         pressed
           ? "border-ink bg-ink text-sheet hover:bg-ink/88"
           : "border-rule bg-sheet text-body hover:border-graphite",
@@ -115,14 +115,14 @@ export function TokenChip({
   className?: string;
 }) {
   return (
-    <span className={cn(pill, "h-8 border border-rule bg-sheet pr-1 pl-3 text-body", className)}>
+    <span className={cn(pill, "h-8 border border-rule bg-sheet pr-1 pl-3 text-body max-md:h-11", className)}>
       {children}
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${typeof children === "string" ? children : "item"}`}
-          className="inline-flex size-6 items-center justify-center rounded-pill text-graphite hover:bg-ink-wash hover:text-ink"
+          className="inline-flex size-6 items-center justify-center rounded-pill text-graphite hover:bg-ink-wash hover:text-ink max-md:-my-1 max-md:size-11 max-md:-mr-1"
         >
           <XIcon size={14} aria-hidden />
         </button>

@@ -24,6 +24,11 @@ export type JobRowData = {
   preview: string;
 };
 
+/** "Direct from careers page (Ashby)" reads as "Lumen Labs, direct from careers page (Ashby)". */
+export function sourcePhrase(source: string) {
+  return source.charAt(0).toLowerCase() + source.slice(1);
+}
+
 /**
  * One job in the feed. A row, not a card: separated by rules, expands in
  * place with reasons, gaps and actions.
@@ -68,8 +73,9 @@ export function JobRow({
             {job.title}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-graphite">
-            <span className="font-medium text-graphite">{job.company}</span>
-            <span>{job.source}</span>
+            <span>
+              <span className="font-medium">{job.company}</span>, {sourcePhrase(job.source)}
+            </span>
             {job.newCompany && <Tag>New company</Tag>}
           </span>
           <span className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-body">

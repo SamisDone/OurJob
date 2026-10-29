@@ -17,7 +17,7 @@ export const buttonVariants = cva(
         secondary: "border border-rule bg-sheet text-body hover:border-graphite hover:bg-ink-wash",
         ghost: "bg-transparent text-body hover:bg-ink-wash",
         destructive: "bg-redpen text-sheet hover:bg-redpen/88",
-        link: "h-auto rounded-none px-0 text-ink underline decoration-rule underline-offset-4 hover:decoration-ink",
+        link: "h-auto rounded-none px-0 text-ink underline decoration-rule underline-offset-4 hover:decoration-ink max-md:min-h-11",
       },
       size: {
         sm: "h-8 px-3 text-sm max-md:h-11 max-md:px-4",
@@ -26,7 +26,8 @@ export const buttonVariants = cva(
         "icon-sm": "size-8 max-md:size-11",
       },
     },
-    compoundVariants: [{ variant: "link", className: "h-auto px-0" }],
+    // Links line up with the text around them; min-h-11 alone gives the phone tap height.
+    compoundVariants: [{ variant: "link", className: "h-auto px-0 max-md:h-auto max-md:px-0" }],
     defaultVariants: { variant: "primary", size: "md" },
   },
 );

@@ -24,12 +24,19 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   await expect(page.getByRole("heading", { name: "Add your CV" })).toBeVisible();
 
   // Step 1: upload the CV and check the text came through.
-  await page.getByLabel("Drop your CV here").setInputFiles("tests/fixtures/cvs/nadia-chowdhury.md");
+  await page.getByLabel("Your CV file").setInputFiles("tests/fixtures/cvs/nadia-chowdhury.md");
   await expect(page.getByRole("heading", { name: "nadia-chowdhury.md" })).toBeVisible();
   await expect(page.getByLabel("Text read from your CV")).toContainText("Senior Backend Engineer, Parcelwise");
   await page.getByRole("button", { name: "Looks right" }).click();
 
   // Step 2: add the LinkedIn export, then build.
+  await expect(page.getByRole("heading", { name: "Add more sources" })).toBeVisible();
+
+  // Done steps go back; future steps are not buttons.
+  await expect(page.getByRole("button", { name: /^Review profile/ })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Add your CV/ }).click();
+  await expect(page.getByRole("heading", { name: "Add your CV" })).toBeVisible();
+  await page.getByRole("button", { name: "Looks right" }).click();
   await expect(page.getByRole("heading", { name: "Add more sources" })).toBeVisible();
   await page.getByLabel("LinkedIn PDF").setInputFiles("tests/fixtures/linkedin/nadia-chowdhury-linkedin.pdf");
   await expect(page.getByText(/LinkedIn export added/)).toBeVisible();

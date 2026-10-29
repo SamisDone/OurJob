@@ -15,8 +15,21 @@ export function Skeleton({ className, ...props }: ComponentProps<"div">) {
 }
 
 /**
- * One sentence on what is happening, plus the next action. Set on a small
- * ruled index card: text sits on the blue lines. No illustrations.
+ * Text on ruled index-card lines. Every line of text is 32 px tall and the
+ * blue rule is drawn 5 px under the baseline of each row (background shifted
+ * 4 px up from the bottom of the band), so text sits on the lines and
+ * descenders (g, p, brackets) clear them.
+ */
+export function RuledText({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("ruled px-6 pt-8 pb-8 leading-8 [background-position:0_-4px] md:px-8", className)}>{children}</div>
+  );
+}
+
+/**
+ * One sentence on what is happening, plus the next action. A small index
+ * card: the text sits on ruled lines, the action sits below them, so no line
+ * ever crosses a button. No illustrations.
  */
 export function EmptyState({
   title,
@@ -30,15 +43,12 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "red-rule-top relative rounded-panel border border-rule ruled [background-position:0_-7px] px-6 pt-8 pb-8 leading-8",
-        className,
-      )}
-    >
-      <p className="text-lg leading-8 font-semibold text-ink">{title}</p>
-      {children && <p className="measure text-base leading-8 text-body">{children}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div className={cn("relative red-rule-top overflow-hidden rounded-panel border border-rule bg-sheet", className)}>
+      <RuledText>
+        <p className="text-lg leading-8 font-semibold text-ink">{title}</p>
+        {children && <p className="measure text-base leading-8 text-body">{children}</p>}
+      </RuledText>
+      {action && <div className="px-6 pb-6 md:px-8">{action}</div>}
     </div>
   );
 }

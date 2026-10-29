@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowSquareOutIcon, CaretDownIcon, DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react/ssr";
+import { ArrowSquareOutIcon, CaretDownIcon, CopyIcon, DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react/ssr";
 import { useMemo, useState, type ReactNode } from "react";
+import { CvPreview } from "@/components/cv/cv-preview";
 import { CvSheet } from "@/components/cv/cv-sheet";
 import { JobRow, JobRowSkeleton } from "@/components/jobs/job-row";
 import { MarkedText } from "@/components/marks/marked-text";
@@ -11,7 +12,8 @@ import { AppShell } from "@/components/shell/app-shell";
 import { AccountMenu } from "@/components/shell/account-menu";
 import { Kbd } from "@/components/shell/command-palette";
 import { ThemeControl } from "@/components/shell/theme-control";
-import { KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
+import { TailorDesk } from "@/components/tailor/desk";
+import { KanbanBoard, KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
 import { Button } from "@/components/ui/button";
 import { FilterChip, KeywordChip, Stamp, Tag, TokenChip } from "@/components/ui/chip";
 import { CodeView } from "@/components/ui/code-view";
@@ -152,27 +154,50 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
     );
   };
 
-  return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,300px)]">
-      <div>
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
-            <p className="text-sm text-graphite">at {sampleJd.company}</p>
-          </div>
-        </div>
-        <MarkedText text={sampleJd.text} marks={marks} phase={phase} />
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button variant="secondary" onClick={replay}>
-            Replay the pen
-          </Button>
-          <span className="text-sm text-graphite">
-            The pen takes {Math.round(timing.totalMs)} ms, {Math.round(timing.staggerMs)} ms between circles.
-          </span>
-        </div>
-      </div>
+  const diff = (
+    <DiffView
+      items={[
+        {
+          kind: "rewritten",
+          where: "Brightfield Software",
+          before: "Built a dashboard for shipments with live updates.",
+          after:
+            "Built the real-time shipment dashboard used by 40 client teams, moving live order updates from REST polling to WebSockets.",
+        },
+        {
+          kind: "moved",
+          where: "Projects",
+          text: "Queue Lite",
+          note: "Moved above Ledgerly: closer to their Node.js API work",
+        },
+        {
+          kind: "dropped",
+          where: "Kite & Co. Digital",
+          text: "Managed hosting renewals for client sites.",
+          reason: "Does not help this job",
+        },
+      ]}
+    />
+  );
 
-      <div>
+  return (
+    <TailorDesk
+      job={
+        <>
+          <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
+          <p className="mb-4 text-sm text-graphite">at {sampleJd.company}</p>
+          <MarkedText text={sampleJd.text} marks={marks} phase={phase} />
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button variant="secondary" onClick={replay}>
+              Replay the pen
+            </Button>
+            <span className="text-sm text-graphite">
+              The pen takes {Math.round(timing.totalMs)} ms, {Math.round(timing.staggerMs)} ms between circles.
+            </span>
+          </div>
+        </>
+      }
+      cv={
         <Tabs defaultValue="preview">
           <TabsList aria-label="CV view">
             <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -180,93 +205,94 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
             <TabsTrigger value="changes">Changes</TabsTrigger>
           </TabsList>
           <TabsContent value="preview">
-            <CvSheet doc={cv} />
-            <p className="mt-3 text-sm text-graphite">1 page, US Letter</p>
+            <CvPreview doc={cv} />
           </TabsContent>
           <TabsContent value="latex">
             <CodeView code={latexExcerpt} />
           </TabsContent>
-          <TabsContent value="changes">
-            <DiffView
-              items={[
-                {
-                  kind: "rewritten",
-                  where: "Brightfield Software",
-                  before: "Built a dashboard for shipments with live updates.",
-                  after:
-                    "Built the real-time shipment dashboard used by 40 client teams, moving live order updates from REST polling to WebSockets.",
-                },
-                {
-                  kind: "moved",
-                  where: "Projects",
-                  text: "Queue Lite",
-                  note: "Moved above Ledgerly: closer to their Node.js API work",
-                },
-                {
-                  kind: "dropped",
-                  where: "Kite & Co. Digital",
-                  text: "Managed hosting renewals for client sites.",
-                  reason: "Does not help this job",
-                },
-              ]}
-            />
-          </TabsContent>
+          <TabsContent value="changes">{diff}</TabsContent>
         </Tabs>
-      </div>
-
-      <div className="space-y-8">
-        <ScoreDisplay
-          key={run}
-          score={sampleAts.tailored}
-          masterScore={sampleAts.master}
-          components={sampleAts.components}
-          animate={phase === "run"}
-          durationMs={timing.totalMs}
-        />
-        <div>
-          <h3 className="text-sm font-medium text-ink">
-            Matched <span className="text-graphite tabular">({sampleJd.matched.length})</span>
-          </h3>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5">
-            {sampleJd.matched.map((k) => (
-              <KeywordChip key={k} kind="matched">
-                {k}
-              </KeywordChip>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h3 className="text-sm font-medium text-ink">
-            Missing <span className="text-graphite tabular">({sampleJd.missing.length})</span>
-          </h3>
-          <ul className="mt-2 divide-y divide-rule border-y border-rule">
-            {sampleJd.missing.map((k, i) => (
-              <li key={k} className="flex items-center justify-between gap-2 py-2">
-                <KeywordChip kind="missing" importance={i < 3 ? "must" : "nice"}>
+      }
+      scoreSummary={
+        <>
+          <span className="font-medium text-ink">Estimated ATS match</span>{" "}
+          <span className="text-lg font-semibold text-ink tabular">{sampleAts.tailored}</span>
+          <span className="text-graphite">
+            , master CV <span className="tabular">{sampleAts.master}</span>
+          </span>
+        </>
+      }
+      score={
+        <div className="space-y-8">
+          <ScoreDisplay
+            key={run}
+            score={sampleAts.tailored}
+            masterScore={sampleAts.master}
+            components={sampleAts.components}
+            animate={phase === "run"}
+            durationMs={timing.totalMs}
+          />
+          <div>
+            <h3 className="text-sm font-medium text-ink">
+              Matched <span className="text-graphite tabular">({sampleJd.matched.length})</span>
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1">
+              {sampleJd.matched.map((k) => (
+                <KeywordChip key={k} kind="matched">
                   {k}
                 </KeywordChip>
-                <IHaveThis term={k} />
-              </li>
-            ))}
-          </ul>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-ink">
+              Missing <span className="text-graphite tabular">({sampleJd.missing.length})</span>
+            </h3>
+            <ul className="mt-2 divide-y divide-rule border-y border-rule">
+              {sampleJd.missing.map((k, i) => (
+                <li key={k} className="flex items-center justify-between gap-2 py-2">
+                  <KeywordChip kind="missing" importance={i < 3 ? "must" : "nice"}>
+                    {k}
+                  </KeywordChip>
+                  <IHaveThis term={k} />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Button className="w-full" onClick={() => toast("Opened in Overleaf in a new tab.")}>
+      }
+      actions={
+        <>
+          <Button onClick={() => toast("Opened in Overleaf in a new tab.")}>
             <ArrowSquareOutIcon aria-hidden />
             Open in Overleaf
           </Button>
-          <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => toast("Copied LaTeX.")}>
+          <div className="flex gap-2 [&>*]:flex-1">
+            <Button variant="secondary" onClick={() => toast("Copied LaTeX.")}>
               Copy LaTeX
             </Button>
-            <Button variant="secondary" className="flex-1">
+            <Button variant="secondary" aria-label="Download .tex">
               <DownloadSimpleIcon aria-hidden />
               .tex
             </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+      mobileActions={
+        <>
+          <Button onClick={() => toast("Opened in Overleaf in a new tab.")}>
+            <ArrowSquareOutIcon aria-hidden />
+            Open in Overleaf
+          </Button>
+          <Button variant="secondary" size="icon" aria-label="Copy LaTeX" onClick={() => toast("Copied LaTeX.")}>
+            <CopyIcon aria-hidden />
+          </Button>
+          <Button variant="secondary" size="icon" aria-label="Download .tex">
+            <DownloadSimpleIcon aria-hidden />
+          </Button>
+        </>
+      }
+    />
   );
 }
 
@@ -452,7 +478,10 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             title="The tailoring desk"
             intro="The signature moment. A blue pen circles each matched word in reading order while the score counts up from the master CV score; red pen underlines land on the missing words at the end."
           >
-            <ProofingDesk cv={cv} />
+            {/* The desk needs the full page width, like the real tailor page. */}
+            <div className="lg:-mx-8">
+              <ProofingDesk cv={cv} />
+            </div>
           </Section>
 
           <Section
@@ -462,7 +491,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           >
             <Panel className="px-5 pt-7 pb-6 md:px-10 md:pt-9 md:pb-8">
               <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
-              <p className="mb-5 text-sm text-graphite">Lumen Labs. Direct from careers page (Ashby)</p>
+              <p className="mb-5 text-sm text-graphite">Lumen Labs, direct from careers page (Ashby)</p>
               <MarkedText
                 text={sampleJd.text}
                 marks={findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing)}
@@ -483,7 +512,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             title="Color"
             intro="Both themes, side by side. Light is an index card on a desk; dark is carbon paper. The CV sheet stays white in both."
           >
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-2">
               <TokenPanel theme="light" />
               <TokenPanel theme="dark" />
             </div>
@@ -594,13 +623,13 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
               </div>
               <div>
                 <p className="text-sm text-graphite">--graphite: secondary lines</p>
-                <p className="mt-2 text-sm text-graphite">Lumen Labs. Direct from careers page (Ashby). 2 days ago</p>
+                <p className="mt-2 text-sm text-graphite">Lumen Labs, direct from careers page (Ashby). 2 days ago</p>
               </div>
             </div>
           </Section>
 
           <Section id="controls" title="Controls">
-            <div className="grid gap-10 lg:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
               <Sub title="Buttons">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button>Tailor CV</Button>
@@ -665,8 +694,8 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="sal">Minimum annual salary in USD</Label>
-                    <Input id="sal" defaultValue="40k" aria-invalid aria-describedby="sal-err" />
-                    <FieldError id="sal-err">Enter a number, for example 40000.</FieldError>
+                    <Input id="sal" defaultValue="about forty" aria-invalid aria-describedby="sal-err" />
+                    <FieldError id="sal-err">Enter an amount like 40k, 40,000 or 40000.</FieldError>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="dis">Email on the CV</Label>
@@ -843,7 +872,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           </Section>
 
           <Section id="progress" title="Progress">
-            <div className="grid gap-10 lg:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
               <Sub title="Onboarding steps">
                 <ProgressSteps
                   steps={["Add your CV", "More sources", "Review profile", "What you want", "First search"]}
@@ -863,7 +892,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           </Section>
 
           <Section id="tracker" title="Tracker" intro="Drag cards between columns, or use Move to from the keyboard.">
-            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
+            <KanbanBoard>
               <KanbanColumn name="Saved" count={2}>
                 <KanbanCard
                   title="Product Engineer, Billing"
@@ -894,7 +923,10 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
               <KanbanColumn name="Offer" count={0}>
                 <p className="px-1 text-sm text-graphite">Nothing here yet.</p>
               </KanbanColumn>
-            </div>
+              <KanbanColumn name="Closed" count={0}>
+                <p className="px-1 text-sm text-graphite">Nothing here yet.</p>
+              </KanbanColumn>
+            </KanbanBoard>
           </Section>
 
           <Section id="companies" title="Companies">
@@ -943,7 +975,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             title="States"
             intro="Loading, empty, error and partial states. Every screen gets all of them."
           >
-            <div className="grid gap-10 lg:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
               <Sub title="Pipeline warning">
                 <CautionBar
                   action={
@@ -952,7 +984,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                     </Button>
                   }
                 >
-                  The last search ran 31 hours ago. Scheduled runs can start late or pause when the repo is quiet.
+                  The last search ran 31 hours ago. It may be running late, or the daily search may have been paused.
                 </CautionBar>
               </Sub>
               <Sub title="Error">
@@ -980,7 +1012,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 </Callout>
               </Sub>
               <Sub title="Loading: score panel" className="lg:col-span-2">
-                <div className="grid gap-8 md:grid-cols-[300px_1fr]">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-[300px_1fr]">
                   <div aria-busy className="space-y-3">
                     <Skeleton className="h-5 w-40" />
                     <Skeleton className="h-12 w-24" />

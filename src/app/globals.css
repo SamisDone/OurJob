@@ -106,6 +106,19 @@
   h3,
   h4 {
     color: var(--ink);
+    text-wrap: balance;
+  }
+
+  /* No single word alone on the last line of short text (app-wide). */
+  p,
+  li,
+  dd,
+  dt,
+  label,
+  legend,
+  figcaption,
+  blockquote {
+    text-wrap: pretty;
   }
 
   ::selection {
@@ -163,17 +176,15 @@
   );
 }
 
-/* A 2 px red rule across the top of a panel, like an index card. The element must be positioned. */
+/*
+ * A 2 px red rule across the top of a panel, like an index card. Drawn as the
+ * panel's own top border, so it follows the rounded corners and never clips
+ * the panel's content (an overflow-hidden version cut off pen marks).
+ */
 @utility red-rule-top {
-  overflow: hidden;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 2px;
-    background: var(--red-rule);
-    pointer-events: none;
-  }
+  border-top-width: 2px !important;
+  border-top-style: solid !important;
+  border-top-color: var(--red-rule) !important;
 }
 
 /* Motion that answers an action. No entrance animations on page load. */
@@ -220,5 +231,64 @@
   }
   to {
     transform: translateX(300%);
+  }
+}
+
+/*
+ * Rail compact mode (icons only): always below 1024 px, and below 1440 px on
+ * pages that need the width (the tailoring desk), marked with
+ * data-compact-rail on the shell. Pure CSS, so there is no flash on load.
+ */
+.rail-compact-only {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .rail {
+    width: 4rem;
+  }
+  .rail-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .rail-center {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .rail-wide-only {
+    display: none;
+  }
+  .rail-compact-only {
+    display: inline;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1439px) {
+  [data-compact-rail] .rail {
+    width: 4rem;
+  }
+  [data-compact-rail] .rail-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  [data-compact-rail] .rail-center {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  [data-compact-rail] .rail-wide-only {
+    display: none;
+  }
+  [data-compact-rail] .rail-compact-only {
+    display: inline;
   }
 }

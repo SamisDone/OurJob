@@ -48,7 +48,7 @@ function useStep() {
 
 function StepTitle({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="mt-10 mb-6">
+    <div className="mt-8 mb-6 lg:mt-12">
       <h1 className="text-2xl font-semibold">{title}</h1>
       {children && <p className="mt-2 measure text-body">{children}</p>}
     </div>
@@ -60,41 +60,81 @@ export function OnboardingFlow() {
   const { step, go } = useStep();
   return (
     <>
-      <ProgressSteps steps={STEPS} current={step - 1} />
-      {step === 1 && <CvStep next={() => go(2)} />}
-      {step === 2 && <MoreSourcesStep back={() => go(1)} next={() => go(3)} />}
-      {step === 3 && <ReviewStep back={() => go(2)} next={() => go(4)} />}
-      {step === 4 && <PreferencesStep next={() => go(5)} />}
-      {step === 5 && <DoneStep />}
+      <ProgressSteps steps={STEPS} current={step - 1} onSelect={(i) => go(i + 1)} />
+      {/* Reading width for the form steps; the profile review keeps the full width. */}
+      <div className={step === 3 ? undefined : "max-w-[640px]"}>
+        {step === 1 && <CvStep next={() => go(2)} />}
+        {step === 2 && <MoreSourcesStep back={() => go(1)} next={() => go(3)} />}
+        {step === 3 && <ReviewStep back={() => go(2)} next={() => go(4)} />}
+        {step === 4 && <PreferencesStep back={() => go(3)} next={() => go(5)} />}
+        {step === 5 && <DoneStep back={() => go(4)} />}
+      </div>
     </>
   );
 }
 
 /* Step 1 ---------------------------------------------------------------------- */
 
+const CV_TYPES = "LaTeX (.tex), PDF, Word (.docx) or Markdown, up to 5 MB.";
+
 function CvStep({ next }: { next: () => void }) {
   const sources = useSources();
   const upload = useUploadSource();
+  const pasteCv = useSaveTextSource();
   const cv = sources.data?.find((s) => CV_KINDS.includes(s.kind));
   const [replacing, setReplacing] = useState(false);
+  const [pasting, setPasting] = useState(false);
+  const [text, setText] = useState("");
+
+  const done = () => {
+    setReplacing(false);
+    setPasting(false);
+    setText("");
+  };
 
   return (
     <>
-      <StepTitle title="Add your CV">
-        Your CV is the base of your profile. A LaTeX (.tex) file works best; PDF, Word (.docx) and Markdown work too.
-      </StepTitle>
+      <StepTitle title="Add your CV" />
       {sources.isPending ? (
-        <Skeleton className="h-64 w-full rounded-panel" />
+        <Skeleton className="h-56 w-full rounded-panel" />
       ) : cv && !replacing ? (
         <CvPreview source={cv} onReplace={() => setReplacing(true)} next={next} />
+      ) : pasting ? (
+        <Panel className="px-6 pt-6 pb-6 md:px-8">
+          <Label htmlFor="cv-text" className="text-lg font-semibold text-ink">
+            Paste your CV
+          </Label>
+          <Textarea
+            id="cv-text"
+            className="mt-3 min-h-64"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Everything from your name to your last line. Formatting does not matter."
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button disabled={!text.trim() || pasteCv.isPending} onClick={() => pasteCv.mutate({ kind: "cv", text }, { onSuccess: done })}>
+              {pasteCv.isPending ? "Saving" : "Use this text"}
+            </Button>
+            <Button variant="ghost" onClick={() => setPasting(false)}>
+              Upload a file instead
+            </Button>
+          </div>
+          {pasteCv.isError && <p role="alert" className="mt-3 text-sm text-redpen">{pasteCv.error.message}</p>}
+        </Panel>
       ) : (
-        <DropZone
-          accept=".tex,.pdf,.docx,.md,.markdown,.txt"
-          busy={upload.isPending}
-          title={replacing ? "Upload a different CV" : "Drop your CV here"}
-          hint="LaTeX, PDF, DOCX or Markdown, up to 5 MB. It stays in your own database."
-          onFile={(file) => upload.mutate({ file }, { onSuccess: () => setReplacing(false) })}
-        />
+        <>
+          <DropZone
+            accept=".tex,.pdf,.docx,.md,.markdown,.txt"
+            busy={upload.isPending}
+            label="Your CV file"
+            hint={`${CV_TYPES} Only you can see it.`}
+            onFile={(file) => upload.mutate({ file }, { onSuccess: done })}
+          />
+          <p className="mt-4 text-sm text-graphite">Using Overleaf? Open Menu, then Download source, and upload the .tex file.</p>
+          <Button variant="link" size="sm" className="mt-2 text-sm" onClick={() => setPasting(true)}>
+            Paste your CV as text instead
+          </Button>
+        </>
       )}
       {upload.isError && (
         <ErrorState className="mt-4" title="That file could not be used.">
@@ -422,7 +462,7 @@ function ReviewStep({ back, next }: { back: () => void; next: () => void }) {
 
 /* Step 4 ---------------------------------------------------------------------- */
 
-function PreferencesStep({ next }: { next: () => void }) {
+function PreferencesStep({ back, next }: { back: () => void; next: () => void }) {
   return (
     <>
       <StepTitle title="Set what you are looking for">
@@ -431,13 +471,16 @@ function PreferencesStep({ next }: { next: () => void }) {
       <Panel className="px-5 pt-7 pb-7 md:px-8">
         <PreferencesForm onSaved={next} saveLabel="Save and continue" />
       </Panel>
+      <Button variant="ghost" className="mt-4" onClick={back}>
+        Back
+      </Button>
     </>
   );
 }
 
 /* Step 5 ---------------------------------------------------------------------- */
 
-function DoneStep() {
+function DoneStep({ back }: { back: () => void }) {
   return (
     <>
       <StepTitle title="Your profile is ready" />
@@ -450,6 +493,9 @@ function DoneStep() {
             </Button>
             <Button asChild variant="secondary">
               <Link href="/settings">Settings</Link>
+            </Button>
+            <Button variant="ghost" onClick={back}>
+              Back
             </Button>
           </div>
         }

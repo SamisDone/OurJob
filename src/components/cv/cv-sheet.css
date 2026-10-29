@@ -29,6 +29,15 @@
   overflow-wrap: break-word;
 }
 
+/*
+ * The CV is paper printed in black: app heading colors and wrapping rules
+ * must not reach it (unlayered, so it wins over the app's base layer).
+ */
+.cv-sheet :where(h1, h2, h3, h4, p, li, a, b, i, u, span, div, section) {
+  color: inherit;
+  text-wrap: wrap;
+}
+
 .cv-sheet a {
   color: inherit;
   text-decoration: underline;

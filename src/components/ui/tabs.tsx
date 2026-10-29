@@ -44,14 +44,14 @@ export function Segmented({ value, onValueChange, options, className, ...props }
       value={value}
       onValueChange={(v) => v && onValueChange(v)}
       aria-label={props["aria-label"]}
-      className={cn("inline-flex rounded-control border border-control-edge bg-paper p-0.5", className)}
+      className={cn("inline-flex max-w-full rounded-control border border-control-edge bg-paper p-0.5", className)}
     >
       {options.map((o) => (
         <ToggleGroup.Item
           key={o.value}
           value={o.value}
           className={cn(
-            "h-8 rounded-[6px] px-3 text-sm text-graphite transition-colors duration-[120ms] ease-ink max-md:h-10",
+            "h-8 shrink-0 rounded-[6px] px-3 text-sm whitespace-nowrap text-graphite transition-colors duration-[120ms] ease-ink max-md:h-11",
             "hover:text-ink data-[state=on]:bg-sheet data-[state=on]:font-medium data-[state=on]:text-ink",
             "data-[state=on]:shadow-[0_0_0_1px_var(--rule)]",
           )}
