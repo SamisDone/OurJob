@@ -53,6 +53,7 @@ Build in phases. Each phase ends with its done criteria met, tests passing, and 
 - `scripts/daily-jobs.ts` with flags; GitHub Actions `daily-jobs.yml`; "Run now" via `workflow_dispatch`.
 - Today screen, job detail, pipeline health header and warning, empty and error states, keyboard shortcuts.
 - Companies seed import (remoteintech directory and `data/companies.seed.json`).
+- Storage housekeeping for Neon's 1 GB free limit. At the end of each run the pipeline: deletes jobs older than 90 days that are closed (`closed_at` set) or dismissed, except any job linked to a tailoring (`tailorings.job_id`) or to a tracker card (a match in Saved, Applied, Interviewing, Offer or Closed); trims raw source payloads once a job is normalized, keeping only the normalized columns; and deletes the run's raw response caches. Settings shows the database size (`pg_database_size`) and a warning above 800 MB.
 
 **Done when:** a real run completes in under 15 minutes, finds jobs from at least 3 tier 1 ATS types and at least 3 tier 2 sources, every shown job is within 7 days with a reliable date, no duplicates across sources in a manual check of 30 jobs, eligibility groups are correct in a manual check of 30 jobs, the run stays within the free-tier budget table, and a second consecutive run marks only truly new jobs as new.
 
