@@ -31,7 +31,7 @@ export default defineConfig({
       AUTH_SECRET: "e2e-test-secret-not-for-production-0123456789",
       AUTH_GOOGLE_ID: "e2e-google-id",
       AUTH_GOOGLE_SECRET: "e2e-google-secret",
-      ALLOWED_EMAILS: "allowed@example.com",
+      ALLOWED_EMAILS: "allowed@example.com,fresh@example.com,confirmed@example.com",
       ENABLE_DESIGN_TILE: "1",
       // Fixture answers for P1 and P5; the real model is never called in e2e.
       LLM_PROVIDER: realLlm ? "gemini" : "mock",

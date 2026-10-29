@@ -44,16 +44,22 @@
 │   └── daily-jobs.ts         # pipeline entry
 ├── src/
 │   ├── app/                  # routes (see DESIGN.md for screens)
-│   │   ├── (auth)/sign-in/
-│   │   ├── (app)/today/
-│   │   ├── (app)/tailor/
-│   │   ├── (app)/tailor/[id]/
-│   │   ├── (app)/jobs/[id]/
-│   │   ├── (app)/tracker/
-│   │   ├── (app)/companies/
-│   │   ├── (app)/profile/
-│   │   ├── (app)/settings/
-│   │   ├── onboarding/
+│   │   ├── (auth)/sign-in/       # no shell
+│   │   ├── design/               # dev-only style tile, no shell, 404 in production
+│   │   ├── (app)/                # every signed-in page: one layout with the app shell
+│   │   │   ├── layout.tsx        # requireUser, rail cookie, AppShell
+│   │   │   ├── not-found.tsx     # signed-in 404, inside the shell
+│   │   │   ├── [...missing]/     # unknown URLs -> notFound() -> the 404 above
+│   │   │   └── (screens)/        # loading.tsx lives here (see below)
+│   │   │       ├── today/
+│   │   │       ├── tailor/
+│   │   │       ├── tailor/[id]/
+│   │   │       ├── jobs/[id]/
+│   │   │       ├── tracker/
+│   │   │       ├── companies/
+│   │   │       ├── profile/
+│   │   │       ├── settings/
+│   │   │       └── onboarding/
 │   │   └── api/
 │   ├── components/           # ui/ (restyled primitives), feature components
 │   ├── lib/
@@ -76,6 +82,12 @@
     ├── unit/
     └── e2e/
 ```
+
+Signed-in routes:
+- Every signed-in page sits under `(app)`, whose one layout renders the app shell (rail, phone bottom bar, command palette, account menu with Sign out). The layout stays mounted across navigation, so the shell never re-mounts or flashes. Only `/sign-in` and the dev-only `/design` are outside it.
+- Onboarding is inside the shell too. Pages that need a confirmed profile (Today, Tailor, Tracker, Companies and their detail pages) never redirect: they render an empty state that says why and links back into onboarding (`NeedsProfile`, `src/components/shell/page-states.tsx`). Screens not built yet render `ComingSoon`.
+- The rail's collapsed state is a cookie (`ourjob-rail`) read by the layout, so the server renders the right width and nothing shifts on load.
+- `loading.tsx` sits in `(app)/(screens)`, not `(app)`: a loading boundary starts streaming the response with status 200 before the page runs, and the signed-in 404 (`[...missing]`, outside that boundary) must answer with a real 404.
 
 ## 3. Data model (Postgres, via Drizzle)
 

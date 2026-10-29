@@ -95,7 +95,7 @@ Checked with pdflatex (MiKTeX) using the template preamble unchanged: José Mül
 The review line in Sam's message was the unfilled template ("[approved / approved with these changes: ...]"). UI work stays paused; non-UI Phase 1 work continues. Superseded: the palette was then rejected and redesigned (2026-10-29, below).
 
 ### Style tile shows the signed-in person's name
-Sam asked for the sample to say Pratik instead of Arif. The style tile now takes the name from the signed-in session and falls back to the fictional sample when nobody is signed in. Pratik's name is not written into the sample CV, `templates/resume-sample.tex` or any fixture: golden rule 5 keeps his data out of the repo, and a committed CV under his name with invented employers would be published with the open-source code. The real app shows his name from his own profile once he imports his CV (Phase 1).
+Sam asked for the sample to say Pratik instead of the fictional sample name. The style tile now takes the name from the signed-in session and falls back to the fictional sample when nobody is signed in. Pratik's name is not written into the sample CV, `templates/resume-sample.tex` or any fixture: golden rule 5 keeps his data out of the repo, and a committed CV under his name with invented employers would be published with the open-source code. The real app shows his name from his own profile once he imports his CV (Phase 1).
 
 ## 2026-10-29: Phase 1, ingestion
 
@@ -311,3 +311,24 @@ Component points are shown as whole numbers using largest-remainder rounding (`w
 - The board scrolls sideways from 768 px with 272 px columns, snap points and a note when it overflows; on phones the columns stack. Card actions ("Tailored CV", "Move to") have their own row and never wrap.
 - The stepper and segmented controls are `white-space: nowrap`; at 1100 px they fit on one line.
 - Interactive controls are at least 44 px tall below 768 px (buttons, chips, segmented options, chip remove buttons, link buttons, palette items; the switch gets a 44 px invisible hit area).
+
+## 2026-10-29: One app shell for every signed-in page
+
+**Why Today showed no sidebar.** `/today` redirected to `/onboarding` when the profile was not confirmed, and `/onboarding` lived outside the `(app)` route group with its own bare layout (a wordmark header). So clicking Today swapped the whole layout: the rail and bottom bar disappeared and the shell re-mounted on the way back.
+
+What changed:
+- Onboarding moved into `(app)`. Every signed-in route now shares one layout: `/today`, `/tailor`, `/tailor/[id]`, `/jobs/[id]`, `/tracker`, `/companies`, `/profile`, `/settings`, `/onboarding` and the signed-in 404. Only `/sign-in` and the dev-only `/design` have no shell.
+- No redirects to onboarding. Today, Tailor, Tracker and Companies (and the two detail pages) render "Finish your profile first." with one sentence on why and "Continue onboarding" (to step 3 when a draft profile exists). Screens not built yet render "Coming soon in this build." `/tailor/[id]` and `/jobs/[id]` exist now as such pages.
+- Active item on every route: `/jobs/*` lights up Today, `/tailor/*` Tailor, onboarding Profile (it builds the profile). On phones More is the active item for Companies, Profile and Settings, and the More sheet marks the current page.
+- The rail's collapsed state moved from localStorage to a cookie read by the layout. With localStorage the server always rendered the wide rail and the client narrowed it after hydration, a visible jump on every full page load. A JavaScript-off test checks the server's HTML is already collapsed.
+- Signed-in 404: `(app)/[...missing]` calls `notFound()`, rendered by `(app)/not-found.tsx` inside the shell. The pages moved into a nested `(app)/(screens)` group that owns `loading.tsx`, because a loading boundary starts streaming with status 200 before the page runs and the 404 then went out as a 200. The root `not-found.tsx` stays for signed-out visitors.
+- The account menu's "header" variant (only onboarding used it) is gone.
+- Kept on purpose: the rail still switches to icons on `/tailor` between 1024 and 1439 px (decided in the review above, so the desk gets its columns). It is the one place the shell changes width between pages, with the existing 200 ms width transition.
+- Tests: `tests/e2e/shell.spec.ts` visits every route above for a person with no profile and one with a confirmed profile, at 1440 px (rail, account menu, active item) and 390 px (bottom bar, More, the More sheet), plus the 404 status, no re-mount while navigating, and the collapsed rail from first paint. Two fictional e2e people (`fresh@example.com`, `confirmed@example.com`) keep it from racing the onboarding test; global setup seeds the confirmed one with the fictional Nadia profile.
+
+### A real race this exposed
+With more tests running in parallel, the onboarding test sometimes ended with an unconfirmed profile. Cause: `saveProfileVersion` read the current version's `confirmedAt` and the latest version number without a lock. A bullet edit still saving while he pressed Confirm wrote a new current version carrying the old "not confirmed" state, silently undoing the confirmation; two edits at once also picked the same version number and one failed. Profile writes (`saveProfileVersion`, `confirmProfile`) now take a row lock on the person's `users` row inside their transaction, so they run one at a time. Three full e2e runs in a row: 30 of 30 passed each time.
+
+## 2026-10-29: Nadia is the one sample person
+
+Sam asked for one fictional person everywhere. The style tile sample, `templates/resume-sample.tex` and the tests that read them now use Nadia Chowdhury, built only from the facts in her fixture CV (`tests/fixtures/cvs/nadia-chowdhury.md`): a tailored one-page version for a fictional Senior Backend Engineer post at Lumen Labs. That makes the template a golden target for Phase 2: rendering her profile tailored to that job should give this structure. The template loses two shapes the old sample showed (an employer linked to its website, a project with a Live link), because her profile has neither; comments in the template show both forms, and a unit test still parses a linked employer. No code, template, fixture, test or doc mentions the old sample person any more.

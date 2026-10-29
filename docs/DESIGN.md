@@ -117,7 +117,10 @@ Desktop (>= 1024 px)
 Mobile (< 768 px): bottom bar with Today, Tailor, Tracker, More.
 ```
 
-- Rail: 220 px with labels, collapsible to 64 px icons. Active item: ink text with a 3 px ink bar on the left. The rail shows icons only from 768 to 1023 px, and on the tailor workspace below 1440 px, where the three columns need the room.
+- One shell for every signed-in page, onboarding and the signed-in 404 included. Only sign-in and the dev-only style tile have no shell. It never re-mounts, flashes or changes size between pages, with one deliberate exception below (the tailor workspace).
+- Rail: 220 px with labels, collapsible to 64 px icons. The collapsed state is remembered (a cookie, so the first paint already has the right width). Active item: ink text with a 3 px ink bar on the left. The rail shows icons only from 768 to 1023 px, and on the tailor workspace below 1440 px, where the three columns need the room.
+- Active item on every route: detail pages light up their parent (`/jobs/[id]` is Today, `/tailor/[id]` is Tailor), onboarding lights up Profile, and the 404 lights up nothing. On phones, Companies, Profile and Settings are under More, so More is the active item for them (ink, 3 px bar on top) and the More sheet marks the current page.
+- Pages that need a confirmed profile still open: an index-card empty state, "Finish your profile first.", one sentence on why the page is empty, and "Continue onboarding" (to the review step when a draft profile exists). Screens not built yet show "Coming soon in this build." with one sentence on what arrives and when.
 - Account item at the bottom of the rail: his Google avatar (24 px, initial on `--circle-fill` if there is no photo) and display name; avatar only when the rail is collapsed. It opens a small menu (an index card with the red rule) showing the signed-in email, "Settings" and "Sign out".
 - Mobile: the "More" sheet ends with "Signed in as {email}" and a full-width "Sign out" secondary button.
 - Sign out: no confirmation (nothing is lost). It clears the client data cache, ends the session and lands on /sign-in with a quiet "Signed out." note in `--graphite`. Never red: it is a secondary action, not a destructive one.
@@ -138,7 +141,7 @@ Centered, minimal. App name, one sentence ("Tailored CVs and fresh remote jobs, 
 
 Progress indicator at the top: step names, current one in ink, done ones with a check. Done steps are links back to that step; future steps are plain text. Steps 2 onward have a Back button. The stepper never wraps from 768 px up. On phones it is one line: "Step 4 of 5: What you want".
 
-Layout: header with the wordmark and the account menu (avatar, email, Settings, Sign out). Content at a 640 px reading width inside an 800 px column, placed about 12% down the window on wide screens so it does not hug the top.
+Layout: inside the app shell like every signed-in page (Profile is the active nav item), so the account menu and Sign out are always there. Content at a 640 px reading width inside an 800 px column, placed about 10% down the window on wide screens so it does not hug the top.
 
 ### 5.3 Today (the daily feed)
 

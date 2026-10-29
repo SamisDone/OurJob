@@ -112,14 +112,21 @@ function CvStep({ next }: { next: () => void }) {
             placeholder="Everything from your name to your last line. Formatting does not matter."
           />
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button disabled={!text.trim() || pasteCv.isPending} onClick={() => pasteCv.mutate({ kind: "cv", text }, { onSuccess: done })}>
+            <Button
+              disabled={!text.trim() || pasteCv.isPending}
+              onClick={() => pasteCv.mutate({ kind: "cv", text }, { onSuccess: done })}
+            >
               {pasteCv.isPending ? "Saving" : "Use this text"}
             </Button>
             <Button variant="ghost" onClick={() => setPasting(false)}>
               Upload a file instead
             </Button>
           </div>
-          {pasteCv.isError && <p role="alert" className="mt-3 text-sm text-redpen">{pasteCv.error.message}</p>}
+          {pasteCv.isError && (
+            <p role="alert" className="mt-3 text-sm text-redpen">
+              {pasteCv.error.message}
+            </p>
+          )}
         </Panel>
       ) : (
         <>
@@ -130,7 +137,9 @@ function CvStep({ next }: { next: () => void }) {
             hint={`${CV_TYPES} Only you can see it.`}
             onFile={(file) => upload.mutate({ file }, { onSuccess: done })}
           />
-          <p className="mt-4 text-sm text-graphite">Using Overleaf? Open Menu, then Download source, and upload the .tex file.</p>
+          <p className="mt-4 text-sm text-graphite">
+            Using Overleaf? Open Menu, then Download source, and upload the .tex file.
+          </p>
           <Button variant="link" size="sm" className="mt-2 text-sm" onClick={() => setPasting(true)}>
             Paste your CV as text instead
           </Button>

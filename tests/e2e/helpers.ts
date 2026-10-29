@@ -12,12 +12,28 @@ export const E2E_USER = {
   name: "Test Person",
 };
 
+/**
+ * Two more fictional people for the app shell test, so it never races the
+ * onboarding test over E2E_USER's data: one with no profile, one with a
+ * confirmed profile (seeded in global-setup.ts).
+ */
+export const SHELL_USERS = {
+  fresh: { id: "00000000-0000-4000-8000-000000000002", email: "fresh@example.com", name: "Fresh Person" },
+  confirmed: { id: "00000000-0000-4000-8000-000000000003", email: "confirmed@example.com", name: "Nadia Chowdhury" },
+} as const;
+
 /** Mints an Auth.js session cookie for a fictional person, so tests never call Google. */
-export async function signInAs(context: BrowserContext, baseURL: string, email: string, name = "Test Person") {
+export async function signInAs(
+  context: BrowserContext,
+  baseURL: string,
+  email: string,
+  name = "Test Person",
+  uid: string = E2E_USER.id,
+) {
   const token = await encode({
     salt: SESSION_COOKIE,
     secret: E2E_SECRET,
-    token: { email, name, sub: "e2e", uid: E2E_USER.id },
+    token: { email, name, sub: "e2e", uid },
   });
   await context.addCookies([{ name: SESSION_COOKIE, value: token, url: baseURL, httpOnly: true, sameSite: "Lax" }]);
 }

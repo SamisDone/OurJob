@@ -3,6 +3,8 @@ import { Skeleton } from "@/components/ui/feedback";
 /**
  * Shown while a page in the app loads. It also limits link prefetching to
  * this point, so the rail does not render every page on each page view.
+ * It lives in (screens), not (app): a loading boundary starts streaming with
+ * status 200, and the signed-in 404 ([...missing]) must send a real 404.
  */
 export default function Loading() {
   return (

@@ -15,9 +15,9 @@ import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { RAIL_COOKIE } from "./rail";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Sheet, SheetContent } from "@/components/ui/overlay";
-import { setStored, useStored } from "@/lib/use-stored";
 import { cn } from "@/lib/utils";
 import { AccountMenu, type AccountUser } from "./account-menu";
 import { CommandPalette, Kbd } from "./command-palette";
@@ -38,9 +38,20 @@ const secondary: NavItem[] = [
   { href: "/settings", label: "Settings", icon: GearSixIcon },
 ];
 
-function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+const under = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
+
+/**
+ * The nav item a route belongs to. Detail pages light up their parent: a job
+ * belongs to Today, a tailored CV to Tailor, onboarding to Profile.
+ */
+export function activeNavHref(pathname: string): string | null {
+  if (under(pathname, "/jobs")) return "/today";
+  if (under(pathname, "/onboarding")) return "/profile";
+  return [...primary, ...secondary].find((item) => under(pathname, item.href))?.href ?? null;
 }
+
+const phoneBar = primary.slice(0, 3);
+const moreItems = [primary[3], ...secondary];
 
 function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const I = item.icon;
@@ -67,14 +78,28 @@ function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean;
  * Rail on desktop (220 px, collapsible to 64 px), bottom bar on phones.
  * The page itself carries the content; the chrome stays quiet.
  */
-export function AppShell({ children, user }: { children: ReactNode; user?: AccountUser }) {
+export function AppShell({
+  children,
+  user,
+  initialCollapsed = false,
+}: {
+  children: ReactNode;
+  user?: AccountUser;
+  /** From the rail cookie, read on the server, so the first paint already has the right width. */
+  initialCollapsed?: boolean;
+}) {
   const pathname = usePathname() ?? "";
-  const collapsed = useStored("ourjob-rail", "open") === "collapsed";
+  const active = activeNavHref(pathname);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const { signOut } = useSignOut();
 
-  const toggle = () => setStored("ourjob-rail", collapsed ? "open" : "collapsed");
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    document.cookie = `${RAIL_COOKIE}=${next ? "collapsed" : "open"}; path=/; max-age=31536000; samesite=lax`;
+  };
   const compactRoute = pathname.startsWith("/tailor") || pathname.startsWith("/design");
 
   return (
@@ -125,7 +150,7 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
           <ul className="mt-5 space-y-0.5">
             {primary.map((item) => (
               <li key={item.href}>
-                <RailLink item={item} active={isActive(pathname, item.href)} collapsed={collapsed} />
+                <RailLink item={item} active={active === item.href} collapsed={collapsed} />
               </li>
             ))}
           </ul>
@@ -133,7 +158,7 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
           <ul className="mt-auto space-y-0.5">
             {secondary.map((item) => (
               <li key={item.href}>
-                <RailLink item={item} active={isActive(pathname, item.href)} collapsed={collapsed} />
+                <RailLink item={item} active={active === item.href} collapsed={collapsed} />
               </li>
             ))}
             <li className="rail-wide-only">
@@ -167,48 +192,70 @@ export function AppShell({ children, user }: { children: ReactNode; user?: Accou
           aria-label="Main"
           className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-rule bg-sheet pb-[env(safe-area-inset-bottom)] md:hidden"
         >
-          {primary.slice(0, 3).map((item) => {
+          {phoneBar.map((item) => {
             const I = item.icon;
-            const active = isActive(pathname, item.href);
+            const on = active === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                aria-current={active ? "page" : undefined}
+                aria-current={on ? "page" : undefined}
                 className={cn(
                   "relative flex h-16 flex-col items-center justify-center gap-1 text-xs",
-                  active ? "font-medium text-ink" : "text-graphite",
+                  on ? "font-medium text-ink" : "text-graphite",
                 )}
               >
-                {active && <span className="absolute top-0 h-[3px] w-8 rounded-b-[2px] bg-ink" aria-hidden />}
-                <I size={22} aria-hidden weight={active ? "fill" : "regular"} />
+                {on && <span className="absolute top-0 h-[3px] w-8 rounded-b-[2px] bg-ink" aria-hidden />}
+                <I size={22} aria-hidden weight={on ? "fill" : "regular"} />
                 {item.label}
               </Link>
             );
           })}
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className="flex h-16 flex-col items-center justify-center gap-1 text-xs text-graphite"
-          >
-            <DotsThreeIcon size={22} aria-hidden />
-            More
-          </button>
+          {/* Companies, Profile and Settings live under More, so More is the active item for them. */}
+          {(() => {
+            const on = moreItems.some((item) => item.href === active);
+            return (
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                data-active={on || undefined}
+                aria-label={on ? `More, current page ${moreItems.find((i) => i.href === active)?.label}` : "More"}
+                className={cn(
+                  "relative flex h-16 flex-col items-center justify-center gap-1 text-xs",
+                  on ? "font-medium text-ink" : "text-graphite",
+                )}
+              >
+                {on && <span className="absolute top-0 h-[3px] w-8 rounded-b-[2px] bg-ink" aria-hidden />}
+                <DotsThreeIcon size={22} aria-hidden weight={on ? "bold" : "regular"} />
+                More
+              </button>
+            );
+          })()}
         </nav>
 
         <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
           <SheetContent title="More">
             <ul className="-mx-3 space-y-0.5">
-              {[primary[3], ...secondary].map((item) => {
+              {moreItems.map((item) => {
                 const I = item.icon;
+                const on = active === item.href;
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setMoreOpen(false)}
-                      className="flex h-12 items-center gap-3 rounded-control px-3 text-base text-body hover:bg-ink-wash"
+                      aria-current={on ? "page" : undefined}
+                      className={cn(
+                        "flex h-12 items-center gap-3 rounded-control px-3 text-base hover:bg-ink-wash",
+                        on ? "font-medium text-ink" : "text-body",
+                      )}
                     >
-                      <I size={20} aria-hidden className="text-graphite" />
+                      <I
+                        size={20}
+                        aria-hidden
+                        weight={on ? "fill" : "regular"}
+                        className={on ? "text-ink" : "text-graphite"}
+                      />
                       {item.label}
                     </Link>
                   </li>

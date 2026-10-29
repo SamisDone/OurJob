@@ -18,8 +18,10 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   test.setTimeout(900_000);
   await signInAs(context, baseURL!, "allowed@example.com", "Nadia Chowdhury");
 
-  // A person with no confirmed profile is sent to onboarding.
+  // With no confirmed profile, Today says why it is empty and leads into onboarding, inside the shell.
   await page.goto("/today");
+  await expect(page.getByText("Finish your profile first.")).toBeVisible();
+  await page.getByRole("link", { name: "Continue onboarding" }).click();
   await expect(page).toHaveURL(/\/onboarding/);
   await expect(page.getByRole("heading", { name: "Add your CV" })).toBeVisible();
 
@@ -93,7 +95,8 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   await history.getByRole("button", { name: "Restore" }).last().click();
   await expect(page.getByText(/Restored version 1 as version \d+/)).toBeVisible();
 
-  // Confirmed: Today no longer sends him to onboarding.
+  // Confirmed: Today no longer asks him to finish onboarding.
   await page.goto("/today");
-  await expect(page).toHaveURL(/\/today$/);
+  await expect(page.getByText("Coming soon in this build.")).toBeVisible();
+  await expect(page.getByText("Finish your profile first.")).toHaveCount(0);
 });
