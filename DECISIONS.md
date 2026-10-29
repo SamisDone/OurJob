@@ -332,3 +332,14 @@ With more tests running in parallel, the onboarding test sometimes ended with an
 ## 2026-10-29: Nadia is the one sample person
 
 Sam asked for one fictional person everywhere. The style tile sample, `templates/resume-sample.tex` and the tests that read them now use Nadia Chowdhury, built only from the facts in her fixture CV (`tests/fixtures/cvs/nadia-chowdhury.md`): a tailored one-page version for a fictional Senior Backend Engineer post at Lumen Labs. That makes the template a golden target for Phase 2: rendering her profile tailored to that job should give this structure. The template loses two shapes the old sample showed (an employer linked to its website, a project with a Live link), because her profile has neither; comments in the template show both forms, and a unit test still parses a linked employer. No code, template, fixture, test or doc mentions the old sample person any more.
+
+## 2026-10-29: Deployment to Vercel Hobby and Neon (Singapore)
+
+Checked against current docs: Vercel's region list (`sin1` is Singapore, ap-southeast-1; Hobby allows one function region, set with `regions` in `vercel.json`), Auth.js v5's deployment guide (`AUTH_URL` is unnecessary when the host comes from request headers; trust host is inferred on Vercel; `AUTH_SECRET` is the only strictly required variable; the Next.js callback is `/api/auth/callback/google`), and Neon's guidance (pooled `-pooler` URL for the app, direct URL for migrations). Neon's docs site refused connections during this check, so the pooled/direct split comes from Neon's FAQ pages.
+- `vercel.json` sets `regions: ["sin1"]`, next to a Neon project in AWS Singapore.
+- `pnpm db:migrate:prod` reads only `.env.production.local`, prefers `DATABASE_URL_UNPOOLED` (Neon's direct connection), refuses a local host and warns on a pooled host. It never reads `.env.local`, so it cannot migrate the wrong database. Migrations run by hand before a deploy that needs them, not in Vercel's build: a build should not change a database, and a failed migration should stop before code that depends on it ships.
+- The app connects through the pooled URL with `prepare: false` (already the case). The profile row lock is transaction-scoped, so it works through Neon's transaction pooler; a session-level advisory lock would not have.
+- The proxy now also reads `x-forwarded-proto` to choose the secure session cookie name, matching what Auth.js does behind a TLS proxy, so a protocol mismatch cannot turn into a sign-in loop. `auth.ts` already had `trustHost: true`.
+- `/design` stays a 404 in production unless `ENABLE_DESIGN_TILE=1` (checked on a local production build: 404).
+- `APP_URL` was listed in `.env.example` but nothing reads it; removed. `DATABASE_URL_UNPOOLED` added.
+- Env vars for Production only, so preview deployments never touch the production database. Google sign-in only works on the production address anyway.

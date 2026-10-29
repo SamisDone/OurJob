@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:migrate:prod": "tsx scripts/db-migrate.ts --prod",
     "db:studio": "drizzle-kit studio",
     "jobs:daily": "tsx scripts/daily-jobs.ts",
     "llm:smoke": "tsx scripts/llm-smoke.ts",

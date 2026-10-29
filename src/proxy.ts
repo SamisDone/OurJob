@@ -13,7 +13,9 @@ import { isAllowedEmail } from "@/lib/auth/allowlist";
  * in. Sessions therefore last a fixed 30 days from sign-in (DECISIONS.md).
  */
 export default async function proxy(req: NextRequest) {
-  const secure = req.nextUrl.protocol === "https:";
+  // Behind Vercel's TLS proxy Auth.js names the cookie from the forwarded
+  // protocol (trustHost), so read the same header here.
+  const secure = req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
   const cookieName = secure ? "__Secure-authjs.session-token" : "authjs.session-token";
   let email: string | null | undefined;
   try {
