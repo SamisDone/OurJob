@@ -51,22 +51,27 @@ const result: TailorResult = {
 };
 
 export function TailorPreview({ state }: { state?: string }) {
-  const [phase, setPhase] = useState<"paste" | "read" | "tailor" | "done">(
+  const [phase, setPhase] = useState<"paste" | "read" | "tailor" | "check" | "done">(
     state === "paste" ? "paste" : state === "working" ? "tailor" : "done",
   );
-  // Walk through the two steps when tailoring from the paste screen.
+  // Walk through the three steps when tailoring from the paste screen.
   useEffect(() => {
     if (phase === "read") {
       const t = setTimeout(() => setPhase("tailor"), 1200);
       return () => clearTimeout(t);
     }
     if (phase === "tailor" && state !== "working") {
-      const t = setTimeout(() => setPhase("done"), 1800);
+      const t = setTimeout(() => setPhase("check"), 1800);
+      return () => clearTimeout(t);
+    }
+    if (phase === "check") {
+      const t = setTimeout(() => setPhase("done"), 900);
       return () => clearTimeout(t);
     }
   }, [phase, state]);
 
   if (phase === "paste") return <TailorPaste onSubmit={() => setPhase("read")} />;
-  if (phase === "read" || phase === "tailor") return <TailorWorking step={phase === "read" ? 0 : 1} />;
+  if (phase !== "paste" && phase !== "done")
+    return <TailorWorking step={phase === "read" ? 0 : phase === "tailor" ? 1 : 2} />;
   return <TailorResultView result={result} onNewPost={() => setPhase("paste")} />;
 }

@@ -87,10 +87,11 @@ export function TailorPaste({ onSubmit, initial = "" }: { onSubmit: (text: strin
   );
 }
 
-const steps = ["Reading the job", "Tailoring your CV"] as const;
+/** The pipeline stages (onStage: reading, tailoring, checking), in his words. */
+const steps = ["Reading the job", "Tailoring your CV", "Checking every fact against your profile"] as const;
 
 /** While tailoring: the two named steps, and the result layout in skeletons. */
-export function TailorWorking({ step }: { step: 0 | 1 }) {
+export function TailorWorking({ step }: { step: 0 | 1 | 2 }) {
   return (
     <Page wide>
       <PageHeader title="Tailor" description={DESCRIPTION} />
@@ -102,7 +103,9 @@ export function TailorWorking({ step }: { step: 0 | 1 }) {
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Tailoring your CV</CardTitle>
-            <CardDescription>This usually takes 15 to 40 seconds.</CardDescription>
+            <CardDescription>
+              Usually under a minute. When Gemini is slow, a second model is asked as well and the first answer is used.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ol className="space-y-3" aria-live="polite">
