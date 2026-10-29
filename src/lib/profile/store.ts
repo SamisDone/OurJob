@@ -54,6 +54,18 @@ function toVersion(row: typeof schema.masterProfiles.$inferSelect): ProfileVersi
   };
 }
 
+type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/**
+ * Profile writes for one person run one at a time. Without this, an edit
+ * still saving while he confirms reads the unconfirmed version, writes a new
+ * current version without the confirmation and quietly undoes it; two edits
+ * at once also pick the same version number.
+ */
+async function lockProfile(tx: Tx, userId: string) {
+  await tx.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.id, userId)).for("update");
+}
+
 /**
  * Saves `data` as the newest version and makes it current. A confirmed
  * profile stays confirmed: edits after onboarding do not send him back to it.
@@ -66,6 +78,7 @@ export async function saveProfileVersion(
 ): Promise<ProfileVersion> {
   const valid = masterProfileSchema.parse(data);
   return db.transaction(async (tx) => {
+    await lockProfile(tx, userId);
     const [{ latest }] = await tx
       .select({ latest: max(schema.masterProfiles.version) })
       .from(schema.masterProfiles)
@@ -103,10 +116,13 @@ export async function restoreVersion(db: Db, userId: string, version: number): P
 }
 
 export async function confirmProfile(db: Db, userId: string): Promise<void> {
-  await db
-    .update(schema.masterProfiles)
-    .set({ confirmedAt: new Date() })
-    .where(and(eq(schema.masterProfiles.userId, userId), eq(schema.masterProfiles.isCurrent, true)));
+  await db.transaction(async (tx) => {
+    await lockProfile(tx, userId);
+    await tx
+      .update(schema.masterProfiles)
+      .set({ confirmedAt: new Date() })
+      .where(and(eq(schema.masterProfiles.userId, userId), eq(schema.masterProfiles.isCurrent, true)));
+  });
 }
 
 /* Sources --------------------------------------------------------------- */

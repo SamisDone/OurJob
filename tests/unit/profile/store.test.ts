@@ -67,6 +67,19 @@ describe("profile versions (Postgres via PGlite, real migrations)", () => {
     expect(next.confirmedAt).not.toBeNull();
   });
 
+  it("runs simultaneous saves and a confirm one at a time", async () => {
+    const [u] = await (db as unknown as ReturnType<typeof drizzle<typeof schema>>)
+      .insert(schema.users)
+      .values({ email: "busy@example.com" })
+      .returning();
+    await saveProfileVersion(db, u.id, nadia(), { note: "Built" });
+    const saves = [1, 2, 3].map((n) => saveProfileVersion(db, u.id, nadia(), { note: `Edit ${n}` }));
+    await Promise.all([...saves, confirmProfile(db, u.id)]);
+    const versions = await listVersions(db, u.id);
+    expect(versions.map((v) => v.version)).toEqual([4, 3, 2, 1]);
+    expect(versions.filter((v) => v.isCurrent)).toHaveLength(1);
+  });
+
   it("uses the newest source of each kind, any CV format counting as one", async () => {
     await saveSource(db, userId, { kind: "cv_pdf", text: "old pdf" });
     await new Promise((r) => setTimeout(r, 5));
