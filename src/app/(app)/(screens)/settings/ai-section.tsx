@@ -1,7 +1,7 @@
 "use client";
 
-import { Callout, ErrorState, Skeleton } from "@/components/ui/feedback";
-import { Segmented } from "@/components/ui/tabs";
+import { Callout, ErrorState, Skeleton } from "@/components/legacy/feedback";
+import { Segmented } from "@/components/legacy/tabs";
 import { useAiSettings, useSaveTailorModel } from "@/lib/query/settings";
 
 /** Measured in pnpm eval:tailor on ten fictional job posts (DECISIONS.md, 2026-10-29). */

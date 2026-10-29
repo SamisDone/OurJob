@@ -14,13 +14,13 @@ import { Kbd } from "@/components/shell/command-palette";
 import { ThemeControl } from "@/components/shell/theme-control";
 import { TailorDesk } from "@/components/tailor/desk";
 import { KanbanBoard, KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
-import { Button } from "@/components/ui/button";
-import { FilterChip, KeywordChip, Stamp, Tag, TokenChip } from "@/components/ui/chip";
-import { CodeView } from "@/components/ui/code-view";
-import { DataTable } from "@/components/ui/data-table";
-import { DiffView } from "@/components/ui/diff-view";
-import { Callout, CautionBar, EmptyState, ErrorState, Panel, Skeleton } from "@/components/ui/feedback";
-import { FieldError, FieldHint, Input, Label, Textarea } from "@/components/ui/input";
+import { Button } from "@/components/legacy/button";
+import { FilterChip, KeywordChip, Stamp, Tag, TokenChip } from "@/components/legacy/chip";
+import { CodeView } from "@/components/legacy/code-view";
+import { DataTable } from "@/components/legacy/data-table";
+import { DiffView } from "@/components/legacy/diff-view";
+import { Callout, CautionBar, EmptyState, ErrorState, Panel, Skeleton } from "@/components/legacy/feedback";
+import { FieldError, FieldHint, Input, Label, Textarea } from "@/components/legacy/input";
 import {
   Dialog,
   DialogClose,
@@ -34,11 +34,11 @@ import {
   SheetTrigger,
   Tooltip,
   TooltipProvider,
-} from "@/components/ui/overlay";
-import { Combobox, Select } from "@/components/ui/select";
-import { ProgressSteps, TaskSteps } from "@/components/ui/steps";
-import { Segmented, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/toast";
+} from "@/components/legacy/overlay";
+import { Combobox, Select } from "@/components/legacy/select";
+import { ProgressSteps, TaskSteps } from "@/components/legacy/steps";
+import { Segmented, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/legacy/tabs";
+import { toast } from "@/components/legacy/toast";
 import type { CvDocument } from "@/lib/cv/document";
 import { findSampleMarks, sampleAts, sampleCompanies, sampleCv, sampleJd, sampleJobs } from "@/lib/design/sample";
 import { cn } from "@/lib/utils";

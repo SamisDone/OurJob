@@ -17,7 +17,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { RAIL_COOKIE } from "./rail";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { Sheet, SheetContent } from "@/components/ui/overlay";
+import { Sheet, SheetContent } from "@/components/legacy/overlay";
 import { cn } from "@/lib/utils";
 import { AccountMenu, type AccountUser } from "./account-menu";
 import { CommandPalette, Kbd } from "./command-palette";

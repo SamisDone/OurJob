@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Toaster } from "@/components/ui/toast";
+import { Toaster } from "@/components/legacy/toast";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 

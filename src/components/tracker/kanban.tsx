@@ -3,7 +3,7 @@
 import { DotsSixVerticalIcon, FileTextIcon } from "@phosphor-icons/react/ssr";
 import { DropdownMenu } from "radix-ui";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Stamp } from "@/components/ui/chip";
+import { Stamp } from "@/components/legacy/chip";
 import { cn } from "@/lib/utils";
 
 export const trackerColumns = ["Saved", "Applied", "Interviewing", "Offer", "Closed"] as const;

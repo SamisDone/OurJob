@@ -12,11 +12,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { PreferencesForm } from "@/components/profile/preferences-form";
 import { ProfileEditor } from "@/components/profile/profile-editor";
-import { Button } from "@/components/ui/button";
-import { EmptyState, ErrorState, Panel, Skeleton } from "@/components/ui/feedback";
-import { DropZone } from "@/components/ui/form-bits";
-import { FieldHint, Input, Label, Textarea } from "@/components/ui/input";
-import { ProgressSteps, TaskSteps } from "@/components/ui/steps";
+import { Button } from "@/components/legacy/button";
+import { EmptyState, ErrorState, Panel, Skeleton } from "@/components/legacy/feedback";
+import { DropZone } from "@/components/legacy/form-bits";
+import { FieldHint, Input, Label, Textarea } from "@/components/legacy/input";
+import { ProgressSteps, TaskSteps } from "@/components/legacy/steps";
 import {
   useBuildProfile,
   useConfirmProfile,

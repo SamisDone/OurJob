@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Callout, ErrorState, Skeleton } from "@/components/ui/feedback";
-import { MultiToggle, Switch, TokenInput } from "@/components/ui/form-bits";
-import { FieldError, FieldHint, Input, Label } from "@/components/ui/input";
-import { Combobox, Select } from "@/components/ui/select";
-import { Segmented } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/toast";
+import { Button } from "@/components/legacy/button";
+import { Callout, ErrorState, Skeleton } from "@/components/legacy/feedback";
+import { MultiToggle, Switch, TokenInput } from "@/components/legacy/form-bits";
+import { FieldError, FieldHint, Input, Label } from "@/components/legacy/input";
+import { Combobox, Select } from "@/components/legacy/select";
+import { Segmented } from "@/components/legacy/tabs";
+import { toast } from "@/components/legacy/toast";
 import { countryOptions, regionsFor, timezoneOptions } from "@/lib/geo";
 import { formatAmount, parseAmountInput } from "@/lib/salary/input";
 import type { SearchPreferences } from "@/lib/profile/schema";

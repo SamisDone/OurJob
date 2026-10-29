@@ -2,7 +2,7 @@
 
 import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Segmented } from "@/components/ui/tabs";
+import { Segmented } from "@/components/legacy/tabs";
 import { cn } from "@/lib/utils";
 
 type Pane = "job" | "cv" | "score";

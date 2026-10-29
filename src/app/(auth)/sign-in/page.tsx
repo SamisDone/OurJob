@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
 import { Wordmark } from "@/components/shell/wordmark";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/legacy/button";
 import { isAllowedEmail } from "@/lib/auth/allowlist";
 
 export const metadata: Metadata = { title: "Sign in" };

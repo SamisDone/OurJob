@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/legacy/button";
 import { PageFrame } from "@/components/shell/page-states";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState } from "@/components/legacy/feedback";
 
 /** Signed-in 404, inside the shell. The root not-found.tsx covers everyone else. */
 export default function NotFound() {

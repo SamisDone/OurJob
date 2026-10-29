@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { ProfileEditor } from "@/components/profile/profile-editor";
 import { VersionHistory } from "@/components/profile/version-history";
-import { Button } from "@/components/ui/button";
-import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
+import { Button } from "@/components/legacy/button";
+import { EmptyState, ErrorState, Skeleton } from "@/components/legacy/feedback";
 import { useProfile } from "@/lib/query/profile";
 import { useIsMutating } from "@tanstack/react-query";
 import { mutationKeys } from "@/lib/query-keys";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useMutationState, useQueryClient, type MutationKey, type QueryKey } from "@tanstack/react-query";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/legacy/toast";
 import { mutationKeys } from "@/lib/query-keys";
 import { createOptimisticHandlers, type OptimisticContext, type OptimisticTarget } from "./optimistic";
 import { tailorSteps, type MutationStatus } from "./tailor-progress";

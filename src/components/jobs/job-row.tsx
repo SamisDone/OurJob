@@ -2,8 +2,8 @@
 
 import { ArrowSquareOutIcon, BookmarkSimpleIcon, CheckIcon, XIcon } from "@phosphor-icons/react/ssr";
 import { useId, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Tag } from "@/components/ui/chip";
+import { Button } from "@/components/legacy/button";
+import { Tag } from "@/components/legacy/chip";
 import { PenUnderline } from "@/components/marks/pen";
 import { FitScore } from "@/components/score/score";
 import { cn } from "@/lib/utils";

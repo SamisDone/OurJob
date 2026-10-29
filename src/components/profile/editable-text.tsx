@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
+import { Button } from "@/components/legacy/button";
+import { Textarea } from "@/components/legacy/input";
 import { cn } from "@/lib/utils";
 
 /**

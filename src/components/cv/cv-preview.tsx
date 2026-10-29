@@ -2,9 +2,9 @@
 
 import { ArrowsOutIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/overlay";
-import { Segmented } from "@/components/ui/tabs";
+import { Button } from "@/components/legacy/button";
+import { Dialog, DialogContent } from "@/components/legacy/overlay";
+import { Segmented } from "@/components/legacy/tabs";
 import type { CvDocument } from "@/lib/cv/document";
 import { CvSheet } from "./cv-sheet";
 

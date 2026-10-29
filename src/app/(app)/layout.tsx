@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/app-shell";
 import { RAIL_COOKIE } from "@/components/shell/rail";
-import { TooltipProvider } from "@/components/ui/overlay";
+import { TooltipProvider } from "@/components/legacy/overlay";
 import { requireUser } from "@/lib/auth/session";
 
 /**

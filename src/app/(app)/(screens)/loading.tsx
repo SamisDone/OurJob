@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/feedback";
+import { Skeleton } from "@/components/legacy/feedback";
 
 /**
  * Shown while a page in the app loads. It also limits link prefetching to

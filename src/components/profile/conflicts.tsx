@@ -2,7 +2,7 @@
 
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/legacy/button";
 import { formatCvDate } from "@/lib/profile/dates";
 import { conflictLabel, type EditOp } from "@/lib/profile/edit";
 import type { MasterProfile } from "@/lib/profile/schema";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/feedback";
+import { Button } from "@/components/legacy/button";
+import { EmptyState } from "@/components/legacy/feedback";
 import type { ProfileStatus } from "@/lib/profile/status";
 
 /** Page frame for the shell's simple pages: heading, then one index card. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { Segmented } from "@/components/ui/tabs";
+import { Segmented } from "@/components/legacy/tabs";
 import { setStored, useStored } from "@/lib/use-stored";
 
 type Theme = "system" | "light" | "dark";

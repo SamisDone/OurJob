@@ -4,7 +4,7 @@ import { SignOutIcon } from "@phosphor-icons/react/ssr";
 import type { QueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { signOut as authSignOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/legacy/button";
 import { getQueryClient } from "@/lib/query/client";
 
 /**

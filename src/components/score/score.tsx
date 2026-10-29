@@ -2,7 +2,7 @@
 
 import { InfoIcon } from "@phosphor-icons/react/ssr";
 import { useEffect, useRef, useState } from "react";
-import { Tooltip } from "@/components/ui/overlay";
+import { Tooltip } from "@/components/legacy/overlay";
 import { wholePoints } from "@/lib/ats/display";
 import { cn } from "@/lib/utils";
 import { usePrefersReducedMotion } from "@/lib/use-stored";

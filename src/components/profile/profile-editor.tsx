@@ -9,13 +9,13 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react/ssr";
 import { Fragment, useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { TokenChip } from "@/components/ui/chip";
-import { Panel } from "@/components/ui/feedback";
-import { SourceBadges } from "@/components/ui/form-bits";
-import { Input, Label } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { toast } from "@/components/ui/toast";
+import { Button } from "@/components/legacy/button";
+import { TokenChip } from "@/components/legacy/chip";
+import { Panel } from "@/components/legacy/feedback";
+import { SourceBadges } from "@/components/legacy/form-bits";
+import { Input, Label } from "@/components/legacy/input";
+import { Select } from "@/components/legacy/select";
+import { toast } from "@/components/legacy/toast";
 import { boldSegments } from "@/lib/cv/document";
 import { formatCvDate } from "@/lib/profile/dates";
 import type { EditOp } from "@/lib/profile/edit";
