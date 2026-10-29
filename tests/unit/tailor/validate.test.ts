@@ -96,7 +96,12 @@ const good = (): TailoredResume => ({
   educationIds: ["edu_1"],
   certificationIds: [],
   awardIds: [],
-  notes: [],
+  // The fixture CV keeps it short; check 9 accepts left-out role bullets that the notes explain.
+  notes: [
+    "Left out b_1_3: mentoring is not part of this job.",
+    "Left out b_2_2: reconciliation is covered by the settlement bullet.",
+    "Left out b_2_3: row-level security is not part of this job.",
+  ],
 });
 
 const run = (edit: (r: TailoredResume) => void) => {
@@ -108,9 +113,25 @@ const of = (issues: Issue[], check: Issue["check"], action?: Issue["action"]) =>
   issues.filter((i) => i.check === check && (!action || i.action === action));
 
 describe("validator", () => {
+  it("sends an unexplained left-out role bullet back to the fix loop, and reports an explained one", () => {
+    const silent = run((r) => (r.notes = r.notes.filter((n) => !n.includes("b_1_3"))));
+    expect(of(silent.issues, "kept", "fix").map((i) => i.message)).toEqual([
+      expect.stringContaining("Keep b_1_3 from Parcelwise"),
+    ]);
+    const explained = run(() => {});
+    expect(of(explained.issues, "kept", "fix")).toEqual([]);
+    expect(of(explained.issues, "kept", "report")).toHaveLength(3);
+    const generic = run(
+      (r) => (r.notes = r.notes.map((n) => (n.includes("b_1_3") ? "Left out b_1_3: irrelevant to this job." : n))),
+    );
+    expect(of(generic.issues, "kept", "fix")).toHaveLength(1);
+  });
+
   it("passes a CV that only uses profile facts", () => {
     const { issues } = validateTailored(good(), ctx);
-    expect(issues.filter((i) => i.action !== "fixed")).toEqual([]);
+    // Only the left-out role bullets the notes explain are reported.
+    expect(issues.filter((i) => i.action !== "fixed" && i.check !== "kept")).toEqual([]);
+    expect(issues.filter((i) => i.check === "kept").every((i) => i.action === "report")).toBe(true);
   });
 
   it("1. drops unknown roles and source ids", () => {

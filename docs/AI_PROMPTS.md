@@ -205,9 +205,9 @@ Hard rules:
 3. Never use any keyword from <gaps>, or any skill not in the master profile.
 4. Numbers: a bullet may contain a number only if that number appears in the metrics of its source items. Never estimate or round up. Keep any hedge attached to a number ("roughly 50%", "an estimated ~10x"); never drop the hedge to make a claim sound stronger.
 5. Do not change company names, job titles, dates, degrees or institutions. Refer to them only by ID.
-6. Keep roles in reverse chronological order. Order projects by relevance to the job. You may leave out roles or projects that do not help this job, but never leave out the most recent role.
+6. Keep every role, in reverse chronological order, and his real experience: one tailored bullet for each source bullet of each role. A role bullet may be left out only if it is clearly irrelevant to the job, with a note "Left out <bullet id>: <reason>". Order projects by relevance; projects that do not help may be left out. (p3.3, 2026-10-30)
 7. tech lists: only items from that role's or project's tech in the master profile. Put the ones the job asks for first, using the job's exact wording when it is a synonym (for example the job says "Postgres" and the profile says "PostgreSQL": write "PostgreSQL (Postgres)" only if the profile lists that alias).
-8. Length: his CV is one dense page. For 1 page: 1 or 2 bullets per role, the most relevant role may have 3; 3 to 6 projects with 1 bullet each; summary max 2 lines. For 2 pages: up to 4 bullets per role and 2 per project.
+8. Length: his CV is one dense page. For 1 page: fit by keeping bullets to 1 or 2 lines and choosing fewer projects (up to 6, 1 bullet each), never by dropping role bullets; summary max 2 lines. For 2 pages: every role bullet and up to 2 per project.
 
 How to write each bullet (added in p3.2, 2026-10-29):
 A. Pick source bullets that carry the most terms in <placement> and match the job's responsibilities.
@@ -256,7 +256,8 @@ Checks, each producing a report entry:
 5. **Gap leak:** no gap keyword (or its synonyms) appears anywhere in the output. Failing bullets go to the fix loop.
 6. **Matched coverage:** every matched keyword appears at least once (exact term, case-insensitive). Missing ones are reported; the fix loop asks the model to add them where proofIds allow.
 7. **Style:** no em dash (U+2014) and no banned words; auto-fix em dashes to a comma or period in code, flag banned words for the fix loop.
-8. **Length:** estimate rendered length (characters per line heuristic); if over the page target, ask the fix loop to trim lowest-relevance bullets.
+8. **Length:** estimate rendered length (characters per line heuristic); if over the page target, ask the fix loop to shorten bullets, then drop projects; a role bullet goes only if it is clearly irrelevant.
+9. **Kept experience:** every source bullet of every role is used by some tailored bullet. One left out without a note naming its id goes to the fix loop, which adds it back; one with a note is reported ("Left out from Parcelwise: ..."). Bullets removed for accuracy after the fix loop get such a note automatically.
 
 **Fix loop:** send only the failing items back to the model with the specific errors, max 2 rounds. Anything still failing is dropped, and the UI lists what was dropped and why in a "Removed for accuracy" panel.
 

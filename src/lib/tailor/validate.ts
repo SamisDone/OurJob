@@ -14,7 +14,18 @@ import { extractNumbers, unsupportedReason } from "./numbers";
  */
 
 export type CheckId =
-  "ids" | "source" | "numbers" | "bold" | "tech" | "skills" | "gap" | "coverage" | "style" | "length" | "order";
+  | "ids"
+  | "source"
+  | "numbers"
+  | "bold"
+  | "tech"
+  | "skills"
+  | "gap"
+  | "coverage"
+  | "style"
+  | "length"
+  | "order"
+  | "kept";
 
 export type Issue = {
   check: CheckId;
@@ -394,19 +405,60 @@ export function validateTailored(
     }
   }
 
-  /* 8. Length. */
+  /* 9. Kept experience: every source bullet of every role is used, unless the notes say why it was left out. */
+  for (const left of leftOutBullets(resume, p)) {
+    // A reason counts only when it says something specific: "irrelevant to this job" does not.
+    const note = resume.notes.find((n) => n.includes(left.bulletId) && reasonWords(n) >= 6);
+    issues.push(
+      note
+        ? {
+            check: "kept",
+            ref: "resume",
+            message: `Left out from ${left.company}: "${left.text}" (${note})`,
+            action: "report",
+          }
+        : {
+            check: "kept",
+            ref: "resume",
+            message: `Keep ${left.bulletId} from ${left.company} ("${left.text}"): add it as a bullet to experience:${left.roleId}. Leave it out only if it is clearly irrelevant to this job, with a note saying what it is about and what the job needs instead.`,
+            action: "fix",
+          },
+    );
+  }
+
+  /* 8. Length. Shorten first: real experience is not dropped to fit (check 9). */
   const lines = estimateLines(resume);
   const budget = LINES_PER_PAGE * ctx.pages;
   if (lines > budget) {
     issues.push({
       check: "length",
       ref: "resume",
-      message: `About ${Math.round(lines)} lines for a ${ctx.pages}-page CV that fits ${budget}. Remove or shorten the least relevant bullets.`,
+      message: `About ${Math.round(lines)} lines for a ${ctx.pages}-page CV that fits ${budget}. Shorten bullets, drop projects, or remove only role bullets that are clearly irrelevant to this job.`,
       action: "fix",
     });
   }
 
   return { resume, issues };
+}
+
+/** Words in a note after its "Left out <id>:" prefix. */
+const reasonWords = (note: string) =>
+  note
+    .replace(/^[^:]*:/, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+export type LeftOutBullet = { roleId: string; company: string; bulletId: string; text: string };
+
+/** Source bullets of the profile's roles that no tailored bullet uses, including those of a role left out entirely. */
+export function leftOutBullets(resume: TailoredResume, p: MasterProfile): LeftOutBullet[] {
+  const used = new Set(resume.experience.flatMap((e) => e.bullets.flatMap((b) => b.sourceIds)));
+  return p.experience.flatMap((e) =>
+    e.bullets
+      .filter((b) => !used.has(b.id))
+      .map((b) => ({ roleId: e.id, company: e.company, bulletId: b.id, text: b.text })),
+  );
 }
 
 /** Bullet refs and the summary that still need the model, with their messages. */

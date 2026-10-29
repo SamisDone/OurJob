@@ -259,3 +259,66 @@ describe("llm cache", () => {
     expect(cacheKey(base)).not.toBe(cacheKey({ ...base, model: "other" }));
   });
 });
+
+describe("Gemini provider hedge (slow main model)", () => {
+  /** lite answers after `liteMs`; flash answers at once, or with `flashError`. Records aborts. */
+  function slowLite(liteMs: number, flashError?: Error) {
+    const calls: string[] = [];
+    const aborted: string[] = [];
+    const answer = (model: string) => ({
+      text: JSON.stringify({ title: `from ${model}`, skills: [] }),
+      usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 },
+    });
+    const models = {
+      async generateContent(req: { model: string; config: { abortSignal?: AbortSignal } }) {
+        calls.push(req.model);
+        if (req.model === "gemini-3.8-flash") {
+          if (flashError) throw flashError;
+          return answer(req.model);
+        }
+        return new Promise((resolve, reject) => {
+          const t = setTimeout(() => resolve(answer(req.model)), liteMs);
+          req.config.abortSignal?.addEventListener("abort", () => {
+            clearTimeout(t);
+            aborted.push(req.model);
+            reject(new Error("aborted"));
+          });
+        });
+      },
+    };
+    const p = createGeminiProvider({
+      apiKey: "test",
+      model: "gemini-3.5-flash-lite",
+      fallbackModel: "gemini-3.8-flash",
+      slowMs: 30,
+      models: models as unknown as NonNullable<GeminiOptions["models"]>,
+      ...fast,
+    });
+    return { p, calls, aborted };
+  }
+
+  it("asks the fallback when the main model is slow, takes the first answer and cancels the other", async () => {
+    const { p, calls, aborted } = slowLite(500);
+    const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
+    expect(res.data.title).toBe("from gemini-3.8-flash");
+    expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+    expect(aborted).toEqual(["gemini-3.5-flash-lite"]);
+  });
+
+  it("keeps waiting for the main model when the fallback's daily quota is used up", async () => {
+    const quota = Object.assign(new Error('{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}'), {
+      status: 429,
+    });
+    const { p, calls } = slowLite(100, quota);
+    const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
+    expect(res.data.title).toBe("from gemini-3.5-flash-lite");
+    expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+  });
+
+  it("does not ask the fallback when the main model answers in time", async () => {
+    const { p, calls } = slowLite(5);
+    const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
+    expect(res.data.title).toBe("from gemini-3.5-flash-lite");
+    expect(calls).toEqual(["gemini-3.5-flash-lite"]);
+  });
+});

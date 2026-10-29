@@ -13,6 +13,8 @@ import { generateValidated } from "./validate";
  * latency, never the prompt text (it can contain CV text).
  */
 
+type Usage = { inputTokens: number; outputTokens: number };
+
 type Models = Pick<GoogleGenAI["models"], "generateContent">;
 
 export type GeminiOptions = {
@@ -25,6 +27,12 @@ export type GeminiOptions = {
   retries?: number;
   /** Per-request timeout in ms. */
   timeoutMs?: number;
+  /**
+   * When the main model has not answered after this many ms, the fallback
+   * model is asked too and the first answer wins (the other request is
+   * cancelled). Default 20 s.
+   */
+  slowMs?: number;
   models?: Models;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
@@ -61,6 +69,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
   const now = opts.now ?? Date.now;
   const rpm = opts.rpm ?? 8;
   const retries = opts.retries ?? 3;
+  const slowMs = opts.slowMs ?? 20_000;
   const log =
     opts.log ??
     ((e) => console.info(`[llm] ${e.promptId} ${e.model} ${e.ms}ms in=${e.inputTokens} out=${e.outputTokens}`));
@@ -78,10 +87,11 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
     }
   }
 
-  async function callModel<T>(model: string, args: GenerateArgs<T>, user: string) {
+  async function callModel<T>(model: string, args: GenerateArgs<T>, user: string, signal?: AbortSignal) {
     const schema = toGeminiSchema(args.schema);
     for (let attempt = 0; ; attempt++) {
       await waitForSlot();
+      if (signal?.aborted) throw new LLMError("unavailable", "Cancelled: the other model answered first.");
       const started = now();
       try {
         const res = await models.generateContent({
@@ -93,6 +103,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
             maxOutputTokens: args.maxOutputTokens,
             responseMimeType: "application/json",
             responseJsonSchema: schema,
+            abortSignal: signal,
           },
         });
         const usage = {
@@ -102,6 +113,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
         log({ promptId: args.promptId, model, ms: now() - started, ...usage });
         return { text: res.text ?? "", usage };
       } catch (e) {
+        if (signal?.aborted) throw new LLMError("unavailable", "Cancelled: the other model answered first.");
         const status = statusOf(e);
         if (status === 401 || status === 403) {
           throw new LLMError(
@@ -135,19 +147,62 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
     }
   }
 
-  async function callOnce<T>(args: GenerateArgs<T>, user: string) {
-    try {
-      return await callModel(opts.model, args, user);
-    } catch (e) {
-      const canFallBack =
-        opts.fallbackModel &&
-        opts.fallbackModel !== opts.model &&
-        e instanceof LLMError &&
-        (e.code === "unavailable" || e.code === "rate_limited");
-      if (!canFallBack) throw e;
-      console.info(`[llm] ${args.promptId}: ${opts.model} is busy, using ${opts.fallbackModel}`);
-      return callModel(opts.fallbackModel!, args, user);
-    }
+  const busyError = (e: unknown) => e instanceof LLMError && (e.code === "unavailable" || e.code === "rate_limited");
+
+  /**
+   * The main model, with the fallback as a hedge: asked when the main model is
+   * busy, or when it has not answered after slowMs. The first answer wins and
+   * the other request is cancelled. If the fallback fails (say its daily quota
+   * is used up), the main model's answer is still awaited.
+   */
+  function callOnce<T>(args: GenerateArgs<T>, user: string): Promise<{ text: string; usage: Usage }> {
+    const fallback = opts.fallbackModel && opts.fallbackModel !== opts.model ? opts.fallbackModel : null;
+    if (!fallback) return callModel(opts.model, args, user);
+    const main = new AbortController();
+    const hedge = new AbortController();
+    return new Promise((resolve, reject) => {
+      let done = false;
+      let running = 1;
+      let hedged = false;
+      let mainError: unknown;
+      let hedgeError: unknown;
+      const win = (value: { text: string; usage: Usage }, loser: AbortController) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        loser.abort();
+        resolve(value);
+      };
+      const failed = () => {
+        if (done || --running > 0) return;
+        done = true;
+        clearTimeout(timer);
+        // The fallback's error says more when the main model was only busy.
+        reject(busyError(mainError) && hedgeError ? hedgeError : (mainError ?? hedgeError));
+      };
+      const startHedge = (why: string) => {
+        if (hedged || done) return;
+        hedged = true;
+        running++;
+        console.info(`[llm] ${args.promptId}: ${opts.model} ${why}, also asking ${fallback}`);
+        callModel(fallback, args, user, hedge.signal).then(
+          (v) => win(v, main),
+          (e) => {
+            hedgeError = e;
+            failed();
+          },
+        );
+      };
+      const timer = setTimeout(() => startHedge(`has not answered in ${slowMs / 1000} s`), slowMs);
+      callModel(opts.model, args, user, main.signal).then(
+        (v) => win(v, hedge),
+        (e) => {
+          mainError = e;
+          if (busyError(e)) startHedge("is busy");
+          failed();
+        },
+      );
+    });
   }
 
   return {

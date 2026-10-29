@@ -11,6 +11,14 @@ import { p1OutputSchema } from "../src/lib/llm/prompts/p1-profile";
 import { normalizeProfile } from "../src/lib/profile/normalize";
 import type { TailoredResume } from "../src/lib/profile/schema";
 import type { MatchedKeyword } from "../src/lib/tailor/keywords";
+import { leftOutBullets } from "../src/lib/tailor/validate";
+
+/** Per post: each role's source bullets against its tailored bullets, and what was left out. */
+const roleLines = [
+  "| Model | Post | Bullets per role (source to tailored) | Left out | Which, and why |",
+  "|---|---|---|---|---|",
+];
+const roleTotals = { source: 0, tailored: 0, left: 0, explained: 0 };
 
 const dir = process.argv[2] ?? "eval-output/run1";
 const profile = normalizeProfile(
@@ -110,6 +118,21 @@ for (const r of rows) {
     resume: TailoredResume;
     matched: MatchedKeyword[];
   };
+  const perRole = profile.experience.map((e) => {
+    const tailored = saved.resume.experience.find((x) => x.experienceId === e.id)?.bullets.length ?? 0;
+    roleTotals.source += e.bullets.length;
+    roleTotals.tailored += tailored;
+    return `${e.company} ${e.bullets.length} to ${tailored}`;
+  });
+  const left = leftOutBullets(saved.resume, profile).map((l) => {
+    const note = saved.resume.notes.find((n) => n.includes(l.bulletId));
+    roleTotals.left++;
+    if (note) roleTotals.explained++;
+    return `${l.bulletId} (${l.company}): ${note ? note.replace(/^Left out [^:]+:\s*/, "") : "no reason given"}`;
+  });
+  roleLines.push(
+    `| ${r.model.replace("gemini-", "")} | ${r.jd} | ${perRole.join(", ")} | ${left.length} | ${left.join("; ") || "none"} |`,
+  );
   const bullets = [...saved.resume.experience, ...saved.resume.projects].flatMap((e) => e.bullets);
   const reworded = bullets.filter((b) => !sourceTexts.has(norm(b.text))).length;
   const reworded20 = bullets.filter((b) => changed(b.text, b.sourceIds) >= 0.2).length;
@@ -159,3 +182,8 @@ for (const [model, a] of agg) {
     `| ${model} | ${a.ok}/${a.n} | ${median.toFixed(1)} | ${Math.max(...sorted).toFixed(1)} | ${sorted.filter((t) => t < 45).length}/${a.ok} | ${a.clean}/${a.ok} | ${a.leaks} | ${a.nums} | ${a.removed} | ${pct(a.cov)} | ${pct(a.bul)} (${a.placeable}) | ${pct(a.rew)} (${a.rew20}) |`,
   );
 }
+
+console.log(`\n${roleLines.join("\n")}`);
+console.log(
+  `\nRole bullets: ${roleTotals.tailored} tailored from ${roleTotals.source} in the source; ${roleTotals.left} left out, ${roleTotals.explained} of them with a reason.`,
+);

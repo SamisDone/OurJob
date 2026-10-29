@@ -115,6 +115,16 @@ export async function tailorCv(
       ([ref]) => ref === "summary" || /^(experience|projects):[^:]+:\d+$/.test(ref),
     );
     for (const [ref, reasons] of drop) removed.push({ ref, text: textAt(resume, ref) ?? "", reasons });
+    // The kept-experience check (9) then reports these as removed for accuracy instead of asking for them back.
+    const ids = drop.flatMap(([ref]) => bulletAt(resume, ref)?.sourceIds ?? []);
+    if (ids.length)
+      resume = {
+        ...resume,
+        notes: [
+          ...resume.notes,
+          `Left out ${ids.join(", ")}: removed for accuracy, because the fact check could not confirm it from your profile.`,
+        ],
+      };
     resume = removeRefs(
       resume,
       drop.map(([ref]) => ref),

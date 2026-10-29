@@ -8,7 +8,7 @@ import { p3System, promptProfile, type TailorOptions } from "./p3-tailor";
  * back to the model, with the exact errors, and only changes come back.
  */
 export const P3_FIX_PROMPT_ID = "p3-fix";
-export const P3_FIX_PROMPT_VERSION = "p3fix.1";
+export const P3_FIX_PROMPT_VERSION = "p3fix.2";
 
 export const p3FixOutputSchema = z.object({
   changes: z.array(
@@ -44,8 +44,8 @@ You are now correcting a CV you already tailored. <problems> lists items that fa
 For each problem return a change:
 - "replace" with a corrected bullet (or summary) that fixes every error and still follows all rules above. When a number or claim is not supported, remove it or use the exact wording of the source; never invent a replacement.
 - "remove" when the item cannot be fixed without adding facts.
-- "add" a bullet to a role or project (ref "experience:<id>" or "projects:<id>") only to place a missing matched keyword where its proofIds support it, or to add the most recent role.
-For "Remove or shorten" length problems, remove or shorten the least relevant bullets.
+- "add" a bullet to a role or project (ref "experience:<id>" or "projects:<id>") only to place a missing matched keyword where its proofIds support it, to add a role, or to restore a left-out source bullet.
+For length problems, shorten bullets first, then drop the least relevant projects; remove a role bullet only if it is clearly irrelevant to the job. For "Keep ..." problems, add the named source bullet back as a tailored bullet to that role (ref "experience:<id>"), reworded for the job.
 Return only changes.`;
   const user = [
     `<master_profile>${JSON.stringify(promptProfile(args.profile))}</master_profile>`,

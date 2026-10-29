@@ -55,6 +55,8 @@ export function getLLMProvider(tier: ModelTier = "standard"): LLMProvider {
       model: useTier === "thorough" ? thorough! : standard,
       fallbackModel: useTier === "thorough" ? standard : process.env.LLM_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
       rpm: Number(process.env.LLM_RPM) || undefined,
+      // Ask the fallback too when the main model is this slow (ms); default 20 s.
+      slowMs: Number(process.env.LLM_SLOW_MS) || undefined,
     });
   } else {
     throw new LLMError("auth", `Unknown LLM_PROVIDER "${kind}". Use gemini or mock.`);
