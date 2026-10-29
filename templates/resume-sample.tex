@@ -91,68 +91,64 @@
 \begin{document}
 
 %----------HEADING----------
+% Optional links follow the same pattern, e.g. $|$ \lnk{https://example.com}{Portfolio}
 \begin{center}
-    {\huge \scshape Arif Rahman} \\ \vspace{2pt}
-    \small Dhaka, Bangladesh $|$ \lnk{mailto:arif.rahman@example.com}{arif.rahman@example.com} $|$
-    \lnk{https://github.com/example-arif}{Github} $|$
-    \lnk{https://www.linkedin.com/in/example-arif}{LinkedIn} $|$
-    \lnk{https://example.com}{Portfolio}
+    {\huge \scshape Nadia Chowdhury} \ \vspace{2pt}
+    \small Sylhet, Bangladesh $|$ \lnk{mailto:nadia.chowdhury@example.com}{nadia.chowdhury@example.com} $|$
+    \lnk{https://github.com/example-nadia}{Github} $|$
+    \lnk{https://www.linkedin.com/in/example-nadia}{LinkedIn}
     \vspace{-4pt}
 \end{center}
 
 %-----------SUMMARY-----------
 \section{Summary}
-\small{Full-Stack Engineer with 4+ years of experience building TypeScript products, REST APIs, and data-heavy dashboards, owning features from database design to production.}
+\small{Backend Engineer with 5+ years of experience designing Go and Python services, PostgreSQL schemas and event pipelines for logistics and payments products.}
 \vspace{-3pt}
 
 %-----------SKILLS-----------
 \section{Technical Skills}
  \begin{itemize}[leftmargin=0in, label={}]
     \small{\item{
-     \textbf{Languages}{: TypeScript, JavaScript, Python, SQL} $|$ \textbf{Frameworks}{: Node.js, Express.js, React.js, Next.js} \\
-     \textbf{Databases}{: PostgreSQL, Redis, Prisma} $|$ \textbf{Testing \& Tools}{: Git, Vitest, Playwright} \\
-     \textbf{DevOps/Infra}{: Docker, GitHub Actions, Vercel, AWS (basic)} \\
+     \textbf{Languages}{: Go, Python, SQL} $|$ \textbf{Data}{: PostgreSQL, Redis} \
+     \textbf{Backend}{: gRPC, Kafka, REST APIs, Django, Celery} \
+     \textbf{Infrastructure}{: Docker, Kubernetes, AWS, GitHub Actions} \
     }}
  \end{itemize}
 \vspace{-6pt}
 
 %-----------EXPERIENCE-----------
+% An employer with a website in the profile is linked instead of underlined:
+% {\lnk{https://example.com/company}{Company}}{Title}{Dates}
 \section{Professional Experience}
   \resumeSubHeadingListStart
 
     \resumeSubheading
-      {\lnk{https://example.com/brightfield}{Brightfield Software}}{Full-Stack Engineer}{Mar 2024 -- Present}
+      {\underline{Parcelwise}{}}{Senior Backend Engineer}{Jun 2023 -- Present}
       \resumeItemListStart
-        \resumeItem{Built the \textbf{real-time shipment dashboard} used by \textbf{40 client teams}, moving live order updates from REST polling to WebSockets; cut the main bundle size by \textbf{35\%} through route splitting.}
-        \tech{React, TypeScript, Node.js, PostgreSQL, Redis, WebSockets, Docker}
+        \resumeItem{Designed the \textbf{rate-quote service} in Go that answers about \textbf{1,200 requests per second} at p99 under 80 ms, and moved nightly billing jobs to a \textbf{Kafka}-based event pipeline that cut failed invoice runs by roughly \textbf{60\%}.}
+        \tech{Go, PostgreSQL, Kafka, Redis, Docker, Kubernetes, gRPC}
       \resumeItemListEnd
 
     \resumeSubheading
-      {\underline{Kite \& Co. Digital}{}}{Web Developer}{Jan 2022 -- Feb 2024}
+      {\underline{Taka Pay}{}}{Backend Developer}{Feb 2020 -- May 2023}
       \resumeItemListStart
-        \resumeItem{Delivered \textbf{12 booking and marketing sites} for local businesses with a headless CMS, and wrote Playwright tests for checkout flows that caught \textbf{9 regressions} before release.}
-        \tech{Next.js, TypeScript, Tailwind CSS, Playwright, Vercel}
+        \resumeItem{Built the merchant settlement API in \textbf{Python (Django)} used by \textbf{2,000+ merchants}, and wrote the reconciliation job that matches bank statements to ledger entries with \textbf{98\% automatic matches}.}
+        \tech{Python, Django, PostgreSQL, Celery, AWS}
       \resumeItemListEnd
 
   \resumeSubHeadingListEnd
 \vspace{-5pt}
 
 %-----------PROJECTS-----------
+% A project with a live site lists it first: \lnk{https://example.com/app}{Live} $|$ \lnk{...}{Source}
 \section{Projects}
     \resumeSubHeadingListStart
 
       \resumeProjectHeading
-          {\textbf{Ledgerly}}{\lnk{https://example.com/ledgerly}{Live} $|$ \lnk{https://github.com/example-arif/ledgerly}{Source}}
+          {\textbf{pgwatch-lite}}{\lnk{https://github.com/example-nadia/pgwatch-lite}{Source}}
           \resumeItemListStart
-            \resumeItem{Shared household budgeting app with \textbf{role-based access} for 4 user types and \textbf{offline support} through a service worker and background sync.}
-            \tech{Next.js, TypeScript, PostgreSQL, Prisma, Vitest}
-          \resumeItemListEnd
-
-      \resumeProjectHeading
-          {\textbf{Queue Lite}}{\lnk{https://github.com/example-arif/queue-lite}{Source}}
-          \resumeItemListStart
-            \resumeItem{Built a \textbf{background job queue} with separate API and worker services, retries with \textbf{exponential backoff}, and integration tests against a real PostgreSQL database.}
-            \tech{Node.js, TypeScript, PostgreSQL, Docker}
+            \resumeItem{Small CLI that samples pg\_stat\_statements and flags \textbf{slow queries in CI}.}
+            \tech{Go, PostgreSQL}
           \resumeItemListEnd
 
     \resumeSubHeadingListEnd
@@ -162,7 +158,7 @@
 \section{Education}
   \resumeSubHeadingListStart
     \resumeSubheading
-      {Example University of Science and Technology}{B.Sc. in Computer Science and Engineering}{Chattogram, Bangladesh}
+      {Shahjalal University of Science and Technology}{B.Sc. in Computer Science}{Sylhet, Bangladesh}
   \resumeSubHeadingListEnd
 
 \end{document}

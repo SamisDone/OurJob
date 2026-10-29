@@ -127,8 +127,8 @@ describe("extractUpload", () => {
 
   it("parses a .tex upload structurally and falls back to raw text otherwise", async () => {
     const tex = await extractUpload("cv.tex", new Uint8Array(readFileSync("templates/resume-sample.tex")));
-    expect(tex.tex?.name).toBe("Arif Rahman");
-    expect(tex.text).toContain("**35%**");
+    expect(tex.tex?.name).toBe("Nadia Chowdhury");
+    expect(tex.text).toContain("**60%**");
     const other = await extractUpload(
       "notes.tex",
       new TextEncoder().encode("\\begin{document}Just notes\\end{document}"),

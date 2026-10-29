@@ -73,10 +73,10 @@ describe("parseTexCv on templates/resume-sample.tex", () => {
   const cv = parseTexCv(sample)!;
 
   it("reads the header", () => {
-    expect(cv.name).toBe("Arif Rahman");
-    expect(cv.contact.location).toBe("Dhaka, Bangladesh");
-    expect(cv.contact.email).toBe("arif.rahman@example.com");
-    expect(cv.contact.links.map((l) => l.label)).toEqual(["Github", "LinkedIn", "Portfolio"]);
+    expect(cv.name).toBe("Nadia Chowdhury");
+    expect(cv.contact.location).toBe("Sylhet, Bangladesh");
+    expect(cv.contact.email).toBe("nadia.chowdhury@example.com");
+    expect(cv.contact.links.map((l) => l.label)).toEqual(["Github", "LinkedIn"]);
   });
 
   it("finds every section in order", () => {
@@ -92,18 +92,17 @@ describe("parseTexCv on templates/resume-sample.tex", () => {
   it("reads the summary", () => {
     const s = cv.sections[0];
     expect(s.kind === "text" && s.text).toBe(
-      "Full-Stack Engineer with 4+ years of experience building TypeScript products, REST APIs, and data-heavy dashboards, owning features from database design to production.",
+      "Backend Engineer with 5+ years of experience designing Go and Python services, PostgreSQL schemas and event pipelines for logistics and payments products.",
     );
   });
 
   it("reads skill groups", () => {
     const s = cv.sections[1];
     expect(s.kind === "skills" && s.groups).toEqual([
-      { group: "Languages", items: ["TypeScript", "JavaScript", "Python", "SQL"] },
-      { group: "Frameworks", items: ["Node.js", "Express.js", "React.js", "Next.js"] },
-      { group: "Databases", items: ["PostgreSQL", "Redis", "Prisma"] },
-      { group: "Testing & Tools", items: ["Git", "Vitest", "Playwright"] },
-      { group: "DevOps/Infra", items: ["Docker", "GitHub Actions", "Vercel", "AWS (basic)"] },
+      { group: "Languages", items: ["Go", "Python", "SQL"] },
+      { group: "Data", items: ["PostgreSQL", "Redis"] },
+      { group: "Backend", items: ["gRPC", "Kafka", "REST APIs", "Django", "Celery"] },
+      { group: "Infrastructure", items: ["Docker", "Kubernetes", "AWS", "GitHub Actions"] },
     ]);
   });
 
@@ -112,43 +111,50 @@ describe("parseTexCv on templates/resume-sample.tex", () => {
     if (s.kind !== "entries") throw new Error("expected entries");
     const [a, b] = s.entries as Extract<TexEntry, { kind: "role" }>[];
     expect(a).toMatchObject({
-      org: "Brightfield Software",
-      orgUrl: "https://example.com/brightfield",
-      title: "Full-Stack Engineer",
-      right: "Mar 2024 – Present",
-      tech: ["React", "TypeScript", "Node.js", "PostgreSQL", "Redis", "WebSockets", "Docker"],
+      org: "Parcelwise",
+      title: "Senior Backend Engineer",
+      right: "Jun 2023 – Present",
+      tech: ["Go", "PostgreSQL", "Kafka", "Redis", "Docker", "Kubernetes", "gRPC"],
     });
+    expect(a.orgUrl).toBeUndefined();
     expect(a.bullets).toHaveLength(1);
-    expect(a.bullets[0].text).toContain("cut the main bundle size by 35% through route splitting.");
-    expect(a.bullets[0].boldPhrases).toEqual(["real-time shipment dashboard", "40 client teams", "35%"]);
-    expect(b).toMatchObject({ org: "Kite & Co. Digital", title: "Web Developer", right: "Jan 2022 – Feb 2024" });
-    expect(b.orgUrl).toBeUndefined();
+    expect(a.bullets[0].text).toContain("cut failed invoice runs by roughly 60%.");
+    expect(a.bullets[0].boldPhrases).toEqual(["rate-quote service", "1,200 requests per second", "Kafka", "60%"]);
+    expect(b).toMatchObject({ org: "Taka Pay", title: "Backend Developer", right: "Feb 2020 – May 2023" });
+  });
+
+  it("reads an employer linked to its website", () => {
+    const linked = sample.replace(
+      String.raw`{\underline{Parcelwise}{}}`,
+      String.raw`{\lnk{https://example.com/parcelwise}{Parcelwise \& Co.}}`,
+    );
+    const s = parseTexCv(linked)!.sections[2];
+    if (s.kind !== "entries") throw new Error("expected entries");
+    expect(s.entries[0]).toMatchObject({ org: "Parcelwise & Co.", orgUrl: "https://example.com/parcelwise" });
   });
 
   it("reads projects with their links", () => {
     const s = cv.sections[3];
     if (s.kind !== "entries") throw new Error("expected entries");
     expect(s.entries.map((e) => (e.kind === "project" ? [e.name, e.links.map((l) => l.label)] : null))).toEqual([
-      ["Ledgerly", ["Live", "Source"]],
-      ["Queue Lite", ["Source"]],
+      ["pgwatch-lite", ["Source"]],
     ]);
   });
 
   it("reads education", () => {
     const s = cv.sections[4];
     expect(s.kind === "entries" && s.entries[0]).toMatchObject({
-      org: "Example University of Science and Technology",
-      title: "B.Sc. in Computer Science and Engineering",
-      right: "Chattogram, Bangladesh",
+      org: "Shahjalal University of Science and Technology",
+      title: "B.Sc. in Computer Science",
+      right: "Sylhet, Bangladesh",
     });
   });
 
   it("renders readable text for P1 with bold marked", () => {
     const text = texCvToText(cv);
-    expect(text).toContain(
-      "### Brightfield Software (https://example.com/brightfield) | Full-Stack Engineer | Mar 2024 – Present",
-    );
-    expect(text).toContain("**40 client teams**");
+    expect(text).toContain("### Parcelwise | Senior Backend Engineer | Jun 2023 – Present");
+    expect(text).toContain("**2,000+ merchants**");
+    expect(text).toContain("samples pg_stat_statements");
     expect(text).not.toMatch(/\\[a-zA-Z]/);
   });
 });

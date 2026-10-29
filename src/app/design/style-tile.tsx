@@ -79,10 +79,10 @@ const latexExcerpt = String.raw`%-----------EXPERIENCE-----------
   \resumeSubHeadingListStart
 
     \resumeSubheading
-      {\lnk{https://example.com/brightfield}{Brightfield Software}}{Full-Stack Engineer}{Mar 2024 -- Present}
+      {\underline{Parcelwise}{}}{Senior Backend Engineer}{Jun 2023 -- Present}
       \resumeItemListStart
-        \resumeItem{Built the \textbf{real-time shipment dashboard} used by \textbf{40 client teams}, moving live order updates from REST polling to WebSockets; cut the main bundle size by \textbf{35\%} through route splitting.}
-        \tech{React, TypeScript, Node.js, PostgreSQL, Redis, WebSockets, Docker}
+        \resumeItem{Designed the \textbf{rate-quote service} in Go that answers about \textbf{1,200 requests per second} at p99 under 80 ms, and moved nightly billing jobs to a \textbf{Kafka}-based event pipeline that cut failed invoice runs by roughly \textbf{60\%}.}
+        \tech{Go, PostgreSQL, Kafka, Redis, Docker, Kubernetes, gRPC}
       \resumeItemListEnd
 
   \resumeSubHeadingListEnd`;
@@ -112,7 +112,7 @@ function TokenPanel({ theme }: { theme: "light" | "dark" }) {
   return (
     <div
       data-theme={theme}
-      className="red-rule-top relative overflow-hidden rounded-panel border border-rule bg-paper text-body"
+      className="relative overflow-hidden rounded-panel border red-rule-top border-rule bg-paper text-body"
     >
       <div className="flex items-baseline justify-between border-b border-rule bg-sheet px-4 py-3">
         <span className="font-medium text-ink">{theme === "light" ? "Light" : "Dark, carbon paper"}</span>
@@ -159,22 +159,23 @@ function ProofingDesk({ cv }: { cv: CvDocument }) {
       items={[
         {
           kind: "rewritten",
-          where: "Brightfield Software",
-          before: "Built a dashboard for shipments with live updates.",
+          where: "Parcelwise",
+          before:
+            "Moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.",
           after:
-            "Built the real-time shipment dashboard used by 40 client teams, moving live order updates from REST polling to WebSockets.",
+            "Moved nightly billing jobs to a Kafka-based event pipeline that cut failed invoice runs by roughly 60%.",
         },
         {
           kind: "moved",
-          where: "Projects",
-          text: "Queue Lite",
-          note: "Moved above Ledgerly: closer to their Node.js API work",
+          where: "Technical Skills",
+          text: "Data: PostgreSQL, Redis",
+          note: "Moved to the first line: the job asks for PostgreSQL early",
         },
         {
           kind: "dropped",
-          where: "Kite & Co. Digital",
-          text: "Managed hosting renewals for client sites.",
-          reason: "Does not help this job",
+          where: "Taka Pay",
+          text: "Added PostgreSQL row-level security for multi-tenant reporting.",
+          reason: "One bullet per role keeps the CV to one page",
         },
       ]}
     />
@@ -324,10 +325,9 @@ function IHaveThis({ term }: { term: string }) {
               onValueChange={setWhere}
               placeholder="Choose a role or project"
               options={[
-                { value: "exp_1", label: "Full-Stack Engineer, Brightfield Software" },
-                { value: "exp_2", label: "Web Developer, Kite & Co. Digital" },
-                { value: "proj_1", label: "Ledgerly (project)" },
-                { value: "proj_2", label: "Queue Lite (project)" },
+                { value: "exp_1", label: "Senior Backend Engineer, Parcelwise" },
+                { value: "exp_2", label: "Backend Developer, Taka Pay" },
+                { value: "proj_1", label: "pgwatch-lite (project)" },
               ]}
             />
           </div>
@@ -389,7 +389,7 @@ function TodayPreview({ firstName }: { firstName: string }) {
         <JobRowSkeleton />
       </Panel>
 
-      <details className="group red-rule-top relative mt-6 rounded-panel border border-rule bg-sheet px-4 md:px-6">
+      <details className="group relative mt-6 rounded-panel border red-rule-top border-rule bg-sheet px-4 md:px-6">
         <summary className="flex h-12 cursor-pointer list-none items-center justify-between pt-0.5 text-sm font-medium text-ink">
           <span>
             Eligibility unclear <span className="text-graphite tabular">(7)</span>
@@ -412,7 +412,7 @@ export type Viewer = { name: string; email: string } | null;
 
 /** Puts the signed-in person's name on the sample. Nothing about them is stored or committed. */
 function personalize(viewer: Viewer): { cv: CvDocument; firstName: string; label: string } {
-  if (!viewer) return { cv: sampleCv, firstName: "Arif", label: "Arif Rahman (sample)" };
+  if (!viewer) return { cv: sampleCv, firstName: "Nadia", label: "Nadia Chowdhury (sample)" };
   const contact = sampleCv.contact.map((c) =>
     c.url?.startsWith("mailto:") ? { text: viewer.email, url: `mailto:${viewer.email}` } : c,
   );
@@ -428,12 +428,12 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
   const [country, setCountry] = useState("BD");
   const [scope, setScope] = useState("region");
   const [seniority, setSeniority] = useState<string>();
-  const [titles, setTitles] = useState(["Frontend Engineer", "Full Stack Developer", "Product Engineer"]);
+  const [titles, setTitles] = useState(["Backend Engineer", "Platform Engineer", "Senior Backend Engineer"]);
   const [jd, setJd] = useState("");
 
   return (
     <TooltipProvider>
-      <AppShell user={{ name: label, email: viewer?.email ?? "arif.rahman@example.com", image: null }}>
+      <AppShell user={{ name: label, email: viewer?.email ?? "nadia.chowdhury@example.com", image: null }}>
         <div className="mx-auto max-w-[1240px] px-4 pt-8 pb-16 md:px-8 lg:px-12">
           <header className="flex flex-wrap items-end justify-between gap-4 pb-8">
             <div>
@@ -552,15 +552,15 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   "text-lg",
                   "20 / 28",
                   <span key="c" className="text-lg font-semibold text-ink">
-                    Senior Frontend Engineer
+                    Senior Backend Engineer
                   </span>,
                 ],
                 [
                   "text-base",
                   "16 / 24",
                   <span key="d" className="block measure">
-                    You will build product features in React and TypeScript, work closely with our design systems team,
-                    and ship weekly.
+                    You will write services in Go, keep the schema healthy as clinics grow, and ship weekly behind
+                    feature flags.
                   </span>,
                 ],
                 [
@@ -588,15 +588,15 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   "Plex Mono",
                   "13 / 20",
                   <code key="h" className="font-mono text-[13px]">
-                    {String.raw`\resumeItem{Built the \textbf{real-time shipment dashboard}}`}
+                    {String.raw`\resumeItem{Designed the \textbf{rate-quote service}}`}
                   </code>,
                 ],
                 [
                   "CV serif",
                   "Latin Modern",
                   <span key="i" className="font-cv text-[17px] leading-6">
-                    Built the <b>real-time shipment dashboard</b> used by <b>40 client teams</b>.{" "}
-                    <i>Tech: React, TypeScript, Node.js</i>
+                    Designed the <b>rate-quote service</b> in Go that answers about <b>1,200 requests per second</b>.{" "}
+                    <i>Tech: Go, PostgreSQL, Kafka</i>
                   </span>,
                 ],
               ].map(([token, size, sample]) => (
@@ -612,13 +612,13 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             <div className="mt-8 grid gap-6 md:grid-cols-3">
               <div>
                 <p className="text-sm text-graphite">--ink: headings, titles, fit score, links</p>
-                <p className="mt-2 text-lg font-semibold text-ink">Senior Frontend Engineer</p>
+                <p className="mt-2 text-lg font-semibold text-ink">Senior Backend Engineer</p>
               </div>
               <div>
                 <p className="text-sm text-graphite">--body: all running text</p>
                 <p className="mt-2 text-base text-body">
-                  You will work with our product designer and one backend engineer to split the booking flow into
-                  smaller steps.
+                  You will work with our product designer and one frontend engineer to split the availability service
+                  into smaller steps.
                 </p>
               </div>
               <div>
@@ -658,11 +658,11 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   <FilterChip menu>Seniority</FilterChip>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <KeywordChip kind="matched">TypeScript</KeywordChip>
+                  <KeywordChip kind="matched">PostgreSQL</KeywordChip>
                   <KeywordChip kind="missing" importance="must">
-                    GraphQL
+                    Terraform
                   </KeywordChip>
-                  <KeywordChip kind="missing">Storybook</KeywordChip>
+                  <KeywordChip kind="missing">GraphQL</KeywordChip>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Tag>New company</Tag>
@@ -685,7 +685,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 <div className="space-y-5">
                   <div className="space-y-1.5">
                     <Label htmlFor="gh">GitHub username</Label>
-                    <Input id="gh" defaultValue="example-arif" />
+                    <Input id="gh" defaultValue="example-nadia" />
                     <FieldHint>12 public repos, 6 with READMEs</FieldHint>
                   </div>
                   <div className="space-y-1.5">
@@ -699,7 +699,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="dis">Email on the CV</Label>
-                    <Input id="dis" disabled defaultValue="arif.rahman@example.com" />
+                    <Input id="dis" disabled defaultValue="nadia.chowdhury@example.com" />
                   </div>
                 </div>
               </Sub>
@@ -811,8 +811,8 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                 <SheetContent title="Version history" description="Every save is kept. Restore any version.">
                   <ol className="divide-y divide-rule border-y border-rule">
                     {[
-                      ["Version 4", "Today at 9:14", "Added GraphQL to Ledgerly"],
-                      ["Version 3", "Yesterday at 21:02", "Resolved end date for Kite & Co. Digital"],
+                      ["Version 4", "Today at 9:14", "Added Terraform to Parcelwise"],
+                      ["Version 3", "Yesterday at 21:02", "Resolved end date for Taka Pay"],
                       ["Version 2", "Oct 26 at 18:40", "Imported LinkedIn PDF"],
                     ].map(([v, when, what], i) => (
                       <li key={v} className="flex items-center justify-between gap-3 py-3">
@@ -840,17 +840,19 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   <Button variant="secondary">Where this appears</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 text-sm">
-                  <p className="font-medium text-ink">TypeScript appears in</p>
+                  <p className="font-medium text-ink">PostgreSQL appears in</p>
                   <ul className="mt-2 space-y-1 text-graphite">
                     <li>Summary</li>
-                    <li>Technical skills, Languages</li>
-                    <li>Brightfield Software, Tech line</li>
+                    <li>Technical skills, Data</li>
+                    <li>Parcelwise, Tech line</li>
                   </ul>
                 </PopoverContent>
               </Popover>
 
               <div className="w-56 rounded-panel border border-dashed border-rule p-1">
-                <AccountMenu user={{ name: label, email: viewer?.email ?? "arif.rahman@example.com", image: null }} />
+                <AccountMenu
+                  user={{ name: label, email: viewer?.email ?? "nadia.chowdhury@example.com", image: null }}
+                />
               </div>
               <Tooltip content="Real ATS systems differ. This is an estimate.">
                 <Button variant="secondary">Hover for a tooltip</Button>
@@ -900,11 +902,11 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   moved="Saved 2 days ago"
                   column="Saved"
                 />
-                <KanbanCard title="Frontend Engineer" company="Fieldnote" moved="Saved today" column="Saved" dragging />
+                <KanbanCard title="Backend Engineer" company="Fieldnote" moved="Saved today" column="Saved" dragging />
               </KanbanColumn>
               <KanbanColumn name="Applied" count={1} dropping>
                 <KanbanCard
-                  title="Senior Frontend Engineer"
+                  title="Senior Backend Engineer"
                   company="Lumen Labs"
                   moved="Applied yesterday"
                   tailoredHref="#desk"
@@ -913,7 +915,7 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
               </KanbanColumn>
               <KanbanColumn name="Interviewing" count={1}>
                 <KanbanCard
-                  title="Full Stack Developer (React, Node)"
+                  title="Backend Developer (Go, Python)"
                   company="Tallow Health"
                   moved="Moved Oct 24"
                   tailoredHref="#desk"

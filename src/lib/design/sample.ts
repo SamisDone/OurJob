@@ -7,20 +7,19 @@ import { boldSegments, type CvDocument } from "@/lib/cv/document";
 const b = boldSegments;
 
 export const sampleCv: CvDocument = {
-  name: "Arif Rahman",
+  name: "Nadia Chowdhury",
   contact: [
-    { text: "Dhaka, Bangladesh" },
-    { text: "arif.rahman@example.com", url: "mailto:arif.rahman@example.com" },
-    { text: "Github", url: "https://github.com/example-arif" },
-    { text: "LinkedIn", url: "https://www.linkedin.com/in/example-arif" },
-    { text: "Portfolio", url: "https://example.com" },
+    { text: "Sylhet, Bangladesh" },
+    { text: "nadia.chowdhury@example.com", url: "mailto:nadia.chowdhury@example.com" },
+    { text: "Github", url: "https://github.com/example-nadia" },
+    { text: "LinkedIn", url: "https://www.linkedin.com/in/example-nadia" },
   ],
   sections: [
     {
       kind: "summary",
       title: "Summary",
       segments: b(
-        "Full-Stack Engineer with 4+ years of experience building TypeScript products, REST APIs, and data-heavy dashboards, owning features from database design to production.",
+        "Backend Engineer with 5+ years of experience designing Go and Python services, PostgreSQL schemas and event pipelines for logistics and payments products.",
         [],
       ),
     },
@@ -29,14 +28,11 @@ export const sampleCv: CvDocument = {
       title: "Technical Skills",
       lines: [
         [
-          { group: "Languages", items: ["TypeScript", "JavaScript", "Python", "SQL"] },
-          { group: "Frameworks", items: ["Node.js", "Express.js", "React.js", "Next.js"] },
+          { group: "Languages", items: ["Go", "Python", "SQL"] },
+          { group: "Data", items: ["PostgreSQL", "Redis"] },
         ],
-        [
-          { group: "Databases", items: ["PostgreSQL", "Redis", "Prisma"] },
-          { group: "Testing & Tools", items: ["Git", "Vitest", "Playwright"] },
-        ],
-        [{ group: "DevOps/Infra", items: ["Docker", "GitHub Actions", "Vercel", "AWS (basic)"] }],
+        [{ group: "Backend", items: ["gRPC", "Kafka", "REST APIs", "Django", "Celery"] }],
+        [{ group: "Infrastructure", items: ["Docker", "Kubernetes", "AWS", "GitHub Actions"] }],
       ],
     },
     {
@@ -46,37 +42,36 @@ export const sampleCv: CvDocument = {
         {
           kind: "role",
           id: "exp_1",
-          org: "Brightfield Software",
-          orgUrl: "https://example.com/brightfield",
-          title: "Full-Stack Engineer",
-          right: "Mar 2024 – Present",
+          org: "Parcelwise",
+          title: "Senior Backend Engineer",
+          right: "Jun 2023 – Present",
           bullets: [
             {
-              sourceIds: ["b_1_1", "b_1_3"],
+              sourceIds: ["b_1_1", "b_1_2"],
               segments: b(
-                "Built the real-time shipment dashboard used by 40 client teams, moving live order updates from REST polling to WebSockets; cut the main bundle size by 35% through route splitting.",
-                ["real-time shipment dashboard", "40 client teams", "35%"],
+                "Designed the rate-quote service in Go that answers about 1,200 requests per second at p99 under 80 ms, and moved nightly billing jobs to a Kafka-based event pipeline that cut failed invoice runs by roughly 60%.",
+                ["rate-quote service", "1,200 requests per second", "Kafka", "60%"],
               ),
             },
           ],
-          tech: ["React", "TypeScript", "Node.js", "PostgreSQL", "Redis", "WebSockets", "Docker"],
+          tech: ["Go", "PostgreSQL", "Kafka", "Redis", "Docker", "Kubernetes", "gRPC"],
         },
         {
           kind: "role",
           id: "exp_2",
-          org: "Kite & Co. Digital",
-          title: "Web Developer",
-          right: "Jan 2022 – Feb 2024",
+          org: "Taka Pay",
+          title: "Backend Developer",
+          right: "Feb 2020 – May 2023",
           bullets: [
             {
               sourceIds: ["b_2_1", "b_2_2"],
               segments: b(
-                "Delivered 12 booking and marketing sites for local businesses with a headless CMS, and wrote Playwright tests for checkout flows that caught 9 regressions before release.",
-                ["12 booking and marketing sites", "9 regressions"],
+                "Built the merchant settlement API in Python (Django) used by 2,000+ merchants, and wrote the reconciliation job that matches bank statements to ledger entries with 98% automatic matches.",
+                ["Python (Django)", "2,000+ merchants", "98% automatic matches"],
               ),
             },
           ],
-          tech: ["Next.js", "TypeScript", "Tailwind CSS", "Playwright", "Vercel"],
+          tech: ["Python", "Django", "PostgreSQL", "Celery", "AWS"],
         },
       ],
     },
@@ -87,37 +82,17 @@ export const sampleCv: CvDocument = {
         {
           kind: "project",
           id: "proj_1",
-          name: "Ledgerly",
-          links: [
-            { label: "Live", url: "https://example.com/ledgerly" },
-            { label: "Source", url: "https://github.com/example-arif/ledgerly" },
-          ],
+          name: "pgwatch-lite",
+          links: [{ label: "Source", url: "https://github.com/example-nadia/pgwatch-lite" }],
           bullets: [
             {
               sourceIds: ["b_p1_1"],
-              segments: b(
-                "Shared household budgeting app with role-based access for 4 user types and offline support through a service worker and background sync.",
-                ["role-based access", "offline support"],
-              ),
+              segments: b("Small CLI that samples pg_stat_statements and flags slow queries in CI.", [
+                "slow queries in CI",
+              ]),
             },
           ],
-          tech: ["Next.js", "TypeScript", "PostgreSQL", "Prisma", "Vitest"],
-        },
-        {
-          kind: "project",
-          id: "proj_2",
-          name: "Queue Lite",
-          links: [{ label: "Source", url: "https://github.com/example-arif/queue-lite" }],
-          bullets: [
-            {
-              sourceIds: ["b_p2_1"],
-              segments: b(
-                "Built a background job queue with separate API and worker services, retries with exponential backoff, and integration tests against a real PostgreSQL database.",
-                ["background job queue", "exponential backoff"],
-              ),
-            },
-          ],
-          tech: ["Node.js", "TypeScript", "PostgreSQL", "Docker"],
+          tech: ["Go", "PostgreSQL"],
         },
       ],
     },
@@ -128,9 +103,9 @@ export const sampleCv: CvDocument = {
         {
           kind: "role",
           id: "edu_1",
-          org: "Example University of Science and Technology",
-          title: "B.Sc. in Computer Science and Engineering",
-          right: "Chattogram, Bangladesh",
+          org: "Shahjalal University of Science and Technology",
+          title: "B.Sc. in Computer Science",
+          right: "Sylhet, Bangladesh",
           bullets: [],
         },
       ],
@@ -139,21 +114,21 @@ export const sampleCv: CvDocument = {
 };
 
 export const sampleJd = {
-  title: "Senior Frontend Engineer",
+  title: "Senior Backend Engineer",
   company: "Lumen Labs",
-  text: `Lumen Labs builds scheduling software for community clinics in 14 countries. Nurses, front-desk staff and patients use it every day to book, move and confirm appointments, often on old Android phones and slow connections. We are a team of 31, fully remote across eight time zones, and we are hiring a Senior Frontend Engineer to own the patient booking flow end to end.
+  text: `Lumen Labs builds scheduling software for community clinics in 14 countries. Nurses, front-desk staff and patients use it every day to book, move and confirm appointments, often on old Android phones and slow connections. We are a team of 31, fully remote across eight time zones, and we are hiring a Senior Backend Engineer to own the availability service end to end.
 
-In your first months you will rebuild the booking flow that patients see when a clinic shares a link by text message. Today it is a single page that loads every clinic's full calendar before showing anything, which makes the first screen slow on mid-range phones and confusing for people who only want the next free slot. You will work with our product designer and one backend engineer to split it into smaller steps, load availability as the patient moves through them, and keep the whole thing usable with a screen reader. You will build product features in React and TypeScript, work closely with our design systems team, and ship weekly behind feature flags, so a change reaches a few clinics first and everyone a week later.
+In your first months you will rebuild the service that answers one question thousands of times a minute: which slots are free? Today it reads every clinic's full calendar from PostgreSQL on each request, which makes the first screen slow for patients and puts heavy load on the database at 8 a.m. in every time zone. You will work with our product designer and one frontend engineer to split it into smaller steps, cache availability in Redis, and publish booking changes as events instead of polling. You will write services in Go, keep the schema healthy as clinics grow, and ship weekly behind feature flags, so a change reaches a few clinics first and everyone a week later.
 
-Our API is GraphQL over Node.js, backed by PostgreSQL. Real-time updates reach clinic staff through WebSockets, so when a patient books, the slot disappears from the front desk's screen within a second. Most of our frontend code is covered by tests, and we expect new features to be as well.
+Our services talk over gRPC and run on Kubernetes, packaged with Docker. Booking events flow through Kafka, so when a patient books, the slot disappears from the front desk's screen within a second. Some reporting jobs are still in Python, and we expect new work to be covered by tests.
 
-Requirements: 4+ years building web applications with React and TypeScript. Experience with GraphQL. A habit of writing tests; we use Playwright and Vitest. Care for accessibility, including keyboard and screen reader use.
+Requirements: 5+ years building backend services, with production Go. Strong PostgreSQL skills, including query tuning. Experience with event-driven systems such as Kafka. Comfort with Terraform for the infrastructure you own.
 
-Nice to have: Next.js, Storybook, experience working in a remote, async team.
+Nice to have: GraphQL, OpenTelemetry, load testing, experience working in a remote, async team.
 
 Pay is $95,000 to $130,000 a year, or the local equivalent. We hire anywhere between UTC-3 and UTC+8.`,
-  matched: ["React", "TypeScript", "Node.js", "PostgreSQL", "WebSockets", "Playwright", "Vitest", "Next.js"],
-  missing: ["GraphQL", "design systems", "accessibility", "Storybook"],
+  matched: ["Go", "PostgreSQL", "Redis", "gRPC", "Kubernetes", "Docker", "Kafka", "Python"],
+  missing: ["Terraform", "GraphQL", "OpenTelemetry", "load testing"],
 };
 
 export type SampleMark = { start: number; end: number; kind: "matched" | "missing"; term: string };
@@ -194,7 +169,7 @@ export type SampleJob = {
 export const sampleJobs: SampleJob[] = [
   {
     id: "j1",
-    title: "Senior Frontend Engineer",
+    title: "Senior Backend Engineer",
     company: "Lumen Labs",
     source: "Direct from careers page (Ashby)",
     newCompany: true,
@@ -204,17 +179,17 @@ export const sampleJobs: SampleJob[] = [
     posted: "2 days ago",
     fit: 88,
     reasons: [
-      "4 years of React and TypeScript matches the core requirement",
-      "Shipped a WebSockets dashboard similar to their clinic staff view",
-      "Playwright and Vitest experience fits their testing habit",
+      "5 years of Go and PostgreSQL matches the core requirement",
+      "Built a Kafka event pipeline like their booking events",
+      "gRPC and Kubernetes are in your current role",
     ],
-    gaps: ["GraphQL", "Storybook"],
+    gaps: ["Terraform", "GraphQL"],
     preview:
-      "Lumen Labs builds scheduling software for community clinics in 14 countries. We are hiring a Senior Frontend Engineer to own the patient booking flow end to end.",
+      "Lumen Labs builds scheduling software for community clinics in 14 countries. We are hiring a Senior Backend Engineer to own the availability service end to end.",
   },
   {
     id: "j2",
-    title: "Full Stack Developer (React, Node)",
+    title: "Backend Developer (Go, Python)",
     company: "Tallow Health",
     source: "Direct from careers page (Greenhouse)",
     isNew: true,
@@ -222,10 +197,10 @@ export const sampleJobs: SampleJob[] = [
     pay: "approx. $64k a year",
     posted: "Today",
     fit: 81,
-    reasons: ["Node.js and PostgreSQL appear in two of his roles", "Timezone window fits UTC+6"],
+    reasons: ["Go and Python appear in your last two roles", "Timezone window fits UTC+6"],
     gaps: ["HL7 FHIR"],
     preview:
-      "Tallow Health connects small pharmacies to insurers. You will work across a Next.js app and a Node.js API.",
+      "Tallow Health connects small pharmacies to insurers. You will work on the claims API in Go and the reporting jobs in Python.",
   },
   {
     id: "j3",
@@ -308,9 +283,9 @@ export const sampleAts = {
       label: "Title alignment",
       points: 6,
       max: 10,
-      detail: "Frontend and engineer appear in the summary",
+      detail: "Backend and engineer appear in the summary",
     },
-    { id: "seniority", label: "Seniority and years", points: 5, max: 5, detail: "4+ years fits a senior role" },
+    { id: "seniority", label: "Seniority and years", points: 5, max: 5, detail: "5+ years fits a senior role" },
     { id: "parse", label: "Parseability", points: 15, max: 15, detail: "7 of 7 checks pass" },
   ],
 };
