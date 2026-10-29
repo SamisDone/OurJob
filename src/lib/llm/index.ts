@@ -15,12 +15,29 @@ export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
 /** Sam's choice for when the main model stays busy (503) or rate limited. Also free-tier eligible. */
 export const DEFAULT_FALLBACK_MODEL = "gemini-3.5-flash-lite";
 
-let provider: LLMProvider | undefined;
+/**
+ * "standard" is LLM_MODEL, used for everything. "thorough" is the optional
+ * LLM_THOROUGH_MODEL, which he can pick for tailoring in Settings; when it is
+ * busy it falls back to the standard model.
+ */
+export type ModelTier = "standard" | "thorough";
+
+export function configuredModels(): { standard: string; thorough: string | null } {
+  const standard = process.env.LLM_MODEL || DEFAULT_GEMINI_MODEL;
+  const thorough = process.env.LLM_THOROUGH_MODEL?.trim() || null;
+  return { standard, thorough: thorough && thorough !== standard ? thorough : null };
+}
+
+const providers = new Map<ModelTier, LLMProvider>();
 
 /** LLM_PROVIDER=gemini (default) or mock. Gemini needs GEMINI_API_KEY. */
-export function getLLMProvider(): LLMProvider {
-  if (provider) return provider;
+export function getLLMProvider(tier: ModelTier = "standard"): LLMProvider {
+  const { standard, thorough } = configuredModels();
+  const useTier: ModelTier = tier === "thorough" && thorough ? "thorough" : "standard";
+  const existing = providers.get(useTier);
+  if (existing) return existing;
   const kind = process.env.LLM_PROVIDER || "gemini";
+  let provider: LLMProvider;
   if (kind === "mock") {
     provider = createMockProvider();
   } else if (kind === "gemini") {
@@ -30,13 +47,14 @@ export function getLLMProvider(): LLMProvider {
     }
     provider = createGeminiProvider({
       apiKey,
-      model: process.env.LLM_MODEL || DEFAULT_GEMINI_MODEL,
-      fallbackModel: process.env.LLM_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
+      model: useTier === "thorough" ? thorough! : standard,
+      fallbackModel: useTier === "thorough" ? standard : process.env.LLM_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
       rpm: Number(process.env.LLM_RPM) || undefined,
     });
   } else {
     throw new LLMError("auth", `Unknown LLM_PROVIDER "${kind}". Use gemini or mock.`);
   }
+  providers.set(useTier, provider);
   return provider;
 }
 

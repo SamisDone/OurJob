@@ -87,6 +87,8 @@ export const users = pgTable("users", {
   image: text("image"),
   timezone: text("timezone"),
   country: varchar("country", { length: 2 }),
+  /** Model used for tailoring: "standard" (LLM_MODEL) or "thorough" (LLM_THOROUGH_MODEL), chosen in Settings. */
+  tailorModel: text("tailor_model").notNull().default("standard"),
 });
 
 export const profileSources = pgTable(

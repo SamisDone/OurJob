@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SignOutButton } from "@/components/shell/sign-out";
 import { ThemeControl } from "@/components/shell/theme-control";
-import { Callout } from "@/components/ui/feedback";
 import { requireUser } from "@/lib/auth/session";
+import { AiSection } from "./ai-section";
 import { PreferencesSection } from "./preferences-section";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -37,13 +37,7 @@ export default async function SettingsPage() {
       </SettingsSection>
 
       <SettingsSection id="ai" title="AI provider">
-        <p className="text-body">
-          Gemini, model <span className="font-medium">{process.env.LLM_MODEL || "not set"}</span>.
-        </p>
-        <Callout className="mt-3">
-          On Gemini&apos;s free tier, Google can use what you send to improve its products. Use a paid key or another
-          provider if you would rather it did not.
-        </Callout>
+        <AiSection />
       </SettingsSection>
 
       <SettingsSection id="theme" title="Theme">

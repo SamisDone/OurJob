@@ -79,6 +79,9 @@ export const queryKeys = {
     sources: ["profile", "sources"] as const,
   },
   preferences: ["preferences"] as const,
+  settings: {
+    ai: ["settings", "ai"] as const,
+  },
 } as const;
 
 /**

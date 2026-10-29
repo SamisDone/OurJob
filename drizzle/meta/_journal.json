@@ -15,6 +15,13 @@
       "when": 1793218320801,
       "tag": "0001_profile_version_note",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793277809567,
+      "tag": "0002_user_tailor_model",
+      "breakpoints": true
     }
   ]
 }

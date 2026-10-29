@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "tailor_model" text DEFAULT 'standard' NOT NULL;
