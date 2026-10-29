@@ -28,8 +28,11 @@ for (const theme of ["light", "dark"] as const) {
       const user = SHELL_USERS.confirmed;
       await signInAs(context, baseURL!, user.email, user.name, user.id);
       const page = await context.newPage();
-      const shot = async (name: string, fullPage = true) =>
-        page.screenshot({ path: `${dir}/${name}-${width}-${theme}.png`, fullPage });
+      const shot = async (name: string, fullPage = true) => {
+        // Phones: also the first screen as he sees it, with the fixed bottom bar where it belongs.
+        if (phone && fullPage) await page.screenshot({ path: `${dir}/${name}-view-${width}-${theme}.png` });
+        await page.screenshot({ path: `${dir}/${name}-${width}-${theme}.png`, fullPage });
+      };
 
       await page.goto("/preview/today");
       await settle(page);
@@ -69,7 +72,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.goto("/preview/today");
       await settle(page);
       if (phone) {
-        await page.getByRole("button", { name: "Toggle menu" }).click();
+        await page.getByRole("button", { name: /^More/ }).click();
         await settle(page);
         await shot("shell-menu", false);
       } else {

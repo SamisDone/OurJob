@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "preview:ui": "tsx scripts/preview-ui.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

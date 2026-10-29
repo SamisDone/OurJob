@@ -25,7 +25,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <TooltipProvider>
             {children}
-            <Toaster />
+            {/* Above the phone bottom bar. */}
+            <Toaster position="bottom-right" duration={5000} mobileOffset={{ bottom: 80 }} />
           </TooltipProvider>
         </ThemeProvider>
       </body>

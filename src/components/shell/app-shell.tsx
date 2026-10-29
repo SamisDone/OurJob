@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Ellipsis, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useState, type ReactNode } from "react";
@@ -35,9 +35,10 @@ import {
 } from "@/components/ui/sidebar";
 import { AccountMenu, type AccountUser } from "./account-menu";
 import { CommandPalette } from "./command-palette";
-import { activeNavHref, crumbsFor, primaryNav, secondaryNav, type NavItem } from "./nav";
+import { activeNavHref, crumbsFor, phoneNav, primaryNav, secondaryNav, type NavItem } from "./nav";
 import { useSignOut } from "./sign-out";
 import { LogoMark } from "./wordmark";
+import { cn } from "@/lib/utils";
 
 function NavGroup({ label, items, active }: { label: string; items: NavItem[]; active: string | null }) {
   const { isMobile, setOpenMobile } = useSidebar();
@@ -98,14 +99,56 @@ function AppSidebar({ user, active }: { user?: AccountUser; active: string | nul
   );
 }
 
+/**
+ * Phones: Today, Tailor and Tracker one tap away, and More, which opens the
+ * Sidebar's sheet with every page and the account menu. More is the active
+ * item for the pages that live only in the sheet.
+ */
+function BottomNav({ active }: { active: string | null }) {
+  const { setOpenMobile } = useSidebar();
+  const inMore = active !== null && !phoneNav.some((i) => i.href === active);
+  const moreLabel = [...primaryNav, ...secondaryNav].find((i) => i.href === active)?.label;
+  const item = "h-16 flex-col gap-1 rounded-none text-xs font-normal text-muted-foreground [&_svg]:size-5!";
+  const on = "font-medium text-foreground";
+  return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      {phoneNav.map((i) => (
+        <Button key={i.href} asChild variant="ghost" className={cn(item, active === i.href && on)}>
+          <Link href={i.href} aria-current={active === i.href ? "page" : undefined}>
+            <i.icon />
+            {i.label}
+          </Link>
+        </Button>
+      ))}
+      <Button
+        variant="ghost"
+        className={cn(item, inMore && on)}
+        data-active={inMore || undefined}
+        aria-label={inMore ? `More, current page ${moreLabel}` : "More"}
+        onClick={() => setOpenMobile(true)}
+      >
+        <Ellipsis />
+        More
+      </Button>
+    </nav>
+  );
+}
+
 function SiteHeader({ pathname, onSearch }: { pathname: string; onSearch: () => void }) {
   const crumbs = crumbsFor(pathname);
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:px-6">
-      <SidebarTrigger className="-ml-1" aria-label="Toggle menu" />
+      {/* Phones open the sheet from More in the bottom bar. */}
+      <SidebarTrigger className="-ml-1 hidden md:inline-flex" aria-label="Toggle menu" />
       {crumbs.length > 0 && (
         <>
-          <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-center" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 hidden md:block data-vertical:h-4 data-vertical:self-center"
+          />
           <Breadcrumb>
             <BreadcrumbList>
               {crumbs.map((c, i) => (
@@ -168,10 +211,12 @@ export function AppShell({
           Skip to content
         </a>
         <AppSidebar user={user} active={activeNavHref(pathname)} />
-        <SidebarInset id="main">
+        {/* Room for the phone bottom bar. */}
+        <SidebarInset id="main" className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
           <SiteHeader pathname={pathname} onSearch={() => setPaletteOpen(true)} />
           {children}
         </SidebarInset>
+        <BottomNav active={activeNavHref(pathname)} />
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={user ? signOut : undefined} />
       </SidebarProvider>
     </QueryProvider>

@@ -9,6 +9,9 @@ export const primaryNav: NavItem[] = [
   { href: "/companies", label: "Companies", icon: Building2 },
 ];
 
+/** One tap away on phones, in the bottom bar. The rest is under More. */
+export const phoneNav: NavItem[] = primaryNav.slice(0, 3);
+
 export const secondaryNav: NavItem[] = [
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/settings", label: "Settings", icon: Settings },
