@@ -1,10 +1,12 @@
 "use client";
 
-import { Check, ChevronDown, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronDown, CircleAlert, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
 import { Page, PageHeader } from "@/components/shell/page-states";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,10 +48,24 @@ export type TailorResult = {
   parts: ScorePart[];
   matched: string[];
   missing: string[];
+  /** Left out or removed for accuracy, with why. */
+  removed?: { where: string; text: string; reason: string }[];
 };
 
 /** Before tailoring: one text area for the job post and one button. */
-export function TailorPaste({ onSubmit, initial = "" }: { onSubmit: (text: string) => void; initial?: string }) {
+export function TailorPaste({
+  onSubmit,
+  initial = "",
+  error,
+  below,
+}: {
+  onSubmit: (text: string) => void;
+  initial?: string;
+  /** Why the last attempt failed, in words to show as they are. */
+  error?: string | null;
+  /** Shown under the card: his recent tailorings. */
+  below?: ReactNode;
+}) {
   const [text, setText] = useState(initial);
   const ready = text.trim().length > 0;
   return (
@@ -62,7 +78,14 @@ export function TailorPaste({ onSubmit, initial = "" }: { onSubmit: (text: strin
           </CardTitle>
           <CardDescription>Paste the full job post. Messy text from a select-all is fine.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive" role="alert">
+              <CircleAlert />
+              <AlertTitle>The CV was not tailored.</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <Textarea
             id="job-post"
             value={text}
@@ -83,6 +106,7 @@ export function TailorPaste({ onSubmit, initial = "" }: { onSubmit: (text: strin
           </Button>
         </CardFooter>
       </Card>
+      {below}
     </Page>
   );
 }
@@ -90,7 +114,7 @@ export function TailorPaste({ onSubmit, initial = "" }: { onSubmit: (text: strin
 /** The pipeline stages (onStage: reading, tailoring, checking), in his words. */
 const steps = ["Reading the job", "Tailoring your CV", "Checking every fact against your profile"] as const;
 
-/** While tailoring: the two named steps, and the result layout in skeletons. */
+/** While tailoring: the three named steps, and the result layout in skeletons. */
 export function TailorWorking({ step }: { step: 0 | 1 | 2 }) {
   return (
     <Page wide>
@@ -134,8 +158,55 @@ export function TailorWorking({ step }: { step: 0 | 1 | 2 }) {
 }
 
 /** After tailoring: the CV in tabs, the score, and the marked-up job post. */
-export function TailorResultView({ result, onNewPost }: { result: TailorResult; onNewPost?: () => void }) {
+/** Opens the LaTeX as a new Overleaf project: a form POST to /docs with encoded_snip (overleaf.com/devs, checked 2026-10-30). */
+function useOverleaf(latex: string) {
+  const form = useRef<HTMLFormElement>(null);
+  const node = (
+    <form ref={form} action="https://www.overleaf.com/docs" method="post" target="_blank" hidden>
+      <input type="hidden" name="encoded_snip" value={encodeURIComponent(latex)} />
+      <input type="hidden" name="engine" value="pdflatex" />
+    </form>
+  );
+  const open = () => {
+    form.current?.submit();
+    toast("Opened in Overleaf in a new tab.");
+  };
+  return { node, open };
+}
+
+function download(latex: string, name: string) {
+  const url = URL.createObjectURL(new Blob([latex], { type: "application/x-tex" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`Downloaded ${name}.`);
+}
+
+export function TailorResultView({
+  result,
+  onNewPost,
+  newPostHref,
+  fileName = "resume.tex",
+}: {
+  result: TailorResult;
+  onNewPost?: () => void;
+  newPostHref?: string;
+  fileName?: string;
+}) {
   const r = result;
+  const overleaf = useOverleaf(r.latex);
+  const newPost = (children: ReactNode, props: { variant: "ghost"; size?: "sm" }) =>
+    newPostHref ? (
+      <Button asChild {...props}>
+        <Link href={newPostHref}>{children}</Link>
+      </Button>
+    ) : (
+      <Button {...props} onClick={onNewPost}>
+        {children}
+      </Button>
+    );
   return (
     <Page wide>
       <PageHeader
@@ -148,10 +219,13 @@ export function TailorResultView({ result, onNewPost }: { result: TailorResult; 
         }
         actions={
           <>
-            <Button variant="ghost" onClick={onNewPost}>
-              <FilePlus2 data-icon="inline-start" />
-              New job post
-            </Button>
+            {newPost(
+              <>
+                <FilePlus2 data-icon="inline-start" />
+                New job post
+              </>,
+              { variant: "ghost" },
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -169,13 +243,14 @@ export function TailorResultView({ result, onNewPost }: { result: TailorResult; 
                   <Copy />
                   Copy LaTeX
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => toast("Downloaded resume.tex.")}>
+                <DropdownMenuItem onSelect={() => download(r.latex, fileName)}>
                   <Download />
                   Download .tex
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => toast("Opened in Overleaf in a new tab.")}>
+            {overleaf.node}
+            <Button onClick={overleaf.open}>
               <ExternalLink data-icon="inline-start" />
               Open in Overleaf
             </Button>
@@ -186,7 +261,25 @@ export function TailorResultView({ result, onNewPost }: { result: TailorResult; 
       {/* Phones: score, CV, job post. Wide screens: CV on the left, score and job post on the right. */}
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px] xl:grid-rows-[auto_1fr]">
         <div className="xl:col-start-2 xl:row-start-1">
-          <ScoreCard score={r.score} master={r.master} parts={r.parts} matched={r.matched} missing={r.missing} />
+          <div className="space-y-6">
+            <ScoreCard score={r.score} master={r.master} parts={r.parts} matched={r.matched} missing={r.missing} />
+            {r.removed && r.removed.length > 0 && (
+              <Alert variant="warning">
+                <CircleAlert />
+                <AlertTitle>Left out of this CV</AlertTitle>
+                <AlertDescription>
+                  <ul className="mt-1 space-y-2">
+                    {r.removed.map((x, i) => (
+                      <li key={i}>
+                        <span className="font-medium">{x.where}:</span> {x.text}{" "}
+                        <span className="text-muted-foreground">({x.reason})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
         <Tabs defaultValue="preview" className="min-w-0 gap-4 xl:col-start-1 xl:row-span-2 xl:row-start-1">
           <TabsList>
@@ -215,10 +308,13 @@ export function TailorResultView({ result, onNewPost }: { result: TailorResult; 
                 are highlighted.
               </CardDescription>
               <CardAction>
-                <Button variant="ghost" size="sm" onClick={onNewPost}>
-                  <Pencil data-icon="inline-start" />
-                  Edit
-                </Button>
+                {newPost(
+                  <>
+                    <Pencil data-icon="inline-start" />
+                    New post
+                  </>,
+                  { variant: "ghost", size: "sm" },
+                )}
               </CardAction>
             </CardHeader>
             <CardContent>

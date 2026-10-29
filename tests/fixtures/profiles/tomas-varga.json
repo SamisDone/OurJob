@@ -1,0 +1,151 @@
+{
+  "_note": "FICTIONAL person for tests: a richer profile than Nadia's (4 roles, 16 role bullets, 3 projects), used to check that tailored CVs still fit one page. Every name, company and number is invented.",
+  "output": {
+    "basics": {
+      "name": "Tomás Varga",
+      "headline": "Senior Backend Engineer",
+      "email": "tomas.varga@example.com",
+      "location": "Cluj-Napoca, Romania",
+      "links": [
+        { "label": "GitHub", "url": "https://github.com/example-tvarga" },
+        { "label": "LinkedIn", "url": "https://www.linkedin.com/in/example-tvarga" },
+        { "label": "Portfolio", "url": "https://tvarga.example.com" }
+      ],
+      "summary": {
+        "text": "Senior backend engineer with 9+ years of experience building Go, Python and Java services, PostgreSQL and Kafka data pipelines, and Kubernetes platforms for logistics, payments and health products.",
+        "sources": ["cv", "linkedin"]
+      }
+    },
+    "experience": [
+      {
+        "company": "Brightwater Freight",
+        "title": "Staff Backend Engineer",
+        "location": "Remote",
+        "start": "Mar 2022",
+        "end": "Present",
+        "bullets": [
+          { "text": "Lead the routing platform team of 6 engineers that plans about 40,000 truck routes a day across 9 countries.", "boldPhrases": [], "skills": [], "metrics": [{ "value": "6 engineers" }, { "value": "40,000 truck routes a day", "hedge": "about" }, { "value": "9 countries" }], "sources": ["cv", "linkedin"] },
+          { "text": "Rebuilt the route pricing service in Go with gRPC, cutting p95 latency from 900 ms to 140 ms and infrastructure cost by roughly 35%.", "boldPhrases": [], "skills": ["Go", "gRPC"], "metrics": [{ "value": "900 ms to 140 ms" }, { "value": "35%", "hedge": "roughly" }], "sources": ["cv"] },
+          { "text": "Moved shipment tracking from nightly batch files to Kafka event streams, so customers see status changes within 5 seconds instead of the next morning.", "boldPhrases": [], "skills": ["Kafka"], "metrics": [{ "value": "5 seconds" }], "sources": ["cv", "linkedin"] },
+          { "text": "Designed the PostgreSQL partitioning scheme for 2 billion tracking events, keeping the busiest queries under 50 ms.", "boldPhrases": [], "skills": ["PostgreSQL"], "metrics": [{ "value": "2 billion tracking events" }, { "value": "under 50 ms" }], "sources": ["cv"] },
+          { "text": "Introduced OpenTelemetry tracing across 30+ services and wrote the on-call runbooks the team uses today.", "boldPhrases": [], "skills": ["OpenTelemetry"], "metrics": [{ "value": "30+ services" }], "sources": ["cv"] }
+        ],
+        "tech": ["Go", "gRPC", "Kafka", "PostgreSQL", "Kubernetes", "Terraform", "OpenTelemetry", "AWS"],
+        "sources": ["cv", "linkedin"]
+      },
+      {
+        "company": "Paylink Europe",
+        "title": "Senior Software Engineer",
+        "location": "Bucharest, Romania",
+        "start": "Jan 2019",
+        "end": "Feb 2022",
+        "bullets": [
+          { "text": "Built the card settlement service in Java (Spring Boot) that reconciles about 3 million transactions a day with 99.95% automatic matches.", "boldPhrases": [], "skills": ["Java", "Spring Boot"], "metrics": [{ "value": "3 million transactions a day", "hedge": "about" }, { "value": "99.95%" }], "sources": ["cv"] },
+          { "text": "Led the move from a shared Oracle database to service-owned PostgreSQL schemas for 4 teams, with zero downtime.", "boldPhrases": [], "skills": ["PostgreSQL", "Oracle"], "metrics": [{ "value": "4 teams" }], "sources": ["cv", "linkedin"] },
+          { "text": "Wrote the fraud rules engine in Python that blocks roughly 1,200 suspicious payments a week before they settle.", "boldPhrases": [], "skills": ["Python"], "metrics": [{ "value": "1,200 suspicious payments a week", "hedge": "roughly" }], "sources": ["cv"] },
+          { "text": "Set up the team's CI/CD with GitHub Actions and Docker, taking releases from monthly to several times a week.", "boldPhrases": [], "skills": ["GitHub Actions", "Docker"], "metrics": [], "sources": ["cv"] }
+        ],
+        "tech": ["Java", "Spring Boot", "Python", "PostgreSQL", "Oracle", "Docker", "GitHub Actions", "RabbitMQ"],
+        "sources": ["cv", "linkedin"]
+      },
+      {
+        "company": "Medilink Health",
+        "title": "Backend Developer",
+        "location": "Cluj-Napoca, Romania",
+        "start": "Jun 2016",
+        "end": "Dec 2018",
+        "bullets": [
+          { "text": "Developed the appointment booking API in Python (Django) used by 120 clinics and about 50,000 patients a month.", "boldPhrases": [], "skills": ["Python", "Django"], "metrics": [{ "value": "120 clinics" }, { "value": "50,000 patients a month", "hedge": "about" }], "sources": ["cv"] },
+          { "text": "Integrated 3 national lab systems over HL7 FHIR, replacing faxed results for most partner clinics.", "boldPhrases": [], "skills": ["HL7 FHIR"], "metrics": [{ "value": "3 national lab systems" }], "sources": ["cv"] },
+          { "text": "Cut the nightly reporting job from 4 hours to 25 minutes by rewriting its queries and adding Redis caching.", "boldPhrases": [], "skills": ["Redis"], "metrics": [{ "value": "4 hours to 25 minutes" }], "sources": ["cv"] },
+          { "text": "Mentored 2 interns who later joined the team full time.", "boldPhrases": [], "skills": [], "metrics": [{ "value": "2 interns" }], "sources": ["linkedin"] }
+        ],
+        "tech": ["Python", "Django", "PostgreSQL", "Redis", "Celery", "HL7 FHIR"],
+        "sources": ["cv", "linkedin"]
+      },
+      {
+        "company": "Codecraft Studio",
+        "title": "Junior Developer",
+        "location": "Cluj-Napoca, Romania",
+        "start": "Jul 2015",
+        "end": "May 2016",
+        "bullets": [
+          { "text": "Built REST APIs and admin dashboards for 5 client projects in PHP and JavaScript.", "boldPhrases": [], "skills": ["PHP", "JavaScript", "REST APIs"], "metrics": [{ "value": "5 client projects" }], "sources": ["cv"] },
+          { "text": "Wrote the company's first automated test suite, catching regressions before releases.", "boldPhrases": [], "skills": [], "metrics": [], "sources": ["cv"] },
+          { "text": "Moved client sites from shared hosting to Docker containers on a single VPS.", "boldPhrases": [], "skills": ["Docker"], "metrics": [], "sources": ["cv"] }
+        ],
+        "tech": ["PHP", "JavaScript", "MySQL", "Docker"],
+        "sources": ["cv"]
+      }
+    ],
+    "projects": [
+      {
+        "name": "kafka-replay",
+        "sourceUrl": "https://github.com/example-tvarga/kafka-replay",
+        "description": "Go CLI that replays Kafka topics into a local cluster for debugging.",
+        "bullets": [{ "text": "Go CLI that replays a time window of Kafka topics into a local cluster, used by about 300 developers.", "boldPhrases": [], "skills": ["Go", "Kafka"], "metrics": [{ "value": "300 developers", "hedge": "about" }], "sources": ["github"] }],
+        "tech": ["Go", "Kafka"],
+        "sources": ["github"]
+      },
+      {
+        "name": "pgshard-check",
+        "sourceUrl": "https://github.com/example-tvarga/pgshard-check",
+        "description": "Checks PostgreSQL partition plans before a migration.",
+        "bullets": [{ "text": "Linter that checks PostgreSQL partition plans before a migration and flags full-table scans.", "boldPhrases": [], "skills": ["PostgreSQL"], "metrics": [], "sources": ["github"] }],
+        "tech": ["Python", "PostgreSQL"],
+        "sources": ["github"]
+      },
+      {
+        "name": "clinic-slots",
+        "liveUrl": "https://slots.tvarga.example.com",
+        "sourceUrl": "https://github.com/example-tvarga/clinic-slots",
+        "description": "Open-source availability calendar for small clinics.",
+        "bullets": [{ "text": "Open-source availability calendar for small clinics, with SMS reminders and a FHIR export.", "boldPhrases": [], "skills": ["HL7 FHIR"], "metrics": [], "sources": ["portfolio"] }],
+        "tech": ["TypeScript", "React", "Node.js", "PostgreSQL"],
+        "sources": ["portfolio", "github"]
+      }
+    ],
+    "education": [
+      { "institution": "Babeș-Bolyai University", "degree": "M.Sc. in Distributed Systems", "field": "Distributed Systems", "location": "Cluj-Napoca, Romania", "start": "2013", "end": "2015", "highlights": [], "sources": ["cv"] },
+      { "institution": "Babeș-Bolyai University", "degree": "B.Sc. in Computer Science", "field": "Computer Science", "location": "Cluj-Napoca, Romania", "start": "2010", "end": "2013", "highlights": [], "sources": ["cv"] }
+    ],
+    "skills": [
+      { "name": "Go", "aliases": ["Golang"], "category": "language", "sources": ["cv"] },
+      { "name": "Python", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "Java", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "SQL", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "TypeScript", "aliases": [], "category": "language", "sources": ["github"] },
+      { "name": "PHP", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "JavaScript", "aliases": [], "category": "language", "sources": ["cv"] },
+      { "name": "Spring Boot", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "Django", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "React", "aliases": [], "category": "framework", "sources": ["github"] },
+      { "name": "Node.js", "aliases": [], "category": "framework", "sources": ["github"] },
+      { "name": "gRPC", "aliases": [], "category": "framework", "sources": ["cv"] },
+      { "name": "Celery", "aliases": [], "category": "library", "sources": ["cv"] },
+      { "name": "PostgreSQL", "aliases": ["Postgres"], "category": "database", "sources": ["cv"] },
+      { "name": "Redis", "aliases": [], "category": "database", "sources": ["cv"] },
+      { "name": "Oracle", "aliases": [], "category": "database", "sources": ["cv"] },
+      { "name": "MySQL", "aliases": [], "category": "database", "sources": ["cv"] },
+      { "name": "Kafka", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "RabbitMQ", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Kubernetes", "aliases": [], "category": "cloud", "sources": ["cv"] },
+      { "name": "Docker", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "Terraform", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "AWS", "aliases": ["Amazon Web Services"], "category": "cloud", "sources": ["cv"] },
+      { "name": "GitHub Actions", "aliases": [], "category": "tool", "sources": ["cv"] },
+      { "name": "OpenTelemetry", "aliases": ["OTel"], "category": "tool", "sources": ["cv"] },
+      { "name": "HL7 FHIR", "aliases": ["FHIR"], "category": "domain", "sources": ["cv"] },
+      { "name": "REST APIs", "aliases": [], "category": "practice", "sources": ["cv"] },
+      { "name": "CI/CD", "aliases": [], "category": "practice", "sources": ["cv"] }
+    ],
+    "certifications": [{ "name": "AWS Certified Solutions Architect – Associate", "issuer": "Amazon Web Services", "date": "2021", "sources": ["cv"] }],
+    "awards": [],
+    "languages": [
+      { "name": "Romanian", "level": "Native", "sources": ["cv"] },
+      { "name": "English", "level": "Fluent", "sources": ["cv"] },
+      { "name": "Hungarian", "level": "Fluent", "sources": ["cv"] }
+    ],
+    "conflicts": []
+  }
+}

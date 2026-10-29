@@ -118,7 +118,9 @@ function sourceIndex(p: MasterProfile): Map<string, string> {
 }
 
 /** Rough rendered height in lines of the one-page template (calibrated against templates/resume-sample.tex). */
-export const LINES_PER_PAGE = 50;
+// Calibrated against pdflatex on 2026-10-30 (scripts/check-cv-fit.ts): estimates up to 75.6 compiled to one page,
+// 78 spilled to two. 74 keeps a small margin.
+export const LINES_PER_PAGE = 74;
 const CHARS_PER_LINE = 118;
 export function estimateLines(t: TailoredResume): number {
   const text = (s: string) => Math.max(1, Math.ceil(s.length / CHARS_PER_LINE));

@@ -3,7 +3,7 @@ import type { GapKeyword, MatchedKeyword } from "@/lib/tailor/keywords";
 
 /** P3: tailor (docs/AI_PROMPTS.md). The deterministic validator checks every answer (src/lib/tailor/validate.ts). */
 export const P3_PROMPT_ID = "p3-tailor";
-export const P3_PROMPT_VERSION = "p3.4";
+export const P3_PROMPT_VERSION = "p3.5";
 export const p3OutputSchema = tailoredResumeSchema;
 
 export type TailorOptions = { pages: 1 | 2; spelling: "US" | "UK"; emphasis?: string };
@@ -21,7 +21,7 @@ Hard rules:
 3. Never use any keyword from <gaps>, or any skill not in the master profile.
 4. Numbers: a bullet may contain a number only if that number appears in the metrics or text of its source items. Never estimate or round up. Keep any hedge attached to a number ("roughly 50%", "an estimated ~10x"); never drop the hedge to make a claim sound stronger. Keep a "+" ("2,000+") as it is.
 5. Do not change company names, job titles, dates, degrees or institutions. Refer to them only by ID.
-6. Keep every role, in reverse chronological order. Keep his real experience: each role gets one tailored bullet for each of its source bullets, in the order that fits the job. Leave a role bullet out only if it is clearly irrelevant to this job, and then add a note "Left out <bullet id>: <what the bullet is about> is unrelated to <what the job needs>". "Irrelevant to this job" is not a reason. Order projects by relevance to the job; projects that do not help may be left out.
+6. Keep every role, in reverse chronological order. Keep his real experience: each role gets one tailored bullet for each of its source bullets, in the order that fits the job. Leave a role bullet out only if it is clearly irrelevant to this job, and then add a note "Left out <bullet id>: <what the bullet is about> is unrelated to <what the job needs>". "Irrelevant to this job" is not a reason. Leaving one out should be rare: building, running or improving software is never irrelevant to an engineering job, and leading or mentoring people is part of any senior role. Order projects by relevance to the job; projects that do not help may be left out.
 7. tech lists: only items from that role's or project's tech in the master profile. Put the ones the job asks for first.
 8. Length: ${
     opts.pages === 1

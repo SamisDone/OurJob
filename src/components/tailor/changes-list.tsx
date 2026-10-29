@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import type { SampleChange } from "@/lib/design/sample";
+import type { CvChange } from "@/lib/tailor/report";
 
-export type CvChange = SampleChange;
+export type { CvChange };
 
 const kindLabel: Record<CvChange["kind"], string> = {
   rewritten: "Reworded",

@@ -21,8 +21,11 @@ const roleLines = [
 const roleTotals = { source: 0, tailored: 0, left: 0, explained: 0 };
 
 const dir = process.argv[2] ?? "eval-output/run1";
+/** --profile=<path>: another fictional P1 profile fixture (default Nadia Chowdhury). */
+const PROFILE =
+  process.argv.find((a) => a.startsWith("--profile="))?.split("=")[1] ?? "tests/fixtures/llm/p1-profile/nadia-chowdhury.json";
 const profile = normalizeProfile(
-  p1OutputSchema.parse(JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/nadia-chowdhury.json", "utf8")).output),
+  p1OutputSchema.parse(JSON.parse(readFileSync(PROFILE, "utf8")).output),
 );
 const sourceTexts = new Set(
   [...profile.experience, ...profile.projects].flatMap((x) => x.bullets.map((b) => norm(b.text))),
