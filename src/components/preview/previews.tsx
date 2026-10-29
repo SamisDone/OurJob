@@ -71,7 +71,6 @@ export function TailorPreview({ state }: { state?: string }) {
   }, [phase, state]);
 
   if (phase === "paste") return <TailorPaste onSubmit={() => setPhase("read")} />;
-  if (phase !== "paste" && phase !== "done")
-    return <TailorWorking step={phase === "read" ? 0 : phase === "tailor" ? 1 : 2} />;
+  if (phase !== "done") return <TailorWorking step={phase === "read" ? 0 : phase === "tailor" ? 1 : 2} />;
   return <TailorResultView result={result} onNewPost={() => setPhase("paste")} />;
 }
