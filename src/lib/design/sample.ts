@@ -3,6 +3,7 @@
  * Every person, company and job here is invented. Never put real data here.
  */
 import { boldSegments, type CvDocument } from "@/lib/cv/document";
+import type { FeedJob } from "@/lib/jobs/view";
 
 const b = boldSegments;
 
@@ -289,3 +290,228 @@ export const sampleAts = {
     { id: "parse", label: "Parseability", points: 15, max: 15, detail: "7 of 7 checks pass" },
   ],
 };
+
+/** "Now" for the previews, so relative dates in screenshots never drift. */
+export const sampleNow = new Date("2026-10-29T03:10:00Z");
+
+/** Nadia lives in Sylhet. */
+export const sampleTimeZone = "Asia/Dhaka";
+
+/** The last daily search, for the Today header: 6:32 in the morning in Sylhet. */
+export const sampleRun = { finishedAt: "2026-10-29T00:32:00Z", companies: 412 };
+
+/** Today's feed for Nadia: fictional jobs at fictional companies. */
+export const sampleFeed: FeedJob[] = [
+  {
+    id: "lumen-backend",
+    title: "Senior Backend Engineer",
+    company: "Lumen Labs",
+    newCompany: true,
+    isNew: true,
+    saved: true,
+    source: "Careers page (Ashby)",
+    direct: true,
+    where: "Remote, UTC-3 to UTC+8",
+    eligibility: "eligible",
+    pay: { min: 95_000, max: 130_000, approx: false },
+    postedAt: "2026-10-27T09:00:00Z",
+    fit: 88,
+    reasons: [
+      "5 years of Go and PostgreSQL covers the core requirement.",
+      "You built a Kafka event pipeline like their booking events.",
+      "gRPC and Kubernetes are part of your current role.",
+    ],
+    missing: ["Terraform", "GraphQL"],
+    url: "https://jobs.lumenlabs.example/senior-backend-engineer",
+  },
+  {
+    id: "tallow-backend",
+    title: "Backend Developer (Go, Python)",
+    company: "Tallow Health",
+    newCompany: false,
+    isNew: true,
+    saved: false,
+    source: "Careers page (Greenhouse)",
+    direct: true,
+    where: "Remote, Asia and Europe",
+    eligibility: "eligible",
+    pay: { min: 64_000, approx: true },
+    postedAt: "2026-10-29T02:00:00Z",
+    fit: 84,
+    reasons: ["Go and Python appear in your last two roles.", "Their UTC+3 to UTC+8 window includes Sylhet."],
+    missing: ["HL7 FHIR"],
+    url: "https://boards.tallowhealth.example/backend-developer",
+  },
+  {
+    id: "corvid-platform",
+    title: "Platform Engineer, Routing",
+    company: "Corvid Logistics",
+    newCompany: false,
+    isNew: true,
+    saved: false,
+    source: "Careers page (Lever)",
+    direct: true,
+    where: "Remote, worldwide",
+    eligibility: "eligible",
+    pay: { min: 110_000, max: 140_000, approx: false },
+    postedAt: "2026-10-28T15:00:00Z",
+    fit: 82,
+    reasons: [
+      "Logistics pricing work at Parcelwise matches their routing service.",
+      "Kubernetes and Docker in daily use.",
+    ],
+    missing: ["Rust"],
+    url: "https://jobs.corvid.example/platform-engineer-routing",
+  },
+  {
+    id: "fieldnote-api",
+    title: "Senior API Engineer",
+    company: "Fieldnote",
+    newCompany: true,
+    isNew: false,
+    saved: false,
+    source: "Careers page",
+    direct: true,
+    where: "Remote, worldwide",
+    eligibility: "eligible",
+    pay: { min: 90_000, max: 115_000, approx: false },
+    postedAt: "2026-10-25T10:00:00Z",
+    fit: 80,
+    reasons: ["REST API design and PostgreSQL tuning are central here.", "Small team, async, like your current one."],
+    missing: ["OpenAPI tooling"],
+    url: "https://fieldnote.example/careers/senior-api-engineer",
+  },
+  {
+    id: "quayside-data",
+    title: "Data Platform Engineer",
+    company: "Quayside",
+    newCompany: false,
+    isNew: false,
+    saved: true,
+    source: "Careers page (Workable)",
+    direct: true,
+    where: "Remote, Europe and Asia",
+    eligibility: "eligible",
+    pay: { min: 85_000, max: 105_000, approx: false },
+    postedAt: "2026-10-24T08:00:00Z",
+    fit: 74,
+    reasons: ["Kafka and PostgreSQL pipelines match the role.", "Python batch jobs in your Taka Pay work."],
+    missing: ["Airflow", "dbt", "Snowflake"],
+    url: "https://apply.quayside.example/data-platform-engineer",
+  },
+  {
+    id: "ledgerbird-payments",
+    title: "Software Engineer, Payments",
+    company: "Ledgerbird",
+    newCompany: false,
+    isNew: false,
+    saved: false,
+    source: "Remotive",
+    direct: false,
+    where: "Remote, location not stated",
+    eligibility: "unclear",
+    eligibilityNote: "The post says remote but does not name countries or time zones.",
+    pay: null,
+    postedAt: "2026-10-26T12:00:00Z",
+    fit: 71,
+    reasons: ["Payments reconciliation at Taka Pay is close to their ledger work."],
+    missing: ["Java", "Spring"],
+    url: "https://remotive.example/jobs/ledgerbird-software-engineer-payments",
+  },
+  {
+    id: "tidewater-sre",
+    title: "Site Reliability Engineer",
+    company: "Tidewater Systems",
+    newCompany: false,
+    isNew: false,
+    saved: false,
+    source: "Careers page (SmartRecruiters)",
+    direct: true,
+    where: "Remote, UTC+5 to UTC+9",
+    eligibility: "eligible",
+    pay: { min: 72_000, max: 96_000, approx: true },
+    postedAt: "2026-10-23T07:00:00Z",
+    fit: 63,
+    reasons: ["Kubernetes operations overlap with your platform work."],
+    missing: ["Terraform", "Prometheus", "On-call leadership"],
+    url: "https://careers.tidewater.example/sre",
+  },
+  {
+    id: "paperplane-billing",
+    title: "Product Engineer, Billing",
+    company: "Paperplane Payroll",
+    newCompany: false,
+    isNew: false,
+    saved: false,
+    source: "Himalayas",
+    direct: false,
+    where: "Remote, worldwide",
+    eligibility: "eligible",
+    pay: null,
+    postedAt: "2026-10-24T16:00:00Z",
+    fit: null,
+    reasons: [],
+    missing: [],
+    url: "https://himalayas.example/companies/paperplane/jobs/product-engineer-billing",
+  },
+  {
+    id: "pinecrest-fullstack",
+    title: "Full Stack Engineer (React, Node)",
+    company: "Pinecrest Studio",
+    newCompany: false,
+    isNew: false,
+    saved: false,
+    source: "Careers page (Recruitee)",
+    direct: true,
+    where: "Remote, Americas only",
+    eligibility: "ineligible",
+    pay: { min: 80_000, max: 100_000, approx: false },
+    postedAt: "2026-10-22T11:00:00Z",
+    fit: 52,
+    reasons: ["API work fits, but the role is mostly frontend."],
+    missing: ["React", "TypeScript", "Node.js"],
+    url: "https://pinecrest.example/jobs/full-stack-engineer",
+  },
+];
+
+/** The tailored CV's LaTeX for the LaTeX tab, in Pratik's template (an excerpt). */
+export const sampleLatex = String.raw`%-----------EXPERIENCE-----------
+\section{Professional Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {\underline{Parcelwise}{}}{Senior Backend Engineer}{Jun 2023 -- Present}
+      \resumeItemListStart
+        \resumeItem{Designed the \textbf{rate-quote service} in Go that answers about \textbf{1,200 requests per second} at p99 under 80 ms, and moved nightly billing jobs to a \textbf{Kafka}-based event pipeline that cut failed invoice runs by roughly \textbf{60\%}.}
+        \tech{Go, PostgreSQL, Kafka, Redis, Docker, Kubernetes, gRPC}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd`;
+
+export type SampleChange =
+  | { kind: "rewritten"; where: string; before: string; after: string }
+  | { kind: "moved"; where: string; text: string; note: string }
+  | { kind: "dropped"; where: string; text: string; reason: string };
+
+/** What tailoring changed versus the master CV, for the Changes tab. */
+export const sampleChanges: SampleChange[] = [
+  {
+    kind: "rewritten",
+    where: "Parcelwise",
+    before:
+      "Moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.",
+    after: "Moved nightly billing jobs to a Kafka-based event pipeline that cut failed invoice runs by roughly 60%.",
+  },
+  {
+    kind: "moved",
+    where: "Technical Skills",
+    text: "Data: PostgreSQL, Redis",
+    note: "Moved to the first line: the job asks for PostgreSQL early.",
+  },
+  {
+    kind: "dropped",
+    where: "Taka Pay",
+    text: "Added PostgreSQL row-level security for multi-tenant reporting.",
+    reason: "One bullet per role keeps the CV to one page.",
+  },
+];

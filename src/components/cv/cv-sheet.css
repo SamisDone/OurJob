@@ -17,7 +17,7 @@
   background: var(--cv-paper);
   color: var(--cv-ink);
   border-radius: 2px;
-  box-shadow: var(--shadow-sheet);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.1), 0 8px 24px -8px rgb(0 0 0 / 0.12);
   font-family: var(--font-cv);
   font-size: calc(var(--pt) * 10);
   line-height: calc(var(--pt) * 12);
@@ -143,8 +143,8 @@
 }
 
 .cv-sheet [data-bullet][data-flash="true"] {
-  background: var(--circle-fill);
-  transition: background-color 600ms var(--ease-ink);
+  background: var(--info-soft);
+  transition: background-color 600ms ease-out;
 }
 
 /* Page boundary: a dashed rule where page 1 ends. */
@@ -153,7 +153,7 @@
   left: 0;
   right: 0;
   height: 0;
-  border-top: 1px dashed var(--redpen);
+  border-top: 1px dashed var(--destructive);
   pointer-events: none;
 }
 
@@ -164,7 +164,7 @@
   font-family: var(--font-sans);
   font-size: 11px;
   line-height: 14px;
-  color: var(--redpen);
+  color: var(--destructive);
   background: var(--cv-paper);
   padding: 0 4px;
 }

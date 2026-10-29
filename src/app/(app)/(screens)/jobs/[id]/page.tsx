@@ -8,10 +8,10 @@ export default async function Page() {
   const status = await currentProfileStatus();
   if (status !== "confirmed") {
     return (
-      <NeedsProfile title="Job" status={status}>
+      <NeedsProfile title="Job" description="One job in full, with why it fits you and what you are missing." status={status}>
         Jobs are ranked against your confirmed profile, so job details start once you confirm it.
       </NeedsProfile>
     );
   }
-  return <ComingSoon title="Job">Job details arrive in Phase 3, with the daily feed.</ComingSoon>;
+  return <ComingSoon title="Job" description="One job in full, with why it fits you and what you are missing.">Job details arrive in Phase 3, with the daily feed.</ComingSoon>;
 }

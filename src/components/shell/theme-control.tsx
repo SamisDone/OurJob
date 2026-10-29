@@ -1,30 +1,36 @@
 "use client";
 
-import { Segmented } from "@/components/legacy/tabs";
-import { setStored, useStored } from "@/lib/use-stored";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useMounted } from "@/hooks/use-mounted";
 
-type Theme = "system" | "light" | "dark";
-
-/** Theme: system, light, dark. The choice is applied to <html> before first paint by the root layout. */
+/** Theme: system, light, dark. next-themes applies it to <html> before first paint. */
 export function ThemeControl({ className }: { className?: string }) {
-  const stored = useStored("ourjob-theme", "system");
-  const theme: Theme = stored === "light" || stored === "dark" ? stored : "system";
+  const { theme, setTheme } = useTheme();
+  // The stored theme is only known in the browser; render "system" until then.
+  const mounted = useMounted();
   return (
-    <Segmented
+    <ToggleGroup
+      type="single"
+      variant="outline"
       aria-label="Theme"
       className={className}
-      value={theme}
-      onValueChange={(v) => {
-        const root = document.documentElement;
-        if (v === "system") delete root.dataset.theme;
-        else root.dataset.theme = v;
-        setStored("ourjob-theme", v);
-      }}
-      options={[
-        { value: "system", label: "System" },
-        { value: "light", label: "Light" },
-        { value: "dark", label: "Dark" },
-      ]}
-    />
+      value={mounted ? (theme ?? "system") : "system"}
+      onValueChange={(v) => v && setTheme(v)}
+    >
+      <ToggleGroupItem value="system">
+        <Monitor />
+        System
+      </ToggleGroupItem>
+      <ToggleGroupItem value="light">
+        <Sun />
+        Light
+      </ToggleGroupItem>
+      <ToggleGroupItem value="dark">
+        <Moon />
+        Dark
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }

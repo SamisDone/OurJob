@@ -1,120 +1,69 @@
 @import "tailwindcss";
-@import "../styles/tokens.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Old index-card tokens for screens not migrated yet. Deleted with src/components/legacy. */
+@import "../styles/legacy.css";
 
-/* Dark variant follows the resolved token theme, not only the OS. */
-@custom-variant dark {
-  @media (prefers-color-scheme: dark) {
-    &:where(:root:not([data-theme="light"]) *, :root:not([data-theme="light"])) {
-      @slot;
-    }
-  }
-  &:where([data-theme="dark"], [data-theme="dark"] *) {
-    @slot;
-  }
-}
+/* next-themes puts .dark on <html>; "system" resolves to light or dark there too. */
+@custom-variant dark (&:is(.dark *));
 
 /*
- * Theme. Tailwind's default palette, type scale, radii and shadows are
- * cleared so only OurJob tokens exist. A stock class like bg-zinc-100 or
- * rounded-lg does not compile, which keeps the default shadcn look out.
+ * shadcn/ui theme (style nova, base color neutral). Source of truth:
+ * docs/DESIGN.md section 3. Color carries meaning only through the four
+ * status colors; everything else is neutral.
  */
-@theme {
-  --color-*: initial;
-  --text-*: initial;
-  --radius-*: initial;
-  --shadow-*: initial;
-  --font-*: initial;
-  --ease-*: initial;
-
-  --text-xs: 0.75rem;
-  --text-xs--line-height: 1rem;
-  --text-sm: 0.875rem;
-  --text-sm--line-height: 1.25rem;
-  --text-base: 1rem;
-  --text-base--line-height: 1.5rem;
-  --text-lg: 1.25rem;
-  --text-lg--line-height: 1.75rem;
-  --text-xl: 1.5625rem;
-  --text-xl--line-height: 2rem;
-  --text-2xl: 1.9375rem;
-  --text-2xl--line-height: 2.375rem;
-  --text-score: 3rem;
-  --text-score--line-height: 3rem;
-  --text-score--font-weight: 600;
-
-  --radius-control: 8px;
-  --radius-panel: 12px;
-  --radius-sheet: 2px;
-  --radius-pill: 999px;
-
-  --ease-ink: cubic-bezier(0.2, 0, 0, 1);
-}
-
 @theme inline {
-  --color-paper: var(--paper);
-  --color-sheet: var(--sheet);
-  --color-ink: var(--ink);
-  --color-body: var(--body);
-  --color-graphite: var(--graphite);
-  --color-rule: var(--rule);
-  --color-control-edge: var(--control-edge);
-  --color-red-rule: var(--red-rule);
-  --color-redpen: var(--redpen);
-  --color-circle-fill: var(--circle-fill);
-  --color-circle-stroke: var(--circle-stroke);
-  --color-ok: var(--ok);
-  --color-caution: var(--caution);
-  --color-caution-wash: var(--caution-wash);
-  --color-redpen-wash: var(--redpen-wash);
-  --color-ink-wash: var(--ink-wash);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+  --font-cv: var(--font-lm-roman), "Latin Modern Roman", serif;
+  --font-cv-caps: var(--font-lm-caps), "Latin Modern Roman Caps", serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Status colors: text or icon color, and the soft background behind it. */
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
   --color-cv-paper: var(--cv-paper);
   --color-cv-ink: var(--cv-ink);
   --color-cv-rule: var(--cv-rule);
-  --color-scrim: var(--scrim);
-  --color-transparent: transparent;
-  --color-current: currentColor;
 
-  --shadow-sheet: var(--shadow-sheet);
-  --shadow-pop: var(--shadow-pop);
-
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
-  --font-cv: var(--font-lm-roman), "Latin Modern Roman", serif;
-  --font-cv-caps: var(--font-lm-caps), "Latin Modern Roman Caps", serif;
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -122,221 +71,6 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-@layer base {
-  html {
-    background: var(--paper);
-    color: var(--body);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    @apply font-sans;
-  }
-
-  body {
-    background: var(--paper);
-    color: var(--body);
-    font-size: 1rem;
-    line-height: 1.5rem;
-    @apply bg-background text-foreground;
-  }
-
-  /* Headings are ink; running text is body (DESIGN.md 3, Text color). */
-  h1,
-  h2,
-  h3,
-  h4 {
-    color: var(--ink);
-    text-wrap: balance;
-  }
-
-  /* No single word alone on the last line of short text (app-wide). */
-  p,
-  li,
-  dd,
-  dt,
-  label,
-  legend,
-  figcaption,
-  blockquote {
-    text-wrap: pretty;
-  }
-
-  ::selection {
-    background: var(--circle-fill);
-    color: var(--body);
-  }
-
-  /* Focus: 2 px ink outline plus a 3 px circle-fill halo (DESIGN.md 8). */
-  :focus-visible {
-    outline: 2px solid var(--ink);
-    outline-offset: 0;
-    box-shadow: 0 0 0 5px var(--circle-fill);
-    border-radius: inherit;
-  }
-
-  a {
-    text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      transition-delay: 0ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
-  * {
-    @apply border-border outline-ring/50;
-  }
-}
-
-@utility tabular {
-  font-variant-numeric: tabular-nums;
-}
-
-@utility measure {
-  max-width: 72ch;
-}
-
-/*
- * Ruled index-card lines. Allowed only on the Today feed panel and in empty
- * states (DESIGN.md 10.2). This is the one place a repeating gradient is used,
- * and only to draw hairlines, never as a color wash.
- */
-@utility ruled {
-  background-color: var(--sheet);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--ruled-gap) - 1px),
-    var(--rule) calc(var(--ruled-gap) - 1px),
-    var(--rule) var(--ruled-gap)
-  );
-}
-
-/*
- * A 2 px red rule across the top of a panel, like an index card. Drawn as the
- * panel's own top border, so it follows the rounded corners and never clips
- * the panel's content (an overflow-hidden version cut off pen marks).
- */
-@utility red-rule-top {
-  border-top-width: 2px !important;
-  border-top-style: solid !important;
-  border-top-color: var(--red-rule) !important;
-}
-
-/* Motion that answers an action. No entrance animations on page load. */
-@keyframes overlay-in {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes overlay-out {
-  to {
-    opacity: 0;
-  }
-}
-@keyframes dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-@keyframes sheet-in {
-  from {
-    transform: translateX(100%);
-  }
-}
-@keyframes sheet-up {
-  from {
-    transform: translateY(100%);
-  }
-}
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-}
-@keyframes skeleton-breathe {
-  50% {
-    opacity: 0.55;
-  }
-}
-@keyframes task-progress {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(300%);
-  }
-}
-
-/*
- * Rail compact mode (icons only): always below 1024 px, and below 1440 px on
- * pages that need the width (the tailoring desk), marked with
- * data-compact-rail on the shell. Pure CSS, so there is no flash on load.
- */
-.rail-compact-only {
-  display: none;
-}
-@media (max-width: 1023px) {
-  .rail {
-    width: 4rem;
-  }
-  .rail-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-  }
-  .rail-center {
-    justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .rail-wide-only {
-    display: none;
-  }
-  .rail-compact-only {
-    display: inline;
-  }
-}
-@media (min-width: 1024px) and (max-width: 1439px) {
-  [data-compact-rail] .rail {
-    width: 4rem;
-  }
-  [data-compact-rail] .rail-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-  }
-  [data-compact-rail] .rail-center {
-    justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  [data-compact-rail] .rail-wide-only {
-    display: none;
-  }
-  [data-compact-rail] .rail-compact-only {
-    display: inline;
-  }
 }
 
 :root {
@@ -354,10 +88,8 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -371,7 +103,28 @@
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* success: strong match, open to you, applied */
+  --success: #107d32;
+  --success-soft: #e9f7ee;
+  /* warning: partial match, unclear location, late search */
+  --warning: #a35200;
+  --warning-soft: #fff4e0;
+  /* destructive: missing skills, errors, delete */
+  --destructive: #c4232e;
+  --destructive-soft: #fdecec;
+  /* info: new jobs, links, focus */
+  --info: #0062cc;
+  --info-soft: #eaf3ff;
+  --ring: var(--info);
+  --sidebar-ring: var(--info);
+
+  /* The CV is paper: white with black type in both themes. */
+  --cv-paper: #ffffff;
+  --cv-ink: #000000;
+  --cv-rule: #e5e5e5;
+
+  color-scheme: light;
 }
 
 .dark {
@@ -389,10 +142,8 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -400,10 +151,88 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  /* Neutral, not the stock blue: color is reserved for the status meanings. */
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+
+  --success: #3fcf6e;
+  --success-soft: #0f2a19;
+  --warning: #f5a524;
+  --warning-soft: #2e2008;
+  --destructive: #ff6369;
+  --destructive-soft: #3a1416;
+  --info: #52a8ff;
+  --info-soft: #0b2340;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-base text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p,
+  li,
+  dd,
+  dt,
+  label,
+  legend,
+  figcaption,
+  blockquote {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Numbers (scores, pay, dates, times) are the one place Geist Mono is used. */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Matched and missing words in the job post: a soft wash in the status color, no circles or underlines. */
+@utility mark-matched {
+  background-color: var(--success-soft);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+}
+@utility mark-missing {
+  background-color: var(--destructive-soft);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  box-decoration-break: clone;
 }

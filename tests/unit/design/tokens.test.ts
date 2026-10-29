@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "@/lib/design/contrast";
 
-const css = readFileSync("src/styles/tokens.css", "utf8");
+const css = readFileSync("src/app/globals.css", "utf8");
 
-/** Hex tokens declared in the first rule whose selector starts with `selector`. */
+/** Hex tokens declared in the first rule whose selector is exactly `selector`. */
 function block(selector: string): Record<string, string> {
-  const start = css.indexOf(selector);
+  const start = css.search(new RegExp(`^${selector.replace(".", "\\.")} \\{`, "m"));
   if (start === -1) throw new Error(`selector not found: ${selector}`);
   const open = css.indexOf("{", start);
   const body = css.slice(open + 1, css.indexOf("}", open));
@@ -15,97 +15,49 @@ function block(selector: string): Record<string, string> {
   );
 }
 
-const light = block(":root,");
-const media = block(':root:not([data-theme="light"])');
-const dark = block('[data-theme="dark"] {');
+const light = block(":root");
+const dark = block(".dark");
 
-// docs/DESIGN.md section 3, Color ("index card and ballpoint").
-// --control-edge light is #6F7EA5, one step darker than the brief's #7685AE,
-// which measured 2.88:1 on --paper (see DECISIONS.md).
-const spec: Record<string, [string, string]> = {
-  paper: ["#E6E4DF", "#10162A"],
-  sheet: ["#FFFFFF", "#182039"],
-  ink: ["#1F3A93", "#DCE4F7"],
-  body: ["#2A3145", "#C9D0E0"],
-  graphite: ["#4F5D80", "#9AA6C4"],
-  rule: ["#C9D8F0", "#2A3557"],
-  "control-edge": ["#6F7EA5", "#6878A6"],
-  "red-rule": ["#D7263D", "#FF6B7A"],
-  redpen: ["#C41E3A", "#FF6B7A"],
-  "circle-fill": ["#DCE6FA", "#2A3A6E"],
-  "circle-stroke": ["#1F3A93", "#8FB0FF"],
-  ok: ["#186A41", "#5CC48A"],
-  caution: ["#8A5100", "#F0A63C"],
+// docs/DESIGN.md section 3: the four status colors, as [text, soft background].
+const spec: Record<string, { light: [string, string]; dark: [string, string] }> = {
+  success: { light: ["#107D32", "#E9F7EE"], dark: ["#3FCF6E", "#0F2A19"] },
+  warning: { light: ["#A35200", "#FFF4E0"], dark: ["#F5A524", "#2E2008"] },
+  destructive: { light: ["#C4232E", "#FDECEC"], dark: ["#FF6369", "#3A1416"] },
+  info: { light: ["#0062CC", "#EAF3FF"], dark: ["#52A8FF", "#0B2340"] },
 };
 
-const TEXT = ["ink", "body", "graphite", "redpen", "ok", "caution"];
-const SURFACES = ["paper", "sheet"];
+// The neutral backgrounds they sit on: background and card. oklch(1 0 0) is
+// white; oklch(0.145 0 0) and oklch(0.205 0 0) are the dark background and card.
+const SURFACES = { light: ["#FFFFFF"], dark: ["#0A0A0A", "#171717"] };
 
-describe("design tokens", () => {
+describe("status colors", () => {
   it("match DESIGN.md in both themes", () => {
-    for (const [name, [l, d]] of Object.entries(spec)) {
-      expect(light[name], `light --${name}`).toBe(l);
-      expect(dark[name], `dark --${name}`).toBe(d);
+    for (const [name, s] of Object.entries(spec)) {
+      expect([light[name], light[`${name}-soft`]], `light --${name}`).toEqual(s.light);
+      expect([dark[name], dark[`${name}-soft`]], `dark --${name}`).toEqual(s.dark);
     }
   });
 
-  it("no longer define the highlighter or proofmark", () => {
-    expect(css).not.toMatch(/--(highlight|proofmark)/);
+  it("pass WCAG AA (4.5:1) as text on their soft background", () => {
+    for (const [name, s] of Object.entries(spec)) {
+      for (const theme of ["light", "dark"] as const) {
+        const [fg, bg] = s[theme];
+        expect(contrastRatio(fg, bg), `${theme}: ${name} on ${name}-soft`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
-  it("keep the OS dark theme identical to [data-theme=dark]", () => {
-    expect(media).toEqual(dark);
-  });
-
-  it("pass WCAG AA (4.5:1) for every text color on paper and sheet", () => {
-    for (const [name, theme] of [
-      ["light", light],
-      ["dark", dark],
-    ] as const) {
-      for (const fg of TEXT) {
-        for (const bg of SURFACES) {
-          expect(contrastRatio(theme[fg], theme[bg]), `${name}: ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
+  it("pass WCAG AA as text on the page and card backgrounds", () => {
+    for (const [name, s] of Object.entries(spec)) {
+      for (const theme of ["light", "dark"] as const) {
+        for (const bg of SURFACES[theme]) {
+          expect(contrastRatio(s[theme][0], bg), `${theme}: ${name} on ${bg}`).toBeGreaterThanOrEqual(4.5);
         }
       }
     }
   });
 
-  it("pass AA for circled words, buttons and the focus ring", () => {
-    for (const [name, theme] of [
-      ["light", light],
-      ["dark", dark],
-    ] as const) {
-      // A circled keyword keeps --body text on --circle-fill.
-      expect(contrastRatio(theme.body, theme["circle-fill"]), `${name}: body on circle-fill`).toBeGreaterThanOrEqual(
-        4.5,
-      );
-      expect(contrastRatio(theme.ink, theme["circle-fill"]), `${name}: ink on circle-fill`).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(theme.sheet, theme.ink), `${name}: primary button`).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(theme.sheet, theme.redpen), `${name}: destructive button`).toBeGreaterThanOrEqual(4.5);
-      // Non-text marks need 3:1 against what they sit on (WCAG 1.4.11).
-      expect(contrastRatio(theme["circle-stroke"], theme.sheet), `${name}: pen circle on sheet`).toBeGreaterThanOrEqual(
-        3,
-      );
-      expect(
-        contrastRatio(theme["circle-stroke"], theme["circle-fill"]),
-        `${name}: pen circle on fill`,
-      ).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio(theme.redpen, theme.sheet), `${name}: red underline`).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio(theme.ink, theme.paper), `${name}: focus outline`).toBeGreaterThanOrEqual(3);
-    }
-  });
-
-  it("give text fields a 3:1 edge on paper and sheet (WCAG 1.4.11)", () => {
-    for (const [name, theme] of [
-      ["light", light],
-      ["dark", dark],
-    ] as const) {
-      for (const bg of SURFACES) {
-        expect(
-          contrastRatio(theme["control-edge"], theme[bg]),
-          `${name}: control edge on ${bg}`,
-        ).toBeGreaterThanOrEqual(3);
-      }
-    }
+  it("use info for the focus ring", () => {
+    expect(css).toMatch(/--ring: var\(--info\);/);
   });
 });

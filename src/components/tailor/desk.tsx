@@ -82,14 +82,14 @@ export function TailorDesk({
           aria-label="Estimated ATS match"
           className={cn(
             "order-first col-span-full self-start md:sticky md:top-0 md:z-20",
-            "@min-[1180px]:order-last @min-[1180px]:col-span-1 @min-[1180px]:top-4",
+            "@min-[1180px]:top-4 @min-[1180px]:order-last @min-[1180px]:col-span-1",
             pane !== "score" && "max-md:hidden",
           )}
         >
           <div
             className={cn(
               // A card only in the two-column layout; plain column in three columns and on phones.
-              "md:@max-[1179px]:relative md:@max-[1179px]:red-rule-top md:@max-[1179px]:rounded-panel",
+              "md:@max-[1179px]:relative md:@max-[1179px]:rounded-panel md:@max-[1179px]:red-rule-top",
               "md:@max-[1179px]:border md:@max-[1179px]:border-rule md:@max-[1179px]:bg-sheet md:@max-[1179px]:px-4 md:@max-[1179px]:py-3",
             )}
           >

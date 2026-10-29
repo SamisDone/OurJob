@@ -31,11 +31,17 @@ describe("copy and look guard (DESIGN.md 9 and 10)", () => {
     expect(hits).toEqual([]);
   });
 
-  it("does not load banned UI faces or a second icon set", () => {
-    const all = sources.map((f) => f.text).join("\n");
-    expect(all).not.toMatch(
-      /import\s*\{[^}]*\b(Inter|Geist|Geist_Mono|Roboto)\b[^}]*\}\s*from\s*["']next\/font\/google["']/,
-    );
-    expect(all).not.toMatch(/from\s*["']lucide-react["']/);
+  it("uses one icon set, Lucide, in the migrated screens", () => {
+    // Grows to all of src once every screen is on shadcn/ui and src/components/legacy is gone.
+    const migrated = /[\\/](ui|shell|preview|tailor[\\/](?!desk)|jobs[\\/](?!job-row)|cv)[\\/]?/;
+    const hits = sources
+      .filter((f) => migrated.test(f.path) && /from\s*["']@phosphor-icons\//.test(f.text))
+      .map((f) => f.path);
+    expect(hits).toEqual([]);
+  });
+
+  it("loads Geist Sans and Geist Mono through next/font", () => {
+    const fonts = readFileSync("src/app/fonts.ts", "utf8");
+    expect(fonts).toMatch(/import\s*\{\s*Geist,\s*Geist_Mono\s*\}\s*from\s*["']next\/font\/google["']/);
   });
 });

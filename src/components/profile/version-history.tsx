@@ -4,7 +4,7 @@ import { ClockCounterClockwiseIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/legacy/button";
 import { ErrorState, Skeleton } from "@/components/legacy/feedback";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/legacy/overlay";
-import { toast } from "@/components/legacy/toast";
+import { toast } from "sonner";
 import { useProfileVersions, useRestoreVersion } from "@/lib/query/profile";
 
 function when(iso: string) {

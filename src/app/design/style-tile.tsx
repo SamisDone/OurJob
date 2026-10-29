@@ -10,7 +10,7 @@ import { penTiming } from "@/components/marks/sweep";
 import { ScoreDisplay } from "@/components/score/score";
 import { AppShell } from "@/components/shell/app-shell";
 import { AccountMenu } from "@/components/shell/account-menu";
-import { Kbd } from "@/components/shell/command-palette";
+import { Kbd } from "@/components/ui/kbd";
 import { ThemeControl } from "@/components/shell/theme-control";
 import { TailorDesk } from "@/components/tailor/desk";
 import { KanbanBoard, KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
@@ -38,7 +38,7 @@ import {
 import { Combobox, Select } from "@/components/legacy/select";
 import { ProgressSteps, TaskSteps } from "@/components/legacy/steps";
 import { Segmented, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/legacy/tabs";
-import { toast } from "@/components/legacy/toast";
+import { toast } from "sonner";
 import type { CvDocument } from "@/lib/cv/document";
 import { findSampleMarks, sampleAts, sampleCompanies, sampleCv, sampleJd, sampleJobs } from "@/lib/design/sample";
 import { cn } from "@/lib/utils";

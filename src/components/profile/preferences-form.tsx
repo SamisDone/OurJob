@@ -7,7 +7,7 @@ import { MultiToggle, Switch, TokenInput } from "@/components/legacy/form-bits";
 import { FieldError, FieldHint, Input, Label } from "@/components/legacy/input";
 import { Combobox, Select } from "@/components/legacy/select";
 import { Segmented } from "@/components/legacy/tabs";
-import { toast } from "@/components/legacy/toast";
+import { toast } from "sonner";
 import { countryOptions, regionsFor, timezoneOptions } from "@/lib/geo";
 import { formatAmount, parseAmountInput } from "@/lib/salary/input";
 import type { SearchPreferences } from "@/lib/profile/schema";

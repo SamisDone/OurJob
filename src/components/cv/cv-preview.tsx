@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowsOutIcon } from "@phosphor-icons/react/ssr";
+import { Maximize2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/legacy/button";
-import { Dialog, DialogContent } from "@/components/legacy/overlay";
-import { Segmented } from "@/components/legacy/tabs";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { CvDocument } from "@/lib/cv/document";
 import { CvSheet } from "./cv-sheet";
 
@@ -44,44 +44,54 @@ export function CvPreview({ doc, label = "CV preview" }: { doc: CvDocument; labe
   return (
     <div className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <Segmented
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
           aria-label="Zoom"
           value={zoom}
-          onValueChange={(v) => setZoom(v as Zoom)}
-          options={[
-            { value: "fit", label: "Fit width" },
-            { value: "100", label: "100%" },
-            { value: "125", label: "125%" },
-          ]}
-        />
+          onValueChange={(v) => v && setZoom(v as Zoom)}
+        >
+          <ToggleGroupItem value="fit">Fit width</ToggleGroupItem>
+          <ToggleGroupItem value="100">100%</ToggleGroupItem>
+          <ToggleGroupItem value="125">125%</ToggleGroupItem>
+        </ToggleGroup>
         <Button variant="ghost" size="sm" onClick={() => setFull(true)}>
-          <ArrowsOutIcon aria-hidden />
+          <Maximize2 data-icon="inline-start" />
           Open full size
         </Button>
       </div>
-      <div ref={frame} className="overflow-x-auto pb-2" tabIndex={scrolls ? 0 : undefined} role={scrolls ? "region" : undefined} aria-label={scrolls ? label : undefined}>
-        {/* Click the page to open it full size. The keyboard path is the button above. */}
-        <div
-          className="w-fit cursor-zoom-in"
-          onClick={(e) => {
-            e.preventDefault();
-            setFull(true);
-          }}
-        >
-          <CvSheet doc={doc} width={available ? width : undefined} onPagesChange={setPages} />
+      <div
+        className="overflow-x-auto rounded-lg bg-muted p-3 sm:p-4"
+        tabIndex={scrolls ? 0 : undefined}
+        role={scrolls ? "region" : undefined}
+        aria-label={scrolls ? label : undefined}
+      >
+        {/* Measures the width inside the padding. */}
+        <div ref={frame}>
+          {/* Click the page to open it full size. The keyboard path is the button above. */}
+          <div
+            className="w-fit cursor-zoom-in"
+            onClick={(e) => {
+              e.preventDefault();
+              setFull(true);
+            }}
+          >
+            <CvSheet doc={doc} width={available ? width : undefined} onPagesChange={setPages} />
+          </div>
         </div>
       </div>
-      <p className="mt-2 text-sm text-graphite">
-        {pages === 1 ? "1 page" : `${pages} pages`}, US Letter
+      <p className="mt-2 text-sm text-muted-foreground">
+        <span className="num">{pages}</span> {pages === 1 ? "page" : "pages"}, US Letter
         {scrolls ? ". Scroll sideways to read the whole page." : ""}
       </p>
       <Dialog open={full} onOpenChange={setFull}>
-        <DialogContent
-          title="CV at full size"
-          description="True size, as it prints."
-          className="top-4 w-[min(900px,calc(100vw-16px))] translate-y-0"
-        >
-          <div className="max-h-[calc(100dvh-160px)] overflow-auto">
+        <DialogContent className="top-4 max-h-[calc(100dvh-32px)] w-[min(900px,calc(100vw-16px))] max-w-none translate-y-0 sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle>CV at full size</DialogTitle>
+            <DialogDescription>True size, as it prints.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[calc(100dvh-160px)] overflow-auto rounded-md bg-muted p-4">
             <CvSheet doc={doc} width={TRUE_SHEET_PX} />
           </div>
         </DialogContent>

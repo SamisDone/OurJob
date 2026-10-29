@@ -15,7 +15,7 @@ import { Panel } from "@/components/legacy/feedback";
 import { SourceBadges } from "@/components/legacy/form-bits";
 import { Input, Label } from "@/components/legacy/input";
 import { Select } from "@/components/legacy/select";
-import { toast } from "@/components/legacy/toast";
+import { toast } from "sonner";
 import { boldSegments } from "@/lib/cv/document";
 import { formatCvDate } from "@/lib/profile/dates";
 import type { EditOp } from "@/lib/profile/edit";

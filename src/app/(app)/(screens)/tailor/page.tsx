@@ -8,10 +8,10 @@ export default async function Page() {
   const status = await currentProfileStatus();
   if (status !== "confirmed") {
     return (
-      <NeedsProfile title="Tailor" status={status}>
+      <NeedsProfile title="Tailor" description="Paste a job post and get your CV rewritten for it, ready to open in Overleaf." status={status}>
         A tailored CV only uses facts from your confirmed profile, so tailoring starts once you confirm it.
       </NeedsProfile>
     );
   }
-  return <ComingSoon title="Tailor">CV tailoring arrives in Phase 2.</ComingSoon>;
+  return <ComingSoon title="Tailor" description="Paste a job post and get your CV rewritten for it, ready to open in Overleaf.">CV tailoring arrives in Phase 2.</ComingSoon>;
 }

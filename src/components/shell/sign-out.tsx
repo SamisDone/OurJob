@@ -1,10 +1,10 @@
 "use client";
 
-import { SignOutIcon } from "@phosphor-icons/react/ssr";
 import type { QueryClient } from "@tanstack/react-query";
+import { LogOut } from "lucide-react";
 import { useTransition } from "react";
 import { signOut as authSignOut } from "next-auth/react";
-import { Button } from "@/components/legacy/button";
+import { Button } from "@/components/ui/button";
 import { getQueryClient } from "@/lib/query/client";
 
 /**
@@ -44,8 +44,8 @@ export async function settleRequests(qc: QueryClient, timeoutMs = 5000) {
 export function SignOutButton({ className }: { className?: string }) {
   const { signOut, pending } = useSignOut();
   return (
-    <Button variant="secondary" className={className} onClick={signOut} disabled={pending}>
-      <SignOutIcon aria-hidden />
+    <Button variant="outline" className={className} onClick={signOut} disabled={pending}>
+      <LogOut data-icon="inline-start" />
       {pending ? "Signing out" : "Sign out"}
     </Button>
   );
