@@ -81,7 +81,7 @@ export async function tailorCv(
   const t2 = now();
 
   deps.onStage?.("checking");
-  const ctx = { profile, matched, gaps, pages: opts.pages };
+  const ctx = { profile, matched, gaps, pages: opts.pages, jobText: cleaned };
   let { resume, issues } = validateTailored(first.data, ctx);
   const firstIssues = issues;
   const fixMs: number[] = [];

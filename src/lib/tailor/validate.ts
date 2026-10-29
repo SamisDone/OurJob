@@ -29,7 +29,39 @@ export type ValidateContext = {
   matched: MatchedKeyword[];
   gaps: GapKeyword[];
   pages: 1 | 2;
+  /** The cleaned job post. When given, bullets that copy its claims are caught (check 2b). */
+  jobText?: string;
 };
+
+const STOPWORDS = new Set(
+  "a an and are as at be by for from has have in into is it its of on or our that the their this to was we were will with you your".split(
+    " ",
+  ),
+);
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .match(/[a-z0-9+#.%]+/g)
+    ?.map((w) => w.replace(/\.$/, "")) ?? [];
+
+/**
+ * Check 2b: runs of 5 words that a bullet shares with the job post and that
+ * bring in a content word its sources never use. That is the job's claim
+ * pasted into his CV ("Ingest data from APIs, SFTP drops..."), not his
+ * experience reworded. Returns the first such phrase, or null.
+ */
+export function copiedJobPhrase(text: string, sources: string, jobText: string, n = 5): string | null {
+  const job = words(jobText);
+  const jobGrams = new Set(job.map((_, i) => job.slice(i, i + n).join(" ")).filter((g) => g.split(" ").length === n));
+  const sourceWords = new Set(words(sources));
+  const w = words(text);
+  for (let i = 0; i + n <= w.length; i++) {
+    const gram = w.slice(i, i + n);
+    if (!jobGrams.has(gram.join(" "))) continue;
+    if (gram.some((x) => !STOPWORDS.has(x) && x.length > 2 && !sourceWords.has(x))) return gram.join(" ");
+  }
+  return null;
+}
 
 export const BANNED_WORDS = [
   "spearheaded",
@@ -246,6 +278,15 @@ export function validateTailored(
   /* Bullets: 2 source support, 3 numbers, 3b bold and tech, 4 unknown skills, 5 gap leaks, 7 banned words. */
   const checkText = (text: string, sourceIds: string[], ref: string) => {
     const sources = sourceIds.map((id) => src.get(id) ?? "").join("\n");
+    const copied = ctx.jobText ? copiedJobPhrase(text, sources, ctx.jobText) : null;
+    if (copied) {
+      issues.push({
+        check: "source",
+        ref,
+        message: `Copies "${copied}" from the job post; its source items do not describe that. Describe only what the source says.`,
+        action: "fix",
+      });
+    }
     const sourceNumbers = extractNumbers(sources);
     for (const n of extractNumbers(text)) {
       const reason = unsupportedReason(n, sourceNumbers);

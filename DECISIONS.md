@@ -353,3 +353,26 @@ Sam's rule: if the lite model passes the validator as well as the bigger one, ma
 - The Thorough model only writes the CV (P3 and fixes). The job post is always read by the standard model: P2 is extraction checked in code by `checkJobSpec`, and this halves Thorough's quota use. The eval does the same and shares one P2 answer per post between models, so they tailor from the same job spec.
 - A 429 for a daily quota is no longer retried (retrying cannot help); the provider goes straight to the fallback, and without one it says the limit resets in N hours instead of "wait about a minute".
 - The Settings copy no longer claims Thorough "rewords more": that is unmeasured. To measure it once Flash's quota resets: `pnpm eval:tailor --models=gemini-3.8-flash --out=eval-output/run2` (about 10 to 15 Flash calls), then `pnpm exec tsx scripts/eval-tailor-summary.ts eval-output/run2`.
+
+## 2026-10-30: P3 rewords and places keywords; copied job claims are caught in code
+
+Lite copied most source bullets as they were and left matched keywords in the skills list. p3.2 adds, per source bullet, the matched terms that bullet's own text proves (`<placement>`), the terms proven only by a tech line or skills (`<tech_only>`, kept out of bullets: joining a role's tech line to one of its bullets can invent a claim such as "built the rate-quote service in Go"), a "how to write each bullet" section and one fictional example. A first version also told the model to use the job's words; lite then pasted a job responsibility into a bullet ("Ingest data from APIs, SFTP drops and Kafka topics by..."), an invented claim the validator could not see. That instruction is gone, the prompt now forbids it, and validator check 2b (`copiedJobPhrase`) catches a 5-word run shared with the job post that brings in a content word the bullet's sources never use. On all 79 bullets of both runs below it flags only that one.
+
+Measured on the 10 fictional posts with gemini-3.5-flash-lite, P2 included (`pnpm eval:tailor`, summary by `scripts/eval-tailor-summary.ts`):
+
+| | Before (p3.1) | After (p3.2) |
+|---|---|---|
+| Runs ok | 10/10 | 10/10 |
+| Bullets reworded (any change) | 11/47 (23%) | 19/34 (56%) |
+| Bullets with 20%+ new words | 2 | 0 |
+| Matched keywords in bullets | 24/56 | 20/52 |
+| ...of those a source bullet proves (placeable) | 21 (3 came from tech lines) | 20 of 20 |
+| Validator first pass clean | 10/10 | 10/10 |
+| Gap leaks, unsupported numbers | 0, 0 | 0, 0 |
+| Bullets copying the job post | 0 | 0 |
+| Median time | 56.3 s | 47.7 s |
+| Under 45 s | 3/10 | 2/10 |
+
+- "20%+ new words" stays low by design: the profile allows reordering, trimming and choosing which facts lead, not new vocabulary. Nadia's fixture has five source bullets, so "placeable" is the honest ceiling for keywords in bullets; the rest go to skills and Tech lines, which the ATS score counts as experience.
+- After uses fewer bullets (3.4 per CV against 4.7). The "leave a bullet out rather than bend it" rule likely does this; watch it on a richer profile.
+- Time: lite answered slowly on 2026-10-29 and 30 (15 to 35 s per call against about 6 s in the first run), so both runs miss the 45 s target mostly on API latency; P2 alone took 15 to 50 s.

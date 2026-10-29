@@ -19,6 +19,18 @@ const profile = normalizeProfile(
 const sourceTexts = new Set(
   [...profile.experience, ...profile.projects].flatMap((x) => x.bullets.map((b) => norm(b.text))),
 );
+const sourceById = new Map(
+  [...profile.experience, ...profile.projects].flatMap((x) => x.bullets.map((b) => [b.id, norm(b.text)] as const)),
+);
+const bulletIds = new Set(sourceById.keys());
+
+/** Share of a bullet's words that are not in its source bullets. */
+function changed(text: string, sourceIds: string[]) {
+  const words = norm(text).split(" ");
+  const source = new Set(sourceIds.flatMap((id) => (sourceById.get(id) ?? "").split(" ")));
+  return words.filter((w) => !source.has(w)).length / Math.max(1, words.length);
+}
+
 function norm(s: string) {
   return s
     .toLowerCase()
@@ -50,7 +62,7 @@ type Row = {
 
 const rows = JSON.parse(readFileSync(join(dir, "report.json"), "utf8")) as Row[];
 const lines = [
-  "| Model | Post | Time (s) | P2 / P3 / fixes (s) | First pass | Fix rounds | Removed | Gap leaks | Unsupported numbers | Matched used | In bullets | Reworded |",
+  "| Model | Post | Time (s) | P2 / P3 / fixes (s) | First pass | Fix rounds | Removed | Gap leaks | Unsupported numbers | Matched used | In bullets (placeable) | Reworded (20%+ words) |",
   "|---|---|---|---|---|---|---|---|---|---|---|---|",
 ];
 const agg = new Map<
@@ -65,6 +77,8 @@ const agg = new Map<
     cov: [number, number];
     bul: [number, number];
     rew: [number, number];
+    rew20: number;
+    placeable: number;
     removed: number;
   }
 >();
@@ -80,6 +94,8 @@ for (const r of rows) {
     cov: [0, 0],
     bul: [0, 0],
     rew: [0, 0],
+    rew20: 0,
+    placeable: 0,
     removed: 0,
   };
   agg.set(r.model, a);
@@ -96,6 +112,9 @@ for (const r of rows) {
   };
   const bullets = [...saved.resume.experience, ...saved.resume.projects].flatMap((e) => e.bullets);
   const reworded = bullets.filter((b) => !sourceTexts.has(norm(b.text))).length;
+  const reworded20 = bullets.filter((b) => changed(b.text, b.sourceIds) >= 0.2).length;
+  // The ceiling for "in bullets": matched keywords that some source bullet's own text proves.
+  const placeable = saved.matched.filter((m) => m.proofIds.some((id) => bulletIds.has(id))).length;
   const bulletSections = {
     experience: saved.resume.experience.flatMap((e) => e.bullets.map((b) => b.text)),
     projects: saved.resume.projects.flatMap((p) => p.bullets.map((b) => b.text)),
@@ -114,6 +133,8 @@ for (const r of rows) {
   a.bul[1] += saved.matched.length;
   a.rew[0] += reworded;
   a.rew[1] += bullets.length;
+  a.rew20 += reworded20;
+  a.placeable += placeable;
   a.removed += r.final.removed;
   const first = r.firstPass.clean
     ? "clean"
@@ -121,13 +142,13 @@ for (const r of rows) {
         .map(([k, v]) => `${k} ${v}`)
         .join(", ");
   lines.push(
-    `| ${short}${fell} | ${r.jd} | ${r.totalS!.toFixed(1)} | ${r.parseS!.toFixed(1)} / ${r.tailorS!.toFixed(1)} / ${(r.fixS ?? []).map((s) => s.toFixed(1)).join(" + ") || "0"} | ${first} | ${r.final.rounds} | ${r.final.removed} | ${r.final.gapLeaks.length} | ${r.final.unsupportedNumbers.length} | ${r.final.matchedCovered}/${r.final.matched} | ${inBullets}/${saved.matched.length} | ${reworded}/${bullets.length} |`,
+    `| ${short}${fell} | ${r.jd} | ${r.totalS!.toFixed(1)} | ${r.parseS!.toFixed(1)} / ${r.tailorS!.toFixed(1)} / ${(r.fixS ?? []).map((s) => s.toFixed(1)).join(" + ") || "0"} | ${first} | ${r.final.rounds} | ${r.final.removed} | ${r.final.gapLeaks.length} | ${r.final.unsupportedNumbers.length} | ${r.final.matchedCovered}/${r.final.matched} | ${inBullets}/${saved.matched.length} (${placeable}) | ${reworded}/${bullets.length} (${reworded20}) |`,
   );
 }
 
 console.log(lines.join("\n"));
 console.log(
-  "\n| Model | Runs ok | Median time (s) | Max time (s) | Under 45 s | First pass clean | Gap leaks | Unsupported numbers | Removed | Matched used | In bullets | Reworded |",
+  "\n| Model | Runs ok | Median time (s) | Max time (s) | Under 45 s | First pass clean | Gap leaks | Unsupported numbers | Removed | Matched used | In bullets (placeable) | Reworded (20%+ words) |",
 );
 console.log("|---|---|---|---|---|---|---|---|---|---|---|---|");
 for (const [model, a] of agg) {
@@ -135,6 +156,6 @@ for (const [model, a] of agg) {
   const median = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : NaN;
   const pct = (x: [number, number]) => `${x[0]}/${x[1]}`;
   console.log(
-    `| ${model} | ${a.ok}/${a.n} | ${median.toFixed(1)} | ${Math.max(...sorted).toFixed(1)} | ${sorted.filter((t) => t < 45).length}/${a.ok} | ${a.clean}/${a.ok} | ${a.leaks} | ${a.nums} | ${a.removed} | ${pct(a.cov)} | ${pct(a.bul)} | ${pct(a.rew)} |`,
+    `| ${model} | ${a.ok}/${a.n} | ${median.toFixed(1)} | ${Math.max(...sorted).toFixed(1)} | ${sorted.filter((t) => t < 45).length}/${a.ok} | ${a.clean}/${a.ok} | ${a.leaks} | ${a.nums} | ${a.removed} | ${pct(a.cov)} | ${pct(a.bul)} (${a.placeable}) | ${pct(a.rew)} (${a.rew20}) |`,
   );
 }
