@@ -3,6 +3,10 @@ import type { ReactNode } from "react";
 import { Toaster } from "@/components/legacy/toast";
 import { fontVariables } from "./fonts";
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: { default: "OurJob", template: "%s | OurJob" },
@@ -22,7 +26,7 @@ const themeScript = `try{var t=localStorage.getItem("ourjob-theme");if(t==="ligh
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={fontVariables} suppressHydrationWarning>
+    <html lang="en" className={cn(fontVariables, "font-sans", geist.variable)} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
