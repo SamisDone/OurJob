@@ -108,7 +108,9 @@ export function buildCvDocument(p: MasterProfile, t?: TailoredResume): CvDocumen
         kind: "role" as const,
         id: e.id,
         org: e.institution,
-        title: e.field && !e.degree.includes(e.field) ? `${e.degree} in ${e.field}` : e.degree,
+        title: [e.field && !e.degree.includes(e.field) ? `${e.degree} in ${e.field}` : e.degree, e.grade]
+          .filter(Boolean)
+          .join(", "),
         right: e.location ?? dateRange(e.start, e.end),
         bullets: [],
       },
@@ -137,6 +139,24 @@ export function buildCvDocument(p: MasterProfile, t?: TailoredResume): CvDocumen
       return [{ kind: "entries", title: SECTION_TITLES.education, entries: education }];
     return [];
   });
+
+  // Publications and his other sections (Leadership, Volunteering) are facts as written: always on the CV, last.
+  if (p.publications.length)
+    sections.push({
+      kind: "list",
+      title: "Publications",
+      items: p.publications.map((x) => [
+        { text: x.title, bold: true },
+        {
+          text: [x.venue, formatMonth(x.date)]
+            .filter(Boolean)
+            .map((s) => `, ${s}`)
+            .join(""),
+        },
+      ]),
+    });
+  for (const s of p.extraSections)
+    if (s.items.length) sections.push({ kind: "list", title: s.title, items: s.items.map((i) => [{ text: i.text }]) });
 
   return { name: p.basics.name, contact, sections };
 }

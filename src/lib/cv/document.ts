@@ -42,7 +42,9 @@ export type CvSkillGroup = { group: string; items: string[] };
 export type CvSection =
   | { kind: "summary"; title: string; segments: Segment[] }
   | { kind: "skills"; title: string; lines: CvSkillGroup[][] }
-  | { kind: "entries"; title: string; entries: (CvRoleEntry | CvProjectEntry)[] };
+  | { kind: "entries"; title: string; entries: (CvRoleEntry | CvProjectEntry)[] }
+  /** Publications and sections like Leadership: one line per item, as written in the profile. */
+  | { kind: "list"; title: string; items: Segment[][] };
 
 export type CvDocument = {
   name: string;

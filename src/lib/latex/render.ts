@@ -179,6 +179,9 @@ export function renderLatex(doc: CvDocument): string {
         out.push(`     ${groups.join(" $|$ ")} \\\\`);
       }
       out.push("    }}", " \\end{itemize}", "\\vspace{-6pt}", "");
+    } else if (s.kind === "list") {
+      out.push(" \\resumeItemListStart", ...s.items.map((it) => `  \\resumeItem{${segs(it)}}`));
+      out.push(" \\resumeItemListEnd", "\\vspace{-6pt}", "");
     } else {
       out.push("  \\resumeSubHeadingListStart", "");
       for (const e of s.entries) out.push(...(e.kind === "role" ? role(e) : project(e)));

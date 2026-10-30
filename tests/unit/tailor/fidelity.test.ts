@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import { addedDetails, droppedDetails } from "@/lib/tailor/fidelity";
 
 // Fictional bullets shaped like the problems seen in a real run (2026-10-30).
-const vocab = [["Firebase"], ["Firebase Auth"], ["PostgreSQL", "Postgres"], ["PHP"], ["Kafka"], ["Gemini API"], ["React"]];
+const vocab = [
+  ["Firebase"],
+  ["Firebase Auth"],
+  ["PostgreSQL", "Postgres"],
+  ["PHP"],
+  ["Kafka"],
+  ["Gemini API"],
+  ["React"],
+];
 const job = "We need auth and role-based access control, LLM APIs, Kafka and billing experience.";
 
 describe("droppedDetails", () => {
@@ -18,15 +26,15 @@ describe("droppedDetails", () => {
   });
 
   it("keeps parentheses, number words and possessives", () => {
-    expect(droppedDetails("Shipped the app in two languages (EN/FR)", "Shipped the app in two languages", "", vocab)).toEqual(
-      expect.arrayContaining(["EN", "FR"]),
-    );
-    expect(droppedDetails("Supports six input methods for scoring", "Supports input methods for scoring", "", vocab)).toContain(
-      "six",
-    );
-    expect(droppedDetails("Reviewed peers’ tasks every sprint", "Reviewed peers tasks every sprint", "", vocab)).toContain(
-      "peers'",
-    );
+    expect(
+      droppedDetails("Shipped the app in two languages (EN/FR)", "Shipped the app in two languages", "", vocab),
+    ).toEqual(expect.arrayContaining(["EN", "FR"]));
+    expect(
+      droppedDetails("Supports six input methods for scoring", "Supports input methods for scoring", "", vocab),
+    ).toContain("six");
+    expect(
+      droppedDetails("Reviewed peers’ tasks every sprint", "Reviewed peers tasks every sprint", "", vocab),
+    ).toContain("peers'");
   });
 
   it("allows rewording that keeps every detail", () => {

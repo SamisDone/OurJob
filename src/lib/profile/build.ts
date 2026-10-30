@@ -2,6 +2,7 @@ import { cachedGenerate, type CacheStore } from "@/lib/llm/cache";
 import { P1_PROMPT_ID, P1_PROMPT_VERSION, p1OutputSchema, p1Prompt, type P1Source } from "@/lib/llm/prompts/p1-profile";
 import { P5_PROMPT_ID, P5_PROMPT_VERSION, p5OutputSchema, p5Prompt } from "@/lib/llm/prompts/p5-search";
 import type { LLMProvider } from "@/lib/llm/types";
+import { checkCoverage } from "./coverage";
 import { dateSortKey } from "./dates";
 import { normalizeProfile } from "./normalize";
 import type { MasterProfile, SearchPreferences } from "./schema";
@@ -30,11 +31,12 @@ export async function buildProfile(
     schema: p1OutputSchema,
     temperature: 0.1,
   });
-  const profile = normalizeProfile(res.data);
+  const cvText = sources.find((s) => s.kind.startsWith("cv_"))?.text ?? "";
+  // Every CV section lands somewhere; what the model left out is kept as "unplaced" for him to see.
+  const profile = checkCoverage(cvText, normalizeProfile(res.data));
   // Backstop for a fact models sometimes skip: an email written in the CV.
   // Copied from the source text, never made up.
   if (!profile.basics.email) {
-    const cvText = sources.find((s) => s.kind.startsWith("cv_"))?.text ?? "";
     const email = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.exec(cvText)?.[0];
     if (email) profile.basics.email = email;
   }

@@ -6,6 +6,7 @@ import { db, schema } from "@/lib/db/client";
 import { renderLatex } from "@/lib/latex/render";
 import { dbCacheStore, getLLMProvider } from "@/lib/llm";
 import { DEFAULT_TAILOR_OPTIONS } from "@/lib/llm/prompts/p3-tailor";
+import { masterProfileSchema } from "@/lib/profile/schema";
 import { getCurrentProfile } from "@/lib/profile/store";
 import { getTailorModel } from "@/lib/settings/store";
 import { tailorCv, type TailorStage } from "./pipeline";
@@ -96,5 +97,6 @@ export async function getProfileVersion(userId: string, version: number | null) 
     .select({ data: schema.masterProfiles.data })
     .from(schema.masterProfiles)
     .where(and(eq(schema.masterProfiles.userId, userId), eq(schema.masterProfiles.version, version)));
-  return row?.data ?? null;
+  // Parsed, so versions saved before a field existed get its default (publications, extraSections).
+  return row ? masterProfileSchema.parse(row.data) : null;
 }

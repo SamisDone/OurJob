@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowDown, ArrowUp, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Pencil, Plus, Trash2, TriangleAlert, X } from "lucide-react";
 import { Fragment, useState, type ReactNode } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SourceBadges } from "@/components/forms/source-badges";
 import { Nums } from "@/components/nums";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,7 @@ const FIELDS: Record<Section, FieldSpec[]> = {
     { key: "start", label: "Start", placeholder: "2015" },
     { key: "end", label: "End", placeholder: "2019" },
     { key: "location", label: "Location" },
+    { key: "grade", label: "Grade", placeholder: "CGPA 3.70/4.00" },
   ],
   certifications: [
     { key: "name", label: "Name" },
@@ -447,7 +449,7 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
                 section === "experience"
                   ? (item.title as string)
                   : section === "education"
-                    ? (item.degree as string)
+                    ? [item.degree as string, item.grade as string | undefined].filter(Boolean).join(", ")
                     : section === "certifications"
                       ? (item.issuer as string | undefined)
                       : (item.description as string) || undefined
@@ -511,6 +513,7 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
   return (
     <div className="space-y-6">
       <ConflictsPanel profile={p} onResolve={(op) => edit([op])} pending={editMut.isPending} />
+      <UnplacedPanel profile={p} edit={edit} pending={editMut.isPending} />
 
       <Card role="region" aria-labelledby="basics-h">
         <CardContent>
@@ -626,6 +629,56 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
         {sectionItems("certifications", (x) => String(x.name))}
       </SectionCard>
 
+      {p.publications.length > 0 && (
+        <SectionCard id="pub-h" title="Publications">
+          <ul className="divide-y">
+            {p.publications.map((x) => (
+              <li key={x.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium">{x.title}</p>
+                  <p className="text-muted-foreground">
+                    <Nums>{[x.venue, formatCvDate(x.date)].filter(Boolean).join(", ")}</Nums>
+                  </p>
+                  <SourceBadges sources={x.sources} className="mt-1" />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remove ${x.title}`}
+                  onClick={() => remove({ op: "removePublication", id: x.id }, x.title)}
+                >
+                  <Trash2 />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
+
+      {p.extraSections.map((s) => (
+        <SectionCard key={s.id} id={`${s.id}-h`} title={s.title}>
+          <ul className="space-y-1">
+            {s.items.map((it, i) => (
+              <li key={it.id} className="group grid grid-cols-[1fr_auto] items-start gap-1 text-sm leading-6">
+                <EditableText
+                  label={`line ${i + 1} in ${s.title}`}
+                  value={it.text}
+                  onSave={(text) => edit([{ op: "updateSectionItem", id: it.id, text }])}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remove line ${i + 1} from ${s.title}`}
+                  onClick={() => remove({ op: "removeSectionItem", id: it.id }, `a line from ${s.title}`)}
+                >
+                  <Trash2 />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ))}
+
       {p.languages.length > 0 && (
         <SectionCard id="lang-h" title="Languages">
           <ul className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -639,6 +692,59 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
         </SectionCard>
       )}
     </div>
+  );
+}
+
+/**
+ * Parts of his CV that extraction did not place anywhere (src/lib/profile/coverage.ts).
+ * Shown until he keeps each one as a section or sets it aside: nothing is dropped silently.
+ */
+function UnplacedPanel({
+  profile,
+  edit,
+  pending,
+}: {
+  profile: MasterProfile;
+  edit: (ops: EditOp[]) => void;
+  pending: boolean;
+}) {
+  if (!profile.unplaced.length) return null;
+  return (
+    <Alert variant="warning" role="region" aria-labelledby="unplaced-h">
+      <TriangleAlert />
+      <AlertTitle>
+        <h2 id="unplaced-h">Some parts of your CV are not in your profile yet</h2>
+      </AlertTitle>
+      <AlertDescription>
+        <p>Keep each one as its own section, or set it aside. Tailoring only uses what is in your profile.</p>
+        <ul className="mt-2 w-full divide-y divide-warning/20">
+          {profile.unplaced.map((u) => (
+            <li key={u.id} className="py-3">
+              <p className="font-medium text-foreground">{u.heading}</p>
+              <p className="mt-1 text-sm whitespace-pre-line">{u.text}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => edit([{ op: "placeUnplaced", id: u.id }])}
+                >
+                  Add as a section
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => edit([{ op: "dismissUnplaced", id: u.id }])}
+                >
+                  Set aside
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
   );
 }
 

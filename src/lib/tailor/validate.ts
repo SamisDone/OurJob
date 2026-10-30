@@ -86,10 +86,43 @@ export function copiedJobPhrase(text: string, sources: string, jobText: string, 
 const SIDE = { frontend: /front|client|ui/i, backend: /back|server/i } as const;
 const SIDE_SKILLS = {
   frontend: new Set(
-    ["react", "react.js", "next.js", "vue", "vue.js", "nuxt", "angular", "svelte", "tailwind css", "tailwind", "css", "html", "sass", "redux", "jquery", "bootstrap", "vite"].map(skillFold),
+    [
+      "react",
+      "react.js",
+      "next.js",
+      "vue",
+      "vue.js",
+      "nuxt",
+      "angular",
+      "svelte",
+      "tailwind css",
+      "tailwind",
+      "css",
+      "html",
+      "sass",
+      "redux",
+      "jquery",
+      "bootstrap",
+      "vite",
+    ].map(skillFold),
   ),
   backend: new Set(
-    ["django", "flask", "fastapi", "laravel", "express", "express.js", "spring", "spring boot", "ruby on rails", "rails", "nestjs", "asp.net", "node.js", "celery"].map(skillFold),
+    [
+      "django",
+      "flask",
+      "fastapi",
+      "laravel",
+      "express",
+      "express.js",
+      "spring",
+      "spring boot",
+      "ruby on rails",
+      "rails",
+      "nestjs",
+      "asp.net",
+      "node.js",
+      "celery",
+    ].map(skillFold),
   ),
 };
 
@@ -141,7 +174,7 @@ function sourceIndex(p: MasterProfile): Map<string, string> {
 // 78 spilled to two. 74 keeps a small margin.
 export const LINES_PER_PAGE = 74;
 const CHARS_PER_LINE = 118;
-export function estimateLines(t: TailoredResume): number {
+export function estimateLines(t: TailoredResume, p?: MasterProfile): number {
   const text = (s: string) => Math.max(1, Math.ceil(s.length / CHARS_PER_LINE));
   let lines = 4; // name, contact line, spacing
   lines += t.sections.length * 1.6; // headings and rules
@@ -151,6 +184,14 @@ export function estimateLines(t: TailoredResume): number {
     lines += 1.3 + e.bullets.reduce((n, b) => n + text(b.text) + 0.2, 0) + (e.tech.length ? 1 : 0);
   }
   lines += t.educationIds.length * 1.3 + t.certificationIds.length + t.awardIds.length;
+  // Publications and his other sections are always on the CV (src/lib/cv/build.ts).
+  if (p) {
+    const lists = [
+      p.publications.length ? p.publications.map((x) => `${x.title} ${x.venue ?? ""}`) : [],
+      ...p.extraSections.map((s) => s.items.map((i) => i.text)),
+    ].filter((x) => x.length);
+    for (const items of lists) lines += 1.6 + items.reduce((n, s) => n + text(s) + 0.2, 0);
+  }
   return Math.round(lines * 10) / 10;
 }
 
@@ -427,7 +468,9 @@ export function validateTailored(
         .map((x) => x.text)
         .join("\n");
     const dropped = [
-      ...new Set(cited.flatMap((id) => droppedDetails(sourceBullets.get(id)!.text, tailoredFor(id), ctx.jobText ?? "", vocab))),
+      ...new Set(
+        cited.flatMap((id) => droppedDetails(sourceBullets.get(id)!.text, tailoredFor(id), ctx.jobText ?? "", vocab)),
+      ),
     ];
     const added = addedDetails(strictSource(b.sourceIds), b.text, vocab);
     const what = [
@@ -441,7 +484,12 @@ export function validateTailored(
       const original = sourceBullets.get(cited[0])!;
       b.text = original.text;
       b.boldPhrases = original.boldPhrases.filter((ph) => original.text.includes(ph));
-      issues.push({ check: "fidelity", ref, message: `Kept your original wording: the rewrite ${what}.`, action: "fixed" });
+      issues.push({
+        check: "fidelity",
+        ref,
+        message: `Kept your original wording: the rewrite ${what}.`,
+        action: "fixed",
+      });
     } else if (what) {
       issues.push({
         check: "fidelity",
@@ -536,7 +584,7 @@ export function validateTailored(
   }
 
   /* 8. Length. Shorten first: real experience is not dropped to fit (check 9). */
-  const lines = estimateLines(resume);
+  const lines = estimateLines(resume, p);
   const budget = LINES_PER_PAGE * ctx.pages;
   if (lines > budget) {
     issues.push({

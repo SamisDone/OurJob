@@ -6,6 +6,7 @@ import { createMockProvider } from "@/lib/llm/mock";
 import { p1OutputSchema } from "@/lib/llm/prompts/p1-profile";
 import { buildProfile, draftSearchPreferences, suggestSearchPreferences } from "@/lib/profile/build";
 import { compareProfile, type ExpectedFacts } from "@/lib/profile/compare";
+import { checkCoverage, cvSections } from "@/lib/profile/coverage";
 import { formatCvDate, parseCvDate } from "@/lib/profile/dates";
 import { normalizeProfile } from "@/lib/profile/normalize";
 import { masterProfileSchema } from "@/lib/profile/schema";
@@ -187,5 +188,42 @@ describe("search preferences draft (shown at once, before P5)", () => {
     const profile = normalizeProfile(rawP1("nadia-chowdhury"));
     const d = draftSearchPreferences({ ...profile, experience: [], skills: [] });
     expect(d).toEqual({ targetTitles: [], coreSkills: [], seniority: ["intern", "junior"] });
+  });
+});
+
+describe("extraction keeps every CV section (checkCoverage)", () => {
+  const cv = readFileSync("tests/fixtures/cvs/farhan-kabir.md", "utf8");
+
+  it("copies the CGPA into education, keeps both papers, and shows Leadership as unplaced", async () => {
+    const { profile } = await buildProfile([{ kind: "cv_md", text: cv }], deps());
+    expect(profile.education[0].grade).toBe("CGPA: 3.68/4.00");
+    expect(profile.publications.map((x) => x.title)).toEqual([
+      "Low-cost crop disease detection on phones",
+      "A Bangla speech dataset for clinics",
+    ]);
+    expect(profile.unplaced.map((u) => u.heading)).toEqual(["Leadership"]);
+    expect(profile.unplaced[0].text).toContain("President, university programming club");
+  });
+
+  it("reports nothing once every section is in the profile", async () => {
+    const { profile } = await buildProfile([{ kind: "cv_md", text: cv }], deps());
+    const full = {
+      ...profile,
+      extraSections: [
+        {
+          id: "sec_1",
+          title: "Leadership",
+          items: [{ id: "sec_1_1", text: "President, university programming club", sources: ["cv" as const] }],
+        },
+      ],
+    };
+    expect(checkCoverage(cv, full).unplaced).toEqual([]);
+  });
+
+  it("finds headings in markdown, LaTeX and plain capitals", () => {
+    const sections = cvSections(
+      "Name\n## Experience\nA role\n\\section{Research \\& Publications}\nA paper\nLEADERSHIP\nClub president\n",
+    );
+    expect(sections.map((s) => s.key)).toEqual(["experience", "publications", "extra"]);
   });
 });

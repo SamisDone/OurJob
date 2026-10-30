@@ -191,7 +191,9 @@ export function usePreferenceSuggestion(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.preferenceSuggestion,
     queryFn: ({ signal }) =>
-      api<{ suggestion: { data: SearchPreferences; suggested: boolean } | null }>("/api/preferences/suggest", { signal }),
+      api<{ suggestion: { data: SearchPreferences; suggested: boolean } | null }>("/api/preferences/suggest", {
+        signal,
+      }),
     enabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,

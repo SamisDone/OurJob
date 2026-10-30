@@ -1,0 +1,22 @@
+Full-Stack Engineer (TypeScript, AI features) at Brightwell Health
+
+FICTIONAL job post for tests.
+
+Brightwell builds patient intake software used by 90 clinics. We are a remote team of 18 and we are hiring a full-stack engineer to own features from the database to the browser.
+
+What you will do
+- Build product features end to end with React, Next.js and Node.js on PostgreSQL.
+- Design authentication and role-based access control for clinic staff, doctors and patients.
+- Add LLM features: call LLM APIs such as OpenAI or Gemini to summarize intake forms, with guardrails and evaluation.
+- Write tests and keep CI green; review peers' pull requests.
+- Work with design to ship accessible UI in Tailwind CSS.
+
+Requirements
+- 3+ years building web apps with TypeScript and React.
+- Experience with auth (OAuth, Firebase Auth or similar) and role-based access control.
+- Experience calling LLM APIs in production.
+- Comfort with REST APIs and PostgreSQL.
+
+Nice to have: Docker, GraphQL, internationalization (i18n).
+
+Pay: $70,000 to $95,000 a year. Remote, UTC-2 to UTC+8.

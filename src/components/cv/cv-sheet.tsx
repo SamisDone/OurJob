@@ -153,6 +153,15 @@ export function CvSheet({
                   ))}
                 </div>
               )}
+              {section.kind === "list" && (
+                <ul className="cv-bullets">
+                  {section.items.map((it, li) => (
+                    <li key={li}>
+                      <Rich segments={it} />
+                    </li>
+                  ))}
+                </ul>
+              )}
               {section.kind === "entries" &&
                 section.entries.map((e) =>
                   e.kind === "role" ? <Role key={e.id} entry={e} /> : <Project key={e.id} entry={e} />,

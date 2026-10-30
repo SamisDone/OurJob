@@ -42,7 +42,12 @@ const stem = (w: string) =>
     .replace(/(ies)$/, "y")
     .replace(/(?<=[a-z]{3})(es|s)$/, "");
 
-const stems = (s: string) => new Set(tokens(s).flatMap((w) => w.split(/[-/]/)).map(stem));
+const stems = (s: string) =>
+  new Set(
+    tokens(s)
+      .flatMap((w) => w.split(/[-/]/))
+      .map(stem),
+  );
 
 export type Vocabulary = string[][];
 

@@ -41,6 +41,12 @@ export const editOpSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("addSkill"), name: z.string().trim().min(1).max(80), category: skillCategory }),
   z.object({ op: z.literal("removeSkill"), id: z.string() }),
   z.object({ op: z.literal("resolveConflict"), field: z.string(), value: z.string() }),
+  z.object({ op: z.literal("removePublication"), id: z.string() }),
+  z.object({ op: z.literal("updateSectionItem"), id: z.string(), text }),
+  z.object({ op: z.literal("removeSectionItem"), id: z.string() }),
+  /** CV text the profile did not hold: keep it as its own section, or set it aside. */
+  z.object({ op: z.literal("placeUnplaced"), id: z.string() }),
+  z.object({ op: z.literal("dismissUnplaced"), id: z.string() }),
 ]);
 export type EditOp = z.infer<typeof editOpSchema>;
 
@@ -80,7 +86,10 @@ function allIds(p: MasterProfile): Set<string> {
   p.experience.forEach((e) => (add(e), e.bullets.forEach(add)));
   p.projects.forEach((e) => (add(e), e.bullets.forEach(add)));
   p.education.forEach((e) => (add(e), e.highlights.forEach(add)));
-  [p.skills, p.certifications, p.awards, p.languages, p.basics.links].forEach((xs) => xs.forEach(add));
+  [p.skills, p.certifications, p.awards, p.languages, p.basics.links, p.publications, p.unplaced].forEach((xs) =>
+    xs.forEach(add),
+  );
+  p.extraSections.forEach((s) => (add(s), s.items.forEach(add)));
   return ids;
 }
 
@@ -278,6 +287,48 @@ export function applyEdits(profile: MasterProfile, ops: EditOp[]): { profile: Ma
         }
         p.conflicts = p.conflicts.filter((x) => x.field !== op.field);
         notes.push(`Resolved ${attr ?? id} for ${conflictLabel(profile, op.field)}`);
+        break;
+      }
+      case "removePublication": {
+        const i = p.publications.findIndex((x) => x.id === op.id);
+        if (i < 0) throw new EditError("That publication no longer exists. Reload the page.");
+        notes.push(`Removed ${p.publications[i].title}`);
+        p.publications.splice(i, 1);
+        break;
+      }
+      case "updateSectionItem":
+      case "removeSectionItem": {
+        const s = p.extraSections.find((x) => x.items.some((i) => i.id === op.id));
+        if (!s) throw new EditError("That line no longer exists. Reload the page.");
+        const i = s.items.findIndex((x) => x.id === op.id);
+        if (op.op === "updateSectionItem") {
+          s.items[i] = { ...s.items[i], text: op.text };
+          notes.push(`Edited a line in ${s.title}`);
+        } else {
+          s.items.splice(i, 1);
+          notes.push(`Removed a line from ${s.title}`);
+        }
+        p.extraSections = p.extraSections.filter((x) => x.items.length);
+        break;
+      }
+      case "placeUnplaced":
+      case "dismissUnplaced": {
+        const u = p.unplaced.find((x) => x.id === op.id);
+        if (!u) throw new EditError("That part of your CV was already handled. Reload the page.");
+        p.unplaced = p.unplaced.filter((x) => x.id !== op.id);
+        if (op.op === "placeUnplaced") {
+          const id = newId("sec", allIds(p));
+          const lines = u.text
+            .split(/\n/)
+            .map((l) => l.replace(/^\s*([-*\u2022]|\d+[.)])\s+/, "").trim())
+            .filter(Boolean);
+          p.extraSections.push({
+            id,
+            title: u.heading,
+            items: lines.map((text, j) => ({ id: `${id}_${j + 1}`, text, sources: ["cv" as const] })),
+          });
+          notes.push(`Added ${u.heading} from your CV`);
+        } else notes.push(`Set aside ${u.heading} from your CV`);
         break;
       }
     }

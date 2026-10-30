@@ -109,6 +109,30 @@ export const masterProfileSchema = z.object({
   languages: z
     .array(z.object({ id: z.string(), name: z.string(), level: z.string().optional(), ...sourced }))
     .default([]),
+  publications: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        venue: z.string().optional(),
+        date: z.string().optional(),
+        url: z.string().optional(),
+        ...sourced,
+      }),
+    )
+    .default([]),
+  /** Any other CV section, under its own heading as written: Leadership, Volunteering, Activities. */
+  extraSections: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        items: z.array(z.object({ id: z.string(), text: z.string(), ...sourced })),
+      }),
+    )
+    .default([]),
+  /** CV text that no part of the profile holds, found in code after extraction. Shown to him, never dropped. */
+  unplaced: z.array(z.object({ id: z.string(), heading: z.string(), text: z.string() })).default([]),
   conflicts: z
     .array(z.object({ field: z.string(), values: z.array(z.object({ value: z.string(), source: sourceTag })) }))
     .default([]),

@@ -193,6 +193,18 @@ export function normalizeProfile(raw: P1Output): MasterProfile {
     })),
     awards: raw.awards.map((a, i) => ({ id: `award_${i + 1}`, ...a, sources: sourcesOf(a.sources) })),
     languages: raw.languages.map((l, i) => ({ id: `lang_${i + 1}`, ...l, sources: sourcesOf(l.sources) })),
+    publications: raw.publications.map((x, i) => ({
+      id: `pub_${i + 1}`,
+      ...x,
+      date: date(x.date),
+      sources: sourcesOf(x.sources),
+    })),
+    extraSections: raw.extraSections.map((s, i) => ({
+      id: `sec_${i + 1}`,
+      title: s.title.trim(),
+      items: s.items.map((it, j) => ({ id: `sec_${i + 1}_${j + 1}`, text: it.text, sources: sourcesOf(it.sources) })),
+    })),
+    unplaced: [],
     conflicts,
   };
 }

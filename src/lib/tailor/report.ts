@@ -52,17 +52,18 @@ export function profileAsResume(p: MasterProfile): TailoredResume {
   };
 }
 
-export const estimatePages = (r: TailoredResume) => Math.max(1, Math.ceil(estimateLines(r) / LINES_PER_PAGE));
+export const estimatePages = (r: TailoredResume, p?: MasterProfile) =>
+  Math.max(1, Math.ceil(estimateLines(r, p) / LINES_PER_PAGE));
 
 /** The master CV's and the tailored CV's estimated ATS scores for one job. */
 export function atsReports(spec: JobSpec, p: MasterProfile, tailored: TailoredResume, now = new Date()) {
   const masterSections = profileSections(p);
   const master: AtsReport = scoreCv(
-    { spec, sections: masterSections, profile: p, masterSections, pages: estimatePages(profileAsResume(p)) },
+    { spec, sections: masterSections, profile: p, masterSections, pages: estimatePages(profileAsResume(p), p) },
     now,
   );
   const tailoredReport: AtsReport = scoreCv(
-    { spec, sections: tailoredSections(tailored, p), profile: p, masterSections, pages: estimatePages(tailored) },
+    { spec, sections: tailoredSections(tailored, p), profile: p, masterSections, pages: estimatePages(tailored, p) },
     now,
   );
   return { master, tailored: tailoredReport };
