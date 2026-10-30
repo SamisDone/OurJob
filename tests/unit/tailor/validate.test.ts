@@ -22,7 +22,8 @@ const matched: MatchedKeyword[] = [
 const gaps: GapKeyword[] = [
   { term: "OpenTelemetry", canonical: "OpenTelemetry", synonyms: ["OTel"], importance: "nice" },
 ];
-const ctx = { profile, matched, gaps, pages: 1 as const };
+// Single checks are tested on the model's text; restoring original wording is tested on its own.
+const ctx = { profile, matched, gaps, pages: 1 as const, restoreOriginals: false };
 
 const good = (): TailoredResume => ({
   headline: "Backend Engineer",
@@ -164,9 +165,12 @@ describe("validator", () => {
       r.experience[1].tech.push("Kubernetes");
     });
     expect(resume.experience[0].bullets[0].boldPhrases).toEqual(["rate-quote service"]);
-    expect(resume.experience[1].tech).toEqual(["Python", "Django"]);
+    // Kubernetes goes; the tech line is never trimmed, so the role's own tools all stay.
+    expect(resume.experience[1].tech).toEqual(profile.experience[1].tech);
     expect(of(issues, "bold", "fixed")).toHaveLength(1);
-    expect(of(issues, "tech", "fixed")).toHaveLength(1);
+    expect(of(issues, "tech", "fixed").map((i) => i.message)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/Removed "Kubernetes"/), expect.stringMatching(/Put back/)]),
+    );
   });
 
   it("4. removes skills that are not in the profile and flags skill names added to bullets", () => {
@@ -195,11 +199,27 @@ describe("validator", () => {
 
   it("6. reports matched keywords the CV leaves out", () => {
     const { issues } = run((r) => {
-      r.experience[0].bullets.splice(1, 1);
-      r.experience[0].tech = ["Go", "PostgreSQL"];
+      // Tech lines are never trimmed, so only leaving out the role that shows Kafka loses it.
+      r.experience.splice(0, 1);
       r.skills[1].items = [{ name: "PostgreSQL", skillId: "sk_postgresql" }];
     });
     expect(of(issues, "coverage", "fix").map((i) => i.message)).toEqual([expect.stringMatching(/^Kafka is missing/)]);
+  });
+
+  it("2c. puts his original bullet back when a rewrite drops the job's words or adds a detail", () => {
+    const { resume, issues } = validateTailored(
+      (() => {
+        const r = good();
+        r.experience[1].bullets[0].text = "Built the settlement API used by 2,000+ merchants on PostgreSQL.";
+        return r;
+      })(),
+      { ...ctx, restoreOriginals: true, jobText: "We use Python and Django for merchant APIs." },
+    );
+    expect(resume.experience[1].bullets[0].text).toBe(profile.experience[1].bullets[0].text);
+    const fid = of(issues, "fidelity", "fixed")[0];
+    expect(fid.message).toMatch(/dropped .*Django/);
+    expect(fid.message).toMatch(/added "PostgreSQL"/);
+    expect(of(issues, "numbers", "fix")).toEqual([]);
   });
 
   it("7. replaces em dashes and flags words to avoid", () => {
@@ -304,8 +324,10 @@ Requirements: production Go, Kafka and Postgres. Nice to have: OpenTelemetry.`;
   };
 
   it("splits keywords into matched with proof and gaps, and drops quotes that are not in the post", async () => {
+    // Two sources: code cannot put one original back, so the fix loop rewrites it.
     const bad = good();
     bad.experience[1].bullets[0].text = "Built the merchant settlement API used by 3,000 merchants.";
+    bad.experience[1].bullets[0].sourceIds = ["b_2_1", "b_2_2"];
     const fixed = good().experience[1].bullets[0];
     const res = await tailorCv(jd, profile, {
       provider: scripted({
@@ -337,6 +359,7 @@ Requirements: production Go, Kafka and Postgres. Nice to have: OpenTelemetry.`;
   it("removes what still fails after two rounds and says why", async () => {
     const bad = good();
     bad.experience[1].bullets[0].text = "Built the merchant settlement API used by 3,000 merchants.";
+    bad.experience[1].bullets[0].sourceIds = ["b_2_1", "b_2_2"];
     const stillBad = { ...bad.experience[1].bullets[0], text: "Built the settlement API used by 4,000 merchants." };
     const res = await tailorCv(jd, profile, {
       provider: scripted({
@@ -351,7 +374,11 @@ Requirements: production Go, Kafka and Postgres. Nice to have: OpenTelemetry.`;
     });
     expect(res.fixRounds).toBe(2);
     expect(res.removed).toEqual([
-      { ref: "experience:exp_2:0", text: stillBad.text, reasons: ['"4,000" is not in its source items.'] },
+      {
+        ref: "experience:exp_2:0",
+        text: stillBad.text,
+        reasons: expect.arrayContaining(['"4,000" is not in its source items.']),
+      },
     ]);
     expect(res.resume.experience.find((e) => e.experienceId === "exp_2")?.bullets).toEqual([]);
     expect(res.finalIssues.filter((i) => i.action === "fix")).toEqual([]);

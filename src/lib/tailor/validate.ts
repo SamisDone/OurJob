@@ -4,6 +4,7 @@ import { tailoredSections } from "@/lib/ats/sections";
 import type { MasterProfile, TailoredBullet, TailoredResume } from "@/lib/profile/schema";
 import { skillFold } from "@/lib/profile/skills";
 import type { GapKeyword, MatchedKeyword } from "./keywords";
+import { addedDetails, droppedDetails, type Vocabulary } from "./fidelity";
 import { extractNumbers, unsupportedReason } from "./numbers";
 
 /**
@@ -25,7 +26,9 @@ export type CheckId =
   | "style"
   | "length"
   | "order"
-  | "kept";
+  | "kept"
+  | "fidelity"
+  | "group";
 
 export type Issue = {
   check: CheckId;
@@ -42,6 +45,11 @@ export type ValidateContext = {
   pages: 1 | 2;
   /** The cleaned job post. When given, bullets that copy its claims are caught (check 2b). */
   jobText?: string;
+  /**
+   * When a single-source bullet breaks fidelity (2c, 2d), put the source
+   * bullet's own text back (default). Tests of single checks turn it off.
+   */
+  restoreOriginals?: boolean;
 };
 
 const STOPWORDS = new Set(
@@ -73,6 +81,17 @@ export function copiedJobPhrase(text: string, sources: string, jobText: string, 
   }
   return null;
 }
+
+/** Headings and tools for check 4b. A full-stack group ("Web") may hold both. */
+const SIDE = { frontend: /front|client|ui/i, backend: /back|server/i } as const;
+const SIDE_SKILLS = {
+  frontend: new Set(
+    ["react", "react.js", "next.js", "vue", "vue.js", "nuxt", "angular", "svelte", "tailwind css", "tailwind", "css", "html", "sass", "redux", "jquery", "bootstrap", "vite"].map(skillFold),
+  ),
+  backend: new Set(
+    ["django", "flask", "fastapi", "laravel", "express", "express.js", "spring", "spring boot", "ruby on rails", "rails", "nestjs", "asp.net", "node.js", "celery"].map(skillFold),
+  ),
+};
 
 export const BANNED_WORDS = [
   "spearheaded",
@@ -157,6 +176,28 @@ export function validateTailored(
     .filter((kw) => ![kw.term, ...kw.synonyms].some((n) => known.has(skillFold(n))))
     .filter((kw) => !ctx.gaps.some((g) => skillFold(g.canonical) === skillFold(kw.canonical)))
     .filter((kw) => !findKeyword(kw, allProfileText, false, { techTerms }));
+  // Every named tool, with all its names, for the fidelity checks (2c, 2d).
+  const vocab: Vocabulary = [
+    ...p.skills.map((s) => [s.name, ...s.aliases]),
+    ...[...p.experience.flatMap((e) => e.tech), ...p.projects.flatMap((pr) => pr.tech)].map((x) => [x]),
+    ...dictionary.map(([canonical, aliases]) => [canonical, ...aliases]),
+  ].filter((names) => names.some((n) => n.trim().length > 1));
+  const sourceBullets = new Map(
+    [...p.experience.flatMap((e) => e.bullets), ...p.projects.flatMap((pr) => pr.bullets)].map((b) => [b.id, b]),
+  );
+  /** The text a bullet's own sources state: the cited bullets, never the role's tech line or its other bullets. */
+  const strictSource = (ids: string[]) =>
+    ids
+      .flatMap((id) => {
+        const b = sourceBullets.get(id);
+        if (b) return [src.get(id) ?? b.text];
+        const e = p.experience.find((x) => x.id === id);
+        if (e) return e.bullets.map((x) => src.get(x.id) ?? x.text);
+        const pr = p.projects.find((x) => x.id === id);
+        if (pr) return [pr.description, ...pr.bullets.map((x) => src.get(x.id) ?? x.text)];
+        return [src.get(id) ?? ""];
+      })
+      .join("\n");
 
   /* 7. Style, auto-fix part: em dashes become commas. */
   const unDash = (s: string, ref: string) => {
@@ -274,6 +315,28 @@ export function validateTailored(
     });
   }
   resume.skills = resume.skills.filter((g) => g.items.length);
+
+  /* 4b. Skill groups hold what their heading names: React is never under "Backend". */
+  for (const [side, other] of [
+    ["frontend", "backend"],
+    ["backend", "frontend"],
+  ] as const) {
+    for (const group of resume.skills.filter((g) => SIDE[other].test(g.group))) {
+      const misplaced = group.items.filter((i) => SIDE_SKILLS[side].has(skillFold(i.name)));
+      if (!misplaced.length) continue;
+      group.items = group.items.filter((i) => !misplaced.includes(i));
+      let target = resume.skills.find((g) => SIDE[side].test(g.group));
+      if (!target) resume.skills.push((target = { group: side === "frontend" ? "Frontend" : "Backend", items: [] }));
+      target.items.push(...misplaced);
+      issues.push({
+        check: "group",
+        ref: "skills",
+        message: `Moved ${misplaced.map((i) => i.name).join(", ")} from "${group.group}" to "${target.group}".`,
+        action: "fixed",
+      });
+    }
+  }
+  resume.skills = resume.skills.filter((g) => g.items.length);
   const headlineLeak = leaks(resume.headline)[0];
   if (headlineLeak || !resume.headline.trim()) {
     const fallback = p.basics.headline ?? p.experience[0]?.title ?? "";
@@ -289,7 +352,7 @@ export function validateTailored(
   }
 
   /* Bullets: 2 source support, 3 numbers, 3b bold and tech, 4 unknown skills, 5 gap leaks, 7 banned words. */
-  const checkText = (text: string, sourceIds: string[], ref: string) => {
+  const checkText = (text: string, sourceIds: string[], ref: string, ownWords = false) => {
     const sources = sourceIds.map((id) => src.get(id) ?? "").join("\n");
     const copied = ctx.jobText ? copiedJobPhrase(text, sources, ctx.jobText) : null;
     if (copied) {
@@ -313,7 +376,7 @@ export function validateTailored(
       if (hit)
         issues.push({ check: "skills", ref, message: `Mentions ${hit}, which is not in your profile.`, action: "fix" });
     }
-    for (const w of BANNED_WORDS) {
+    for (const w of ownWords ? [] : BANNED_WORDS) {
       if (new RegExp(`\\b${w}\\b`, "i").test(text)) {
         issues.push({
           check: "style",
@@ -355,7 +418,40 @@ export function validateTailored(
         action: "fixed",
       });
     }
-    checkText(b.text, b.sourceIds, ref);
+    /* 2c and 2d. Fidelity: keep the source bullet's details and the job's words; add nothing the sources do not say. */
+    const cited = b.sourceIds.filter((id) => sourceBullets.has(id));
+    const tailoredFor = (id: string) =>
+      [...resume.experience, ...resume.projects]
+        .flatMap((x) => x.bullets)
+        .filter((x) => x.sourceIds.includes(id))
+        .map((x) => x.text)
+        .join("\n");
+    const dropped = [
+      ...new Set(cited.flatMap((id) => droppedDetails(sourceBullets.get(id)!.text, tailoredFor(id), ctx.jobText ?? "", vocab))),
+    ];
+    const added = addedDetails(strictSource(b.sourceIds), b.text, vocab);
+    const what = [
+      dropped.length ? `dropped ${dropped.map((x) => `"${x}"`).join(", ")}` : "",
+      added.length ? `added ${added.map((x) => `"${x}"`).join(", ")}, which this bullet's source does not say` : "",
+    ]
+      .filter(Boolean)
+      .join(" and ");
+    if (what && ctx.restoreOriginals !== false && cited.length === 1 && b.sourceIds.length === 1) {
+      // One source bullet: his own words are always true, so put them back instead of asking the model again.
+      const original = sourceBullets.get(cited[0])!;
+      b.text = original.text;
+      b.boldPhrases = original.boldPhrases.filter((ph) => original.text.includes(ph));
+      issues.push({ check: "fidelity", ref, message: `Kept your original wording: the rewrite ${what}.`, action: "fixed" });
+    } else if (what) {
+      issues.push({
+        check: "fidelity",
+        ref,
+        message: `This bullet ${what}. Keep every number, named tool, word in parentheses and word the job post uses from its sources, and add nothing they do not state.`,
+        action: "fix",
+      });
+    }
+    const own = cited.length === 1 && b.text === sourceBullets.get(cited[0])!.text;
+    checkText(b.text, b.sourceIds, ref, own);
   };
 
   for (const e of resume.experience) {
@@ -377,7 +473,7 @@ export function validateTailored(
 
   function cleanTech(tech: string[], allowed: string[], ref: string) {
     const ok = new Set(allowed.map(skillFold));
-    return tech.filter((t) => {
+    const kept = tech.filter((t) => {
       if (!ok.has(skillFold(t))) {
         issues.push({
           check: "tech",
@@ -392,6 +488,17 @@ export function validateTailored(
         issues.push({ check: "gap", ref, message: `Removed "${t}" from the tech line (${leak}).`, action: "fixed" });
       return !leak;
     });
+    // The tech line is reordered, never trimmed: every tool the role lists stays.
+    const have = new Set(kept.map(skillFold));
+    const missing = allowed.filter((t) => !have.has(skillFold(t)) && !leaks(t, true).length);
+    if (missing.length)
+      issues.push({
+        check: "tech",
+        ref,
+        message: `Put back ${missing.map((x) => `"${x}"`).join(", ")} on the tech line: it lists everything the role used.`,
+        action: "fixed",
+      });
+    return [...kept, ...missing];
   }
 
   /* 6. Matched coverage. */

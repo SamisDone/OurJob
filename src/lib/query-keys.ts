@@ -79,6 +79,7 @@ export const queryKeys = {
     sources: ["profile", "sources"] as const,
   },
   preferences: ["preferences"] as const,
+  preferenceSuggestion: ["preferences", "suggestion"] as const,
   settings: {
     ai: ["settings", "ai"] as const,
   },

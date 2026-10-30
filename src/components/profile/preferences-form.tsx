@@ -30,7 +30,7 @@ import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { countryOptions, regionsFor, timezoneOptions } from "@/lib/geo";
 import type { SearchPreferences } from "@/lib/profile/schema";
-import { usePreferences, useSavePreferences } from "@/lib/query/profile";
+import { usePreferenceSuggestion, usePreferences, useSavePreferences } from "@/lib/query/profile";
 import { formatAmount, parseAmountInput } from "@/lib/salary/input";
 
 type Scope = "world" | "region" | "onsite";
@@ -162,9 +162,15 @@ function Form({
   saveLabel: string;
 }) {
   const id = useId();
+  // P5 arrives later (it can take 30 s). Fields he has not touched take its values; his edits stay.
+  const suggestion = usePreferenceSuggestion(suggested);
+  const suggestedData = suggested ? suggestion.data?.suggestion?.data : undefined;
+  const values = useMemo(() => (suggestedData ? toForm(suggestedData) : undefined), [suggestedData]);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: toForm(initial),
+    values,
+    resetOptions: { keepDirtyValues: true },
     mode: "onChange",
   });
   const save = useSavePreferences();
@@ -267,10 +273,14 @@ function Form({
     <form onSubmit={(e) => void submit(e)} noValidate>
       <FieldGroup>
         {suggested && (
-          <Alert>
-            <Info />
+          <Alert aria-live="polite">
+            {suggestion.isFetching ? <Spinner /> : <Info />}
             <AlertDescription>
-              Suggested from your profile. Change anything that does not fit; nothing is saved until you save.
+              {suggestion.isFetching
+                ? "Filled in from your profile. Finding more job titles and skills that fit you; you can edit already."
+                : suggestion.isError
+                  ? "Filled in from your profile. The extra suggestions did not load; change anything that does not fit."
+                  : "Suggested from your profile. Change anything that does not fit; nothing is saved until you save."}
             </AlertDescription>
           </Alert>
         )}

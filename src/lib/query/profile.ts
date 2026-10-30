@@ -183,6 +183,22 @@ export function usePreferences(enabled = true) {
   });
 }
 
+/**
+ * P5's suggestion, fetched after the form is on screen. It can take 30 s, so
+ * nothing waits on it; the form applies it only if he has not edited yet.
+ */
+export function usePreferenceSuggestion(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.preferenceSuggestion,
+    queryFn: ({ signal }) =>
+      api<{ suggestion: { data: SearchPreferences; suggested: boolean } | null }>("/api/preferences/suggest", { signal }),
+    enabled,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: 0,
+  });
+}
+
 export function useSavePreferences() {
   const qc = useQueryClient();
   return useMutation({

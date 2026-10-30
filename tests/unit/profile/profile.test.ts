@@ -4,7 +4,7 @@ import { extractUpload } from "@/lib/ingest/files";
 import type { CacheStore } from "@/lib/llm/cache";
 import { createMockProvider } from "@/lib/llm/mock";
 import { p1OutputSchema } from "@/lib/llm/prompts/p1-profile";
-import { buildProfile, suggestSearchPreferences } from "@/lib/profile/build";
+import { buildProfile, draftSearchPreferences, suggestSearchPreferences } from "@/lib/profile/build";
 import { compareProfile, type ExpectedFacts } from "@/lib/profile/compare";
 import { formatCvDate, parseCvDate } from "@/lib/profile/dates";
 import { normalizeProfile } from "@/lib/profile/normalize";
@@ -168,5 +168,24 @@ describe("P5 search suggestions", () => {
     expect(s.coreSkills).toContain("Go");
     expect(s.coreSkills).not.toContain("Rust");
     expect(s.seniority).toEqual(["mid", "senior"]);
+  });
+});
+
+describe("search preferences draft (shown at once, before P5)", () => {
+  it("uses his own titles newest first, his best-evidenced skills and his years", () => {
+    const profile = normalizeProfile(rawP1("nadia-chowdhury"));
+    const d = draftSearchPreferences(profile, new Date("2026-10-30"));
+    expect(d.targetTitles).toEqual(["Senior Backend Engineer", "Backend Developer"]);
+    expect(d.coreSkills.length).toBeGreaterThan(3);
+    expect(d.coreSkills.length).toBeLessThanOrEqual(10);
+    expect(d.coreSkills.every((s) => profile.skills.some((p) => p.name === s))).toBe(true);
+    // Feb 2020 to now is more than 6 years.
+    expect(d.seniority).toEqual(["senior"]);
+  });
+
+  it("is empty but valid for a profile with no roles", () => {
+    const profile = normalizeProfile(rawP1("nadia-chowdhury"));
+    const d = draftSearchPreferences({ ...profile, experience: [], skills: [] });
+    expect(d).toEqual({ targetTitles: [], coreSkills: [], seniority: ["intern", "junior"] });
   });
 });

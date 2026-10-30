@@ -43,7 +43,12 @@ export function ScoreCard({
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Your master CV scores <span className="num">{master}</span> for this job.
+            Your full CV, with everything in your profile, scores <span className="num">{master}</span> for this job.{" "}
+            {score === master
+              ? "Tailoring cannot add keywords you do not have, and your full CV already has every one this job asks for that your profile proves. It gains only by moving keywords into bullets and matching the job title; here those were already in place."
+              : score < master
+                ? "This one-page version leaves out some lines that mention the job's keywords; your full CV keeps them all."
+                : "Tailoring moved the job's keywords into your bullets and matched the job title."}
           </p>
         </div>
 

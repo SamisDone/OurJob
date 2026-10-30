@@ -21,6 +21,8 @@ import { splitKeywords, type GapKeyword, type MatchedKeyword } from "./keywords"
 import { failing, validateTailored, type Issue } from "./validate";
 
 export const MAX_FIX_ROUNDS = 2;
+/** No fix round starts after this much time, so a slow model cannot push a CV past about 45 s (Sam's target). */
+export const FIX_BUDGET_MS = 30_000;
 
 export type RemovedItem = { ref: string; text: string; reasons: string[] };
 
@@ -86,7 +88,7 @@ export async function tailorCv(
   const firstIssues = issues;
   const fixMs: number[] = [];
   let rounds = 0;
-  while (rounds < MAX_FIX_ROUNDS && failing(issues).size) {
+  while (rounds < MAX_FIX_ROUNDS && failing(issues).size && now() - t0 < FIX_BUDGET_MS) {
     const started = now();
     const problems = [...failing(issues)].map(([ref, errors]) => ({ ref, current: textAt(resume, ref), errors }));
     const fix = await cachedGenerate(deps.provider, deps.cache, P3_FIX_PROMPT_VERSION, {
@@ -106,6 +108,22 @@ export async function tailorCv(
     ));
     fixMs.push(now() - started);
     rounds++;
+  }
+
+  // A bullet from one source bullet that still fails gets his own words back: they are always true.
+  const restorable = [...failing(issues).keys()].filter((ref) => {
+    const b = bulletAt(resume, ref);
+    return b?.sourceIds.length === 1 && sourceBullet(profile, b.sourceIds[0]);
+  });
+  if (restorable.length) {
+    resume = structuredClone(resume);
+    for (const ref of restorable) {
+      const b = bulletAt(resume, ref)!;
+      const original = sourceBullet(profile, b.sourceIds[0])!;
+      b.text = original.text;
+      b.boldPhrases = original.boldPhrases.filter((ph) => original.text.includes(ph));
+    }
+    ({ resume, issues } = validateTailored(resume, ctx));
   }
 
   const removed: RemovedItem[] = [];
@@ -145,6 +163,10 @@ export async function tailorCv(
     fixRounds: rounds,
     timings: { parseMs: t1 - t0, tailorMs: t2 - t1, fixMs, totalMs: now() - t0 },
   };
+}
+
+function sourceBullet(p: MasterProfile, id: string) {
+  return [...p.experience, ...p.projects].flatMap((x) => x.bullets).find((b) => b.id === id);
 }
 
 function bulletAt(r: TailoredResume, ref: string): TailoredBullet | undefined {

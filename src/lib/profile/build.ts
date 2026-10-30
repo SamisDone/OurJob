@@ -2,6 +2,7 @@ import { cachedGenerate, type CacheStore } from "@/lib/llm/cache";
 import { P1_PROMPT_ID, P1_PROMPT_VERSION, p1OutputSchema, p1Prompt, type P1Source } from "@/lib/llm/prompts/p1-profile";
 import { P5_PROMPT_ID, P5_PROMPT_VERSION, p5OutputSchema, p5Prompt } from "@/lib/llm/prompts/p5-search";
 import type { LLMProvider } from "@/lib/llm/types";
+import { dateSortKey } from "./dates";
 import { normalizeProfile } from "./normalize";
 import type { MasterProfile, SearchPreferences } from "./schema";
 import { skillFold } from "./skills";
@@ -45,6 +46,39 @@ export async function buildProfile(
  * skills in the profile; others are dropped. Seniority is a suggestion he
  * confirms in onboarding.
  */
+/**
+ * A first draft of search preferences, from the profile alone, in code: his
+ * own titles (newest first), his best-evidenced skills, and a seniority from
+ * his years of experience. Shown at once while P5 thinks.
+ */
+export function draftSearchPreferences(
+  profile: MasterProfile,
+  now = new Date(),
+): Pick<SearchPreferences, "targetTitles" | "coreSkills" | "seniority"> {
+  const roles = [...profile.experience].sort((a, b) => dateSortKey(b.start) - dateSortKey(a.start));
+  const seen = new Set<string>();
+  const targetTitles = roles
+    .map((r) => r.title.trim())
+    .filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+    .slice(0, 4);
+  const coreSkills = [...profile.skills]
+    .filter((s) => s.category !== "soft")
+    .sort((a, b) => b.evidence.length - a.evidence.length)
+    .slice(0, 10)
+    .map((s) => s.name);
+  const month = (v: string | undefined) => {
+    if (v === "present") return now.getFullYear() * 12 + now.getMonth();
+    const m = /^(\d{4})(?:-(\d{2}))?$/.exec(v ?? "");
+    return m ? +m[1] * 12 + (m[2] ? +m[2] - 1 : 0) : null;
+  };
+  const starts = roles.map((r) => month(r.start)).filter((x): x is number => x !== null);
+  const ends = roles.map((r) => month(r.end ?? "present")).filter((x): x is number => x !== null);
+  const years = starts.length && ends.length ? (Math.max(...ends) - Math.min(...starts)) / 12 : 0;
+  const seniority: SearchPreferences["seniority"] =
+    years < 1 ? ["intern", "junior"] : years < 3 ? ["junior", "mid"] : years < 6 ? ["mid", "senior"] : ["senior"];
+  return { targetTitles, coreSkills, seniority };
+}
+
 export async function suggestSearchPreferences(
   profile: MasterProfile,
   deps: { provider: LLMProvider; cache: CacheStore },

@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db/client";
 import { dbCacheStore, getLLMProvider } from "@/lib/llm";
-import { buildProfile, suggestSearchPreferences } from "./build";
+import { buildProfile, draftSearchPreferences, suggestSearchPreferences } from "./build";
 import { applyEdits, type EditOp } from "./edit";
 import { searchPreferencesSchema, type SearchPreferences } from "./schema";
 import * as store from "./store";
@@ -59,19 +59,37 @@ export async function editProfile(userId: string, ops: EditOp[]) {
   });
 }
 
+export type PreferencesResult = { data: SearchPreferences; suggested: boolean };
+
 /**
- * Saved preferences, or a first suggestion from P5 merged with defaults when
- * none are saved yet. `suggested` tells the UI to say so.
+ * Saved preferences, or, when none are saved yet, a draft built in code from
+ * the profile. Never waits on the model: P5 can take 30 s, and the form must
+ * show at once. `suggested` tells the UI to say the values are a suggestion.
  */
-export async function getOrSuggestPreferences(
-  userId: string,
-): Promise<{ data: SearchPreferences; suggested: boolean }> {
+export async function getPreferencesOrDraft(userId: string): Promise<PreferencesResult> {
   const saved = await store.getPreferences(d(), userId);
   if (saved) return { data: saved, suggested: false };
   const current = await store.getCurrentProfile(d(), userId);
   if (!current) return { data: searchPreferencesSchema.parse({}), suggested: false };
+  return { data: searchPreferencesSchema.parse(draftSearchPreferences(current.data)), suggested: true };
+}
+
+/** P5's suggestion on top of the draft, for the form to offer once it arrives. Null when preferences are saved. */
+export async function suggestPreferences(userId: string): Promise<PreferencesResult | null> {
+  if (await store.getPreferences(d(), userId)) return null;
+  const current = await store.getCurrentProfile(d(), userId);
+  if (!current) return null;
   const s = await suggestSearchPreferences(current.data, { provider: getLLMProvider(), cache: dbCacheStore });
-  return { data: searchPreferencesSchema.parse(s), suggested: true };
+  const draft = draftSearchPreferences(current.data);
+  return {
+    data: searchPreferencesSchema.parse({
+      ...draft,
+      ...s,
+      targetTitles: s.targetTitles.length ? s.targetTitles : draft.targetTitles,
+      coreSkills: s.coreSkills.length ? s.coreSkills : draft.coreSkills,
+    }),
+    suggested: true,
+  };
 }
 
 export { store };
