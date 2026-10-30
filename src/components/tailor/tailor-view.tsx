@@ -119,7 +119,7 @@ export function TailorWorking({ step }: { step: 0 | 1 | 2 }) {
   return (
     <Page wide>
       <PageHeader title="Tailor" description={DESCRIPTION} />
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-4" aria-hidden>
           <Skeleton className="h-8 w-72" />
           <Skeleton className="aspect-[8.5/11] w-full max-w-[816px]" />
@@ -242,7 +242,7 @@ export function TailorResultView({
       />
 
       {/* Phones: score, CV, job post. Wide screens: CV on the left, score and job post on the right. */}
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px] xl:grid-rows-[auto_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 xl:grid-cols-[minmax(0,1fr)_400px] xl:grid-rows-[auto_1fr]">
         <div className="xl:col-start-2 xl:row-start-1">
           <div className="space-y-6">
             <ScoreCard score={r.score} master={r.master} parts={r.parts} matched={r.matched} missing={r.missing} />

@@ -38,7 +38,10 @@ export default async function SettingsPage() {
   const user = await requireUser();
   return (
     <Page className="max-w-3xl">
-      <PageHeader title="Settings" description="Your account, what the daily search looks for, and how the app works." />
+      <PageHeader
+        title="Settings"
+        description="Your account, what the daily search looks for, and how the app works."
+      />
       <div className="space-y-6">
         <SettingsCard id="account" title="Account" description={`Signed in as ${user.email}.`}>
           <SignOutButton />

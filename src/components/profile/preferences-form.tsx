@@ -213,7 +213,11 @@ function Form({
     />
   );
 
-  const toggles = (name: "seniority" | "employmentTypes", title: string, options: { value: string; label: string }[]) => (
+  const toggles = (
+    name: "seniority" | "employmentTypes",
+    title: string,
+    options: { value: string; label: string }[],
+  ) => (
     <Controller
       name={name}
       control={form.control}
@@ -286,7 +290,14 @@ function Form({
             "Add a title",
             "Plausible, but your experience supports them less directly.",
           )}
-        {tokens("coreSkills", "Core skills", "Skills to weight higher", "TypeScript", "Up to 10, from your profile.", 10)}
+        {tokens(
+          "coreSkills",
+          "Core skills",
+          "Skills to weight higher",
+          "TypeScript",
+          "Up to 10, from your profile.",
+          10,
+        )}
         {toggles("seniority", "Seniority", SENIORITY)}
 
         <FieldSeparator />

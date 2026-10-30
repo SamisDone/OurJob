@@ -69,7 +69,7 @@ function ProgressSteps({ current, href }: { current: number; href: (step: number
           const marker = (
             <span
               className={cn(
-                "num inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs",
+                "inline-flex size-6 shrink-0 items-center justify-center rounded-full num text-xs",
                 state === "done" && "bg-primary text-primary-foreground",
                 state === "current" && "border-2 border-foreground font-semibold",
                 state === "todo" && "border text-muted-foreground",
@@ -80,7 +80,11 @@ function ProgressSteps({ current, href }: { current: number; href: (step: number
             </span>
           );
           return (
-            <li key={label} className="flex min-w-0 items-center" aria-current={state === "current" ? "step" : undefined}>
+            <li
+              key={label}
+              className="flex min-w-0 items-center"
+              aria-current={state === "current" ? "step" : undefined}
+            >
               {i > 0 && <span className="mx-2 h-px w-4 shrink-0 bg-border" aria-hidden />}
               {state === "done" ? (
                 <Link

@@ -31,7 +31,9 @@ export function VersionHistory() {
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Version history</SheetTitle>
-          <SheetDescription>Every save is kept. Restoring makes a copy of that version the newest one.</SheetDescription>
+          <SheetDescription>
+            Every save is kept. Restoring makes a copy of that version the newest one.
+          </SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <Versions />

@@ -127,7 +127,15 @@ function SectionCard({
   );
 }
 
-function FormButtons({ submitLabel, onCancel, disabled }: { submitLabel: string; onCancel: () => void; disabled?: boolean }) {
+function FormButtons({
+  submitLabel,
+  onCancel,
+  disabled,
+}: {
+  submitLabel: string;
+  onCancel: () => void;
+  disabled?: boolean;
+}) {
   return (
     <div className="flex gap-2">
       <Button type="submit" disabled={disabled}>

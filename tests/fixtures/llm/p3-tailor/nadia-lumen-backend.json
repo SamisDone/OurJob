@@ -1,0 +1,234 @@
+{
+  "_note": "FICTIONAL. A gemini-3.5-flash-lite answer (pnpm eval:tailor, p3.4, 2026-10-30) for the fictional Lumen Labs post and Nadia Chowdhury.",
+  "match": [
+    "Lumen Labs",
+    "Parcelwise"
+  ],
+  "output": {
+    "headline": "Senior Backend Engineer",
+    "summary": {
+      "text": "Senior Backend Engineer with 5+ years of experience designing Go and Python services, PostgreSQL schemas and event pipelines for logistics and payments products.",
+      "sourceIds": [
+        "summary"
+      ]
+    },
+    "sections": [
+      "summary",
+      "skills",
+      "experience",
+      "projects",
+      "education"
+    ],
+    "skills": [
+      {
+        "group": "Languages",
+        "items": [
+          {
+            "name": "Go",
+            "skillId": "sk_go"
+          },
+          {
+            "name": "Python",
+            "skillId": "sk_python"
+          },
+          {
+            "name": "SQL",
+            "skillId": "sk_sql"
+          }
+        ]
+      },
+      {
+        "group": "Backend",
+        "items": [
+          {
+            "name": "Django",
+            "skillId": "sk_django"
+          },
+          {
+            "name": "gRPC",
+            "skillId": "sk_grpc"
+          },
+          {
+            "name": "REST APIs",
+            "skillId": "sk_restapis"
+          },
+          {
+            "name": "Kafka",
+            "skillId": "sk_kafka"
+          },
+          {
+            "name": "Celery",
+            "skillId": "sk_celery"
+          }
+        ]
+      },
+      {
+        "group": "Data",
+        "items": [
+          {
+            "name": "PostgreSQL",
+            "skillId": "sk_postgresql"
+          },
+          {
+            "name": "Redis",
+            "skillId": "sk_redis"
+          }
+        ]
+      },
+      {
+        "group": "Infrastructure",
+        "items": [
+          {
+            "name": "Docker",
+            "skillId": "sk_docker"
+          },
+          {
+            "name": "Kubernetes",
+            "skillId": "sk_kubernetes"
+          },
+          {
+            "name": "Amazon Web Services",
+            "skillId": "sk_amazonwebservices"
+          },
+          {
+            "name": "GitHub Actions",
+            "skillId": "sk_githubactions"
+          },
+          {
+            "name": "Terraform",
+            "skillId": "sk_terraform"
+          }
+        ]
+      }
+    ],
+    "experience": [
+      {
+        "experienceId": "exp_1",
+        "bullets": [
+          {
+            "text": "Moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.",
+            "boldPhrases": [
+              "Kafka",
+              "roughly 60%"
+            ],
+            "sourceIds": [
+              "b_1_2"
+            ],
+            "keywordsUsed": [
+              "Kafka"
+            ]
+          },
+          {
+            "text": "Designed the rate-quote service in Go that answers about 1,200 requests per second at p99 under 80 ms.",
+            "boldPhrases": [
+              "Go",
+              "1,200 requests per second",
+              "p99 under 80 ms"
+            ],
+            "sourceIds": [
+              "b_1_1"
+            ],
+            "keywordsUsed": [
+              "Go"
+            ]
+          },
+          {
+            "text": "Mentor 3 junior engineers and run the weekly architecture review.",
+            "boldPhrases": [
+              "3 junior engineers"
+            ],
+            "sourceIds": [
+              "b_1_3"
+            ],
+            "keywordsUsed": []
+          }
+        ],
+        "tech": [
+          "Go",
+          "PostgreSQL",
+          "Kafka",
+          "Redis",
+          "Docker",
+          "Kubernetes",
+          "gRPC"
+        ]
+      },
+      {
+        "experienceId": "exp_2",
+        "bullets": [
+          {
+            "text": "Added Postgres row-level security for multi-tenant reporting in PostgreSQL.",
+            "boldPhrases": [
+              "PostgreSQL",
+              "row-level security"
+            ],
+            "sourceIds": [
+              "b_2_3"
+            ],
+            "keywordsUsed": [
+              "PostgreSQL"
+            ]
+          },
+          {
+            "text": "Built the merchant settlement API in Python (Django) used by 2,000+ merchants.",
+            "boldPhrases": [
+              "Python (Django)",
+              "2,000+ merchants"
+            ],
+            "sourceIds": [
+              "b_2_1"
+            ],
+            "keywordsUsed": []
+          },
+          {
+            "text": "Wrote the reconciliation job that matches bank statements to ledger entries, with 98% automatic matches.",
+            "boldPhrases": [
+              "98% automatic matches"
+            ],
+            "sourceIds": [
+              "b_2_2"
+            ],
+            "keywordsUsed": []
+          }
+        ],
+        "tech": [
+          "Python",
+          "Django",
+          "PostgreSQL",
+          "Celery",
+          "AWS"
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "projectId": "proj_1",
+        "bullets": [
+          {
+            "text": "Small CLI that samples pg_stat_statements and flags slow queries in CI.",
+            "boldPhrases": [
+              "pg_stat_statements",
+              "slow queries"
+            ],
+            "sourceIds": [
+              "b_p1_1"
+            ],
+            "keywordsUsed": []
+          }
+        ],
+        "tech": [
+          "Go",
+          "PostgreSQL"
+        ]
+      }
+    ],
+    "educationIds": [
+      "edu_1"
+    ],
+    "certificationIds": [
+      "cert_1"
+    ],
+    "awardIds": [],
+    "notes": []
+  }
+}

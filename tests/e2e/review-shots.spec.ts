@@ -68,6 +68,21 @@ for (const theme of ["light", "dark"] as const) {
       await settle(page);
       await shot("tailor-working", false);
 
+      // The screens moved off the legacy UI.
+      for (const [name, path] of [
+        ["profile", "/profile"],
+        ["settings", "/settings"],
+        ["onboarding-1", "/onboarding?step=1"],
+        ["onboarding-2", "/onboarding?step=2"],
+        ["onboarding-4", "/onboarding?step=4"],
+        ["onboarding-5", "/onboarding?step=5"],
+        ["design", "/design"],
+      ]) {
+        await page.goto(path);
+        await settle(page);
+        await shot(name);
+      }
+
       // Shell: account menu open (desktop) or the sidebar sheet (phone).
       await page.goto("/preview/today");
       await settle(page);

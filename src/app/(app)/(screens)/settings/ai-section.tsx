@@ -3,7 +3,15 @@
 import { ShieldAlert } from "lucide-react";
 import { LoadError } from "@/components/load-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Field, FieldContent, FieldDescription, FieldLabel, FieldLegend, FieldSet, FieldTitle } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAiSettings, useSaveTailorModel } from "@/lib/query/settings";

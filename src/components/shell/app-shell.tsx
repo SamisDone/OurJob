@@ -69,7 +69,7 @@ function NavGroup({ label, items, active }: { label: string; items: NavItem[]; a
 
 function AppSidebar({ user, active }: { user?: AccountUser; active: string | null }) {
   return (
-    <Sidebar collapsible="icon" aria-label="Main">
+    <Sidebar collapsible="icon" role="navigation" aria-label="Main">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

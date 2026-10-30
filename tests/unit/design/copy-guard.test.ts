@@ -39,7 +39,8 @@ describe("copy and look guard (DESIGN.md 9 and 10)", () => {
   });
 
   it("uses no old index-card tokens or components", () => {
-    const old = /components\/legacy|\b(text|bg|border)-(ink|paper|sheet|graphite|redpen|rule)\b|rounded-(panel|control|pill)\b/;
+    const old =
+      /components\/legacy|\b(text|bg|border)-(ink|paper|sheet|graphite|redpen|rule)\b|rounded-(panel|control|pill)\b/;
     const hits = sources.filter((f) => old.test(f.text)).map((f) => f.path);
     expect(hits).toEqual([]);
   });

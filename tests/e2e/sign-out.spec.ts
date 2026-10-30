@@ -12,8 +12,10 @@ test("signing out ends the session and protected pages send you to sign in", asy
   await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
 
   if (testInfo.project.name === "phone" || isMobile) {
-    await page.getByRole("button", { name: "More" }).click();
-    await page.getByRole("dialog", { name: "More" }).getByRole("button", { name: "Sign out" }).click();
+    // More opens the menu sheet; the account menu at its foot has Sign out.
+    await page.getByRole("button", { name: /^More/ }).click();
+    await page.getByRole("dialog", { name: "Menu" }).getByRole("button", { name: "Account: Test Person" }).click();
+    await page.getByRole("menuitem", { name: "Sign out" }).click();
   } else {
     await page.getByRole("button", { name: "Account: Test Person" }).click();
     await page.getByRole("menuitem", { name: "Sign out" }).click();

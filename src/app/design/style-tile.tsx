@@ -146,8 +146,15 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
           <h1 className="text-2xl font-semibold tracking-tight">Style tile</h1>
           <p className="max-w-prose text-muted-foreground">
             Standard shadcn/ui (nova, neutral) with four status colors. Sample person: {label}. Screens with fictional
-            data: <Link className="underline underline-offset-4" href="/preview/today">Today</Link> and{" "}
-            <Link className="underline underline-offset-4" href="/preview/tailor">Tailor</Link>.
+            data:{" "}
+            <Link className="underline underline-offset-4" href="/preview/today">
+              Today
+            </Link>{" "}
+            and{" "}
+            <Link className="underline underline-offset-4" href="/preview/tailor">
+              Tailor
+            </Link>
+            .
           </p>
         </div>
         <ThemeControl />
@@ -191,7 +198,11 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
         </div>
       </Section>
 
-      <Section id="controls" title="Controls" intro="One primary button per view. Everything else is outline, ghost or in a menu.">
+      <Section
+        id="controls"
+        title="Controls"
+        intro="One primary button per view. Everything else is outline, ghost or in a menu."
+      >
         <div className="grid gap-10 lg:grid-cols-2">
           <Sub title="Buttons">
             <div className="flex flex-wrap items-center gap-2">
@@ -258,7 +269,13 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
             <FieldGroup className="gap-5">
               <Field>
                 <FieldLabel htmlFor="tile-titles">Job titles to search for</FieldLabel>
-                <TokenInput id="tile-titles" label="Job titles" values={titles} onChange={setTitles} placeholder="Frontend Engineer" />
+                <TokenInput
+                  id="tile-titles"
+                  label="Job titles"
+                  values={titles}
+                  onChange={setTitles}
+                  placeholder="Frontend Engineer"
+                />
               </Field>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field>
@@ -439,7 +456,10 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
               <CardDescription>Usually under a minute.</CardDescription>
             </CardHeader>
             <CardContent>
-              <TaskSteps steps={["Reading the job", "Tailoring your CV", "Checking every fact against your profile"]} current={1} />
+              <TaskSteps
+                steps={["Reading the job", "Tailoring your CV", "Checking every fact against your profile"]}
+                current={1}
+              />
             </CardContent>
           </Card>
           <Card>
@@ -462,8 +482,12 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
         </div>
       </Section>
 
-      <Section id="cv" title="CV and score" intro="The preview matches the PDF: Latin Modern, US Letter, never below 9 px.">
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <Section
+        id="cv"
+        title="CV and score"
+        intro="The preview matches the PDF: Latin Modern, US Letter, never below 9 px."
+      >
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
           <Tabs defaultValue="preview">
             <TabsList>
               <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -522,7 +546,9 @@ export function StyleTile({ viewer }: { viewer: Viewer }) {
                   <Search />
                 </EmptyMedia>
                 <EmptyTitle>No new matches today.</EmptyTitle>
-                <EmptyDescription>The search checked 412 companies. Widen your titles or time zones to see more.</EmptyDescription>
+                <EmptyDescription>
+                  The search checked 412 companies. Widen your titles or time zones to see more.
+                </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button variant="outline">Edit preferences</Button>

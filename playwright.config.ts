@@ -37,6 +37,8 @@ export default defineConfig({
       ENABLE_DESIGN_TILE: "1",
       // Fixture answers for P1 and P5; the real model is never called in e2e.
       LLM_PROVIDER: realLlm ? "gemini" : "mock",
+      // Long enough to see each tailoring step on screen.
+      LLM_MOCK_DELAY_MS: realLlm ? "0" : "1500",
       ...(realLlm
         ? {
             GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
