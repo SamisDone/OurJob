@@ -1,0 +1,103 @@
+{
+  "_note": "FICTIONAL. A gemini-3.5-flash-lite answer (pnpm eval:tailor, p3.4, 2026-10-30) for the fictional Lumen Labs post.",
+  "match": [
+    "Lumen Labs"
+  ],
+  "output": {
+    "title": "Senior Backend Engineer",
+    "company": "Lumen Labs",
+    "seniority": "senior",
+    "employmentType": "full-time",
+    "location": "Fully remote across eight time zones",
+    "remoteScopeText": "fully remote across eight time zones",
+    "salaryText": "$95,000 to $130,000 a year",
+    "yearsExperience": {
+      "min": 5
+    },
+    "responsibilities": [
+      "Rebuild the availability service",
+      "Cache availability in Redis",
+      "Publish booking changes as events",
+      "Write services in Go",
+      "Keep the schema healthy as clinics grow",
+      "Ship weekly behind feature flags"
+    ],
+    "keywords": [
+      {
+        "term": "Senior Backend Engineer",
+        "canonical": "Senior Backend Engineer",
+        "synonyms": [],
+        "importance": "must",
+        "kind": "title",
+        "evidenceQuote": "Senior Backend Engineer"
+      },
+      {
+        "term": "Go",
+        "canonical": "Go",
+        "synonyms": [
+          "Golang"
+        ],
+        "importance": "must",
+        "kind": "hard_skill",
+        "evidenceQuote": "production Go"
+      },
+      {
+        "term": "PostgreSQL",
+        "canonical": "PostgreSQL",
+        "synonyms": [
+          "Postgres",
+          "psql"
+        ],
+        "importance": "must",
+        "kind": "hard_skill",
+        "evidenceQuote": "Strong PostgreSQL skills"
+      },
+      {
+        "term": "Kafka",
+        "canonical": "Kafka",
+        "synonyms": [
+          "Apache Kafka"
+        ],
+        "importance": "must",
+        "kind": "tool",
+        "evidenceQuote": "event-driven systems such as Kafka"
+      },
+      {
+        "term": "Terraform",
+        "canonical": "Terraform",
+        "synonyms": [],
+        "importance": "must",
+        "kind": "tool",
+        "evidenceQuote": "Comfort with Terraform"
+      },
+      {
+        "term": "GraphQL",
+        "canonical": "GraphQL",
+        "synonyms": [
+          "GQL"
+        ],
+        "importance": "nice",
+        "kind": "hard_skill",
+        "evidenceQuote": "GraphQL"
+      },
+      {
+        "term": "OpenTelemetry",
+        "canonical": "OpenTelemetry",
+        "synonyms": [
+          "OTel"
+        ],
+        "importance": "nice",
+        "kind": "tool",
+        "evidenceQuote": "OpenTelemetry"
+      },
+      {
+        "term": "load testing",
+        "canonical": "Load Testing",
+        "synonyms": [],
+        "importance": "nice",
+        "kind": "hard_skill",
+        "evidenceQuote": "load testing"
+      }
+    ]
+  }
+}

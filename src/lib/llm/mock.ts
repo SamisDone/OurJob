@@ -40,14 +40,17 @@ export function createMockProvider(dir = process.env.LLM_FIXTURES_DIR ?? "tests/
     );
   }
 
+  // LLM_MOCK_DELAY_MS: wait before each answer, so e2e can watch progress that a real model shows.
+  const delay = Number(process.env.LLM_MOCK_DELAY_MS ?? 0);
+
   return {
     name: "mock",
     model: "mock",
     generateJSON: (args) =>
-      generateValidated(args.schema, args.user, async () => ({
-        text: JSON.stringify(find(args)),
-        usage: { inputTokens: 0, outputTokens: 0 },
-      })),
+      generateValidated(args.schema, args.user, async () => {
+        if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+        return { text: JSON.stringify(find(args)), usage: { inputTokens: 0, outputTokens: 0 } };
+      }),
   };
 }
 

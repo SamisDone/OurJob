@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Toaster } from "@/components/ui/toast";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 
@@ -11,24 +13,22 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f5f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1522" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
 };
-
-// Applies the saved theme before first paint. "system" leaves the attribute
-// off so tokens.css follows prefers-color-scheme.
-const themeScript = `try{var t=localStorage.getItem("ourjob-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body className="min-h-dvh">
-        {children}
-        <Toaster />
+        <ThemeProvider>
+          <TooltipProvider>
+            {children}
+            {/* Above the phone bottom bar. */}
+            <Toaster position="bottom-right" duration={5000} mobileOffset={{ bottom: 80 }} />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -39,6 +39,8 @@ Build in phases. Each phase ends with its done criteria met, tests passing, and 
 - Tailoring history.
 - `pnpm eval:prompts`.
 
+**Status (2026-10-30):** built: JD cleaner, P2, keyword matcher, scorer, P3, validator, fix loop, "Left out of this CV" panel, LaTeX renderer, Open in Overleaf, Copy, Download, the Tailor screen with a three-step progress card, Preview, LaTeX and Changes tabs, a highlighted job post, and tailoring history (Recent list and `/tailor/[id]`). The highlighter sweep was dropped with the redesign (soft highlights instead, DESIGN.md 9). Not built yet: inline bullet edit, the "I have this" gap flow and re-tailor options. Fit: 20 of 20 tailored CVs (two fictional profiles) compile to one page with pdflatex.
+
 **Done when:** for 10 fictional JDs: zero gap leaks, zero unsupported numbers, all matched keywords present; 5 rendered `.tex` files compile with pdflatex locally and open and compile in Overleaf; score is deterministic; the workspace passes DESIGN.md section 10 at all widths and both themes.
 
 ## Phase 3: job sources and daily feed

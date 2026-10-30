@@ -18,6 +18,7 @@ export default async function globalSetup() {
       await sql`delete from users where email = ${u.email} and id <> ${u.id}`;
       await sql`insert into users (id, email, name) values (${u.id}, ${u.email}, ${u.name})
                 on conflict (id) do update set email = excluded.email, name = excluded.name`;
+      await sql`delete from tailorings where user_id = ${u.id}`;
       await sql`delete from profile_sources where user_id = ${u.id}`;
       await sql`delete from master_profiles where user_id = ${u.id}`;
       await sql`delete from search_preferences where user_id = ${u.id}`;

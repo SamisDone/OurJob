@@ -33,8 +33,11 @@ const only = arg("only");
 const PAUSE_MS = Number(arg("pause") ?? 15_000);
 const JOB_MODEL = arg("job-model") ?? "gemini-3.5-flash-lite";
 
+/** --profile=<path>: another fictional P1 profile fixture (default Nadia Chowdhury). */
+const PROFILE =
+  process.argv.find((a) => a.startsWith("--profile="))?.split("=")[1] ?? "tests/fixtures/llm/p1-profile/nadia-chowdhury.json";
 const profile = normalizeProfile(
-  p1OutputSchema.parse(JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/nadia-chowdhury.json", "utf8")).output),
+  p1OutputSchema.parse(JSON.parse(readFileSync(PROFILE, "utf8")).output),
 );
 
 type Row = {

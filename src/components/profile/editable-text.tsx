@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 /**
@@ -39,8 +39,8 @@ export function EditableText({
           setEditing(true);
         }}
         className={cn(
-          "-mx-1.5 block w-[calc(100%+12px)] rounded-[6px] px-1.5 py-0.5 text-left transition-colors duration-[120ms] ease-ink hover:bg-ink-wash",
-          !value && "text-graphite italic",
+          "-mx-1.5 block w-[calc(100%+12px)] rounded-md px-1.5 py-0.5 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+          !value && "text-muted-foreground italic",
           className,
         )}
       >
@@ -62,7 +62,7 @@ export function EditableText({
         aria-label={label}
         value={draft}
         rows={multiline ? 2 : 1}
-        className="min-h-0 text-[15px] leading-6"
+        className="min-h-0"
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setEditing(false);

@@ -1,278 +1,224 @@
 "use client";
 
-import {
-  BuildingsIcon,
-  DotsThreeIcon,
-  FileTextIcon,
-  GearSixIcon,
-  KanbanIcon,
-  MagnifyingGlassIcon,
-  SidebarSimpleIcon,
-  SunHorizonIcon,
-  UserCircleIcon,
-} from "@phosphor-icons/react/ssr";
-import type { Icon } from "@phosphor-icons/react";
+import { Ellipsis, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import { RAIL_COOKIE } from "./rail";
+import { Fragment, useState, type ReactNode } from "react";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { Sheet, SheetContent } from "@/components/ui/overlay";
-import { cn } from "@/lib/utils";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { AccountMenu, type AccountUser } from "./account-menu";
-import { CommandPalette, Kbd } from "./command-palette";
-import { SignOutButton, useSignOut } from "./sign-out";
-import { Wordmark } from "./wordmark";
+import { CommandPalette } from "./command-palette";
+import { activeNavHref, crumbsFor, phoneNav, primaryNav, secondaryNav, type NavItem } from "./nav";
+import { useSignOut } from "./sign-out";
+import { LogoMark } from "./wordmark";
+import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: Icon };
-
-const primary: NavItem[] = [
-  { href: "/today", label: "Today", icon: SunHorizonIcon },
-  { href: "/tailor", label: "Tailor", icon: FileTextIcon },
-  { href: "/tracker", label: "Tracker", icon: KanbanIcon },
-  { href: "/companies", label: "Companies", icon: BuildingsIcon },
-];
-
-const secondary: NavItem[] = [
-  { href: "/profile", label: "Profile", icon: UserCircleIcon },
-  { href: "/settings", label: "Settings", icon: GearSixIcon },
-];
-
-const under = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
-
-/**
- * The nav item a route belongs to. Detail pages light up their parent: a job
- * belongs to Today, a tailored CV to Tailor, onboarding to Profile.
- */
-export function activeNavHref(pathname: string): string | null {
-  if (under(pathname, "/jobs")) return "/today";
-  if (under(pathname, "/onboarding")) return "/profile";
-  return [...primary, ...secondary].find((item) => under(pathname, item.href))?.href ?? null;
+function NavGroup({ label, items, active }: { label: string; items: NavItem[]; active: string | null }) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton asChild isActive={active === item.href} tooltip={item.label}>
+                <Link
+                  href={item.href}
+                  aria-current={active === item.href ? "page" : undefined}
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
 }
 
-const phoneBar = primary.slice(0, 3);
-const moreItems = [primary[3], ...secondary];
-
-function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
-  const I = item.icon;
+function AppSidebar({ user, active }: { user?: AccountUser; active: string | null }) {
   return (
-    <Link
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      title={collapsed ? item.label : undefined}
-      className={cn(
-        "relative flex h-10 items-center gap-3 rounded-control px-3 text-sm transition-colors duration-[120ms] ease-ink",
-        active ? "font-medium text-ink" : "text-graphite hover:bg-ink-wash hover:text-ink",
-        "rail-center",
-        collapsed && "justify-center px-0",
+    <Sidebar collapsible="icon" role="navigation" aria-label="Main">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild tooltip="OurJob">
+              <Link href="/today">
+                <LogoMark className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground" />
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">OurJob</span>
+                  <span className="truncate text-xs text-muted-foreground">Remote job search</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavGroup label="Search" items={primaryNav} active={active} />
+        <NavGroup label="You" items={secondaryNav} active={active} />
+      </SidebarContent>
+      {user && (
+        <SidebarFooter>
+          <AccountMenu user={user} />
+        </SidebarFooter>
       )}
-    >
-      {active && <span className="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r-[2px] bg-ink" aria-hidden />}
-      <I size={20} aria-hidden weight={active ? "fill" : "regular"} className="shrink-0" />
-      <span className={cn("rail-label", collapsed && "sr-only")}>{item.label}</span>
-    </Link>
+      <SidebarRail />
+    </Sidebar>
   );
 }
 
 /**
- * Rail on desktop (220 px, collapsible to 64 px), bottom bar on phones.
- * The page itself carries the content; the chrome stays quiet.
+ * Phones: Today, Tailor and Tracker one tap away, and More, which opens the
+ * Sidebar's sheet with every page and the account menu. More is the active
+ * item for the pages that live only in the sheet.
+ */
+function BottomNav({ active }: { active: string | null }) {
+  const { setOpenMobile } = useSidebar();
+  const inMore = active !== null && !phoneNav.some((i) => i.href === active);
+  const moreLabel = [...primaryNav, ...secondaryNav].find((i) => i.href === active)?.label;
+  const item = "h-16 flex-col gap-1 rounded-none text-xs font-normal text-muted-foreground [&_svg]:size-5!";
+  const on = "font-medium text-foreground";
+  return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      {phoneNav.map((i) => (
+        <Button key={i.href} asChild variant="ghost" className={cn(item, active === i.href && on)}>
+          <Link href={i.href} aria-current={active === i.href ? "page" : undefined}>
+            <i.icon />
+            {i.label}
+          </Link>
+        </Button>
+      ))}
+      <Button
+        variant="ghost"
+        className={cn(item, inMore && on)}
+        data-active={inMore || undefined}
+        aria-label={inMore ? `More, current page ${moreLabel}` : "More"}
+        onClick={() => setOpenMobile(true)}
+      >
+        <Ellipsis />
+        More
+      </Button>
+    </nav>
+  );
+}
+
+function SiteHeader({ pathname, onSearch }: { pathname: string; onSearch: () => void }) {
+  const crumbs = crumbsFor(pathname);
+  return (
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:px-6">
+      {/* Phones open the sheet from More in the bottom bar. */}
+      <SidebarTrigger className="-ml-1 hidden md:inline-flex" aria-label="Toggle menu" />
+      {crumbs.length > 0 && (
+        <>
+          <Separator
+            orientation="vertical"
+            className="mr-2 hidden md:block data-vertical:h-4 data-vertical:self-center"
+          />
+          <Breadcrumb>
+            <BreadcrumbList>
+              {crumbs.map((c, i) => (
+                <Fragment key={c.label}>
+                  {i > 0 && <BreadcrumbSeparator />}
+                  <BreadcrumbItem>
+                    {c.href ? (
+                      <BreadcrumbLink asChild>
+                        <Link href={c.href}>{c.label}</Link>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage>{c.label}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </>
+      )}
+      <Button
+        variant="outline"
+        onClick={onSearch}
+        aria-label="Open command palette"
+        className="ml-auto w-9 justify-center px-0 text-muted-foreground sm:w-56 sm:justify-start sm:px-2.5"
+      >
+        <Search />
+        <span className="hidden flex-1 text-left font-normal sm:inline">Search</span>
+        <Kbd className="hidden sm:inline-flex">Ctrl K</Kbd>
+      </Button>
+    </header>
+  );
+}
+
+/**
+ * The one shell for every signed-in page: the shadcn Sidebar (collapsible to
+ * icons, a sheet on phones), a header with breadcrumbs, and the command palette.
  */
 export function AppShell({
   children,
   user,
-  initialCollapsed = false,
+  defaultOpen = true,
 }: {
   children: ReactNode;
   user?: AccountUser;
-  /** From the rail cookie, read on the server, so the first paint already has the right width. */
-  initialCollapsed?: boolean;
+  /** From the sidebar cookie, read on the server, so the first paint already has the right width. */
+  defaultOpen?: boolean;
 }) {
   const pathname = usePathname() ?? "";
-  const active = activeNavHref(pathname);
-  const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const { signOut } = useSignOut();
-
-  const toggle = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    document.cookie = `${RAIL_COOKIE}=${next ? "collapsed" : "open"}; path=/; max-age=31536000; samesite=lax`;
-  };
-  const compactRoute = pathname.startsWith("/tailor") || pathname.startsWith("/design");
 
   return (
     <QueryProvider>
-      {/* The tailoring desk needs the width: there the rail shows icons only below 1440 px. */}
-      <div className="min-h-dvh md:flex" data-compact-rail={compactRoute || undefined}>
+      <SidebarProvider defaultOpen={defaultOpen}>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-sheet focus:px-3 focus:py-2"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:ring-2 focus:ring-ring"
         >
           Skip to content
         </a>
-
-        <nav
-          aria-label="Main"
-          className={cn(
-            "rail sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-rule bg-paper px-3 py-4 md:flex",
-            "transition-[width] duration-200 ease-ink",
-            collapsed ? "w-16" : "w-[220px]",
-          )}
-        >
-          <div className={cn("rail-center flex h-10 items-center px-3", collapsed && "justify-center px-0")}>
-            <span className={cn("rail-wide-only", collapsed && "hidden")}>
-              <Wordmark />
-            </span>
-            <span className={cn(collapsed ? "inline" : "rail-compact-only")}>
-              <Wordmark compact />
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className={cn(
-              "mt-4 flex h-9 items-center gap-2 rounded-control border border-rule px-3 text-sm text-graphite hover:border-graphite hover:text-ink",
-              "rail-center",
-              collapsed && "justify-center px-0",
-            )}
-            aria-label="Open command palette"
-          >
-            <MagnifyingGlassIcon size={16} aria-hidden />
-            <span className={cn("rail-label flex-1 text-left", collapsed && "sr-only")}>Search</span>
-            <span className={cn("rail-wide-only", collapsed && "hidden")}>
-              <Kbd>Ctrl K</Kbd>
-            </span>
-          </button>
-
-          <ul className="mt-5 space-y-0.5">
-            {primary.map((item) => (
-              <li key={item.href}>
-                <RailLink item={item} active={active === item.href} collapsed={collapsed} />
-              </li>
-            ))}
-          </ul>
-
-          <ul className="mt-auto space-y-0.5">
-            {secondary.map((item) => (
-              <li key={item.href}>
-                <RailLink item={item} active={active === item.href} collapsed={collapsed} />
-              </li>
-            ))}
-            <li className="rail-wide-only">
-              <button
-                type="button"
-                onClick={toggle}
-                aria-pressed={collapsed}
-                className={cn(
-                  "flex h-10 w-full items-center gap-3 rounded-control px-3 text-sm text-graphite hover:bg-ink-wash hover:text-ink",
-                  collapsed && "justify-center px-0",
-                )}
-              >
-                <SidebarSimpleIcon size={20} aria-hidden />
-                <span className={cn(collapsed && "sr-only")}>{collapsed ? "Expand menu" : "Collapse menu"}</span>
-              </button>
-            </li>
-          </ul>
-          {user && (
-            <div className="mt-2 border-t border-rule pt-2">
-              <AccountMenu user={user} collapsed={collapsed} />
-            </div>
-          )}
-        </nav>
-
-        <main id="main" className="min-w-0 flex-1 pb-24 md:pb-0">
+        <AppSidebar user={user} active={activeNavHref(pathname)} />
+        {/* Room for the phone bottom bar. */}
+        <SidebarInset id="main" className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+          <SiteHeader pathname={pathname} onSearch={() => setPaletteOpen(true)} />
           {children}
-        </main>
-
-        {/* Phone bottom bar */}
-        <nav
-          aria-label="Main"
-          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-rule bg-sheet pb-[env(safe-area-inset-bottom)] md:hidden"
-        >
-          {phoneBar.map((item) => {
-            const I = item.icon;
-            const on = active === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={on ? "page" : undefined}
-                className={cn(
-                  "relative flex h-16 flex-col items-center justify-center gap-1 text-xs",
-                  on ? "font-medium text-ink" : "text-graphite",
-                )}
-              >
-                {on && <span className="absolute top-0 h-[3px] w-8 rounded-b-[2px] bg-ink" aria-hidden />}
-                <I size={22} aria-hidden weight={on ? "fill" : "regular"} />
-                {item.label}
-              </Link>
-            );
-          })}
-          {/* Companies, Profile and Settings live under More, so More is the active item for them. */}
-          {(() => {
-            const on = moreItems.some((item) => item.href === active);
-            return (
-              <button
-                type="button"
-                onClick={() => setMoreOpen(true)}
-                data-active={on || undefined}
-                aria-label={on ? `More, current page ${moreItems.find((i) => i.href === active)?.label}` : "More"}
-                className={cn(
-                  "relative flex h-16 flex-col items-center justify-center gap-1 text-xs",
-                  on ? "font-medium text-ink" : "text-graphite",
-                )}
-              >
-                {on && <span className="absolute top-0 h-[3px] w-8 rounded-b-[2px] bg-ink" aria-hidden />}
-                <DotsThreeIcon size={22} aria-hidden weight={on ? "bold" : "regular"} />
-                More
-              </button>
-            );
-          })()}
-        </nav>
-
-        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetContent title="More">
-            <ul className="-mx-3 space-y-0.5">
-              {moreItems.map((item) => {
-                const I = item.icon;
-                const on = active === item.href;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      aria-current={on ? "page" : undefined}
-                      className={cn(
-                        "flex h-12 items-center gap-3 rounded-control px-3 text-base hover:bg-ink-wash",
-                        on ? "font-medium text-ink" : "text-body",
-                      )}
-                    >
-                      <I
-                        size={20}
-                        aria-hidden
-                        weight={on ? "fill" : "regular"}
-                        className={on ? "text-ink" : "text-graphite"}
-                      />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-            {user && (
-              <div className="mt-5 border-t border-rule pt-5">
-                {user.email && <p className="mb-3 text-sm text-graphite">Signed in as {user.email}</p>}
-                <SignOutButton className="w-full" />
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
-
+        </SidebarInset>
+        <BottomNav active={activeNavHref(pathname)} />
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={user ? signOut : undefined} />
-      </div>
+      </SidebarProvider>
     </QueryProvider>
   );
 }

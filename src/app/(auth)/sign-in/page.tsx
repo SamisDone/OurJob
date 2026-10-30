@@ -1,8 +1,11 @@
+import { CircleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
-import { Wordmark } from "@/components/shell/wordmark";
+import { LogoMark } from "@/components/shell/wordmark";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAllowedEmail } from "@/lib/auth/allowlist";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -39,36 +42,44 @@ export default async function SignInPage({
   const redirectTo = callbackUrl ?? "/today";
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-16">
-      <div className="w-full max-w-[400px]">
-        <Wordmark />
-        <h1 className="mt-6 text-2xl font-semibold text-ink">Sign in</h1>
-        <p className="mt-2 text-base text-graphite">Tailored CVs and fresh remote jobs, every morning.</p>
-
-        <form
-          className="mt-8"
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo });
-          }}
-        >
-          <Button type="submit" className="w-full" disabled={!googleConfigured()}>
-            Continue with Google
-          </Button>
-        </form>
-
-        {signedOut && !message && (
-          <p role="status" className="mt-5 text-sm text-graphite">
-            Signed out.
-          </p>
-        )}
-
-        {message && (
-          <p role="alert" className="mt-5 border-l-2 border-redpen py-1 pl-3 text-sm text-body">
-            {message}
-          </p>
-        )}
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-muted px-6 py-16">
+      <div className="flex items-center gap-2 font-semibold">
+        <LogoMark />
+        OurJob
       </div>
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle>
+            <h1 className="text-xl">Sign in</h1>
+          </CardTitle>
+          <CardDescription>Tailored CVs and fresh remote jobs, every morning.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <form
+            action={async () => {
+              "use server";
+              await signIn("google", { redirectTo });
+            }}
+          >
+            <Button type="submit" size="lg" className="w-full" disabled={!googleConfigured()}>
+              Continue with Google
+            </Button>
+          </form>
+
+          {signedOut && !message && (
+            <p role="status" className="text-center text-sm text-muted-foreground">
+              Signed out.
+            </p>
+          )}
+
+          {message && (
+            <Alert variant="destructive" role="alert">
+              <CircleAlert />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
     </main>
   );
 }

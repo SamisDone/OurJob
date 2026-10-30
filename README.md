@@ -29,7 +29,19 @@ pnpm test:e2e       # Playwright, against a production build
 pnpm db:generate    # Drizzle migrations from src/lib/db/schema.ts
 pnpm db:migrate
 pnpm db:migrate:prod   # production database, see Deploy
+pnpm preview:ui     # the redesigned Today and Tailor screens, signed in as a fictional person
 ```
+
+### Preview the redesigned screens
+
+With Docker running, from this folder:
+
+```sh
+docker start ourjob-pg
+pnpm preview:ui
+```
+
+A browser window opens on `/preview/today` and `/preview/tailor`, signed in as the fictional Nadia Chowdhury. No Google sign-in, API key or `.env.local` is needed: the script starts `next dev` with a throwaway secret and the mock LLM, and mints the session cookie the same way the e2e tests do. Add `?state=loading`, `empty`, `error` or `late` to Today, and `?state=paste` or `working` to Tailor. For the phone layout, open DevTools and pick a phone in the device toolbar. Close the window to stop. If it says another dev server is running, stop that one first (`pnpm dev` in this folder).
 
 A full self-host guide (accounts, env vars, GitHub secrets, deploy) comes in Phase 5.
 
@@ -37,7 +49,7 @@ A full self-host guide (accounts, env vars, GitHub secrets, deploy) comes in Pha
 
 The app runs on Vercel with its functions in Singapore (`vercel.json` sets `sin1`), next to a Neon Postgres database in the same region. Do the steps in this order.
 
-1. **Neon.** Create a project in the region *AWS Asia Pacific (Singapore)*. From *Connect*, copy two connection strings: the **pooled** one (connection pooling on, the host contains `-pooler`) for the app, and the **direct** one (pooling off) for migrations.
+1. **Neon.** Create a project in the region _AWS Asia Pacific (Singapore)_. From _Connect_, copy two connection strings: the **pooled** one (connection pooling on, the host contains `-pooler`) for the app, and the **direct** one (pooling off) for migrations.
 2. **Migrate.** On your machine, create `.env.production.local` (git-ignored) with one line, `DATABASE_URL_UNPOOLED=<the direct string>`, then run `pnpm db:migrate:prod`. It reads only that file and refuses a local database. Run it again before deploying any commit that adds a file to `drizzle/`.
 3. **Secret.** Generate a new `AUTH_SECRET` for production (`npx auth secret` or `openssl rand -base64 32`). Do not reuse the local one.
 4. **Vercel.** Import the GitHub repository (framework and pnpm are detected). Before the first deploy, add these environment variables for the **Production** environment only:
@@ -58,11 +70,13 @@ The app runs on Vercel with its functions in Singapore (`vercel.json` sets `sin1
    | `GITHUB_TOKEN` | a token with no scopes, raises GitHub's limits for profile import | optional |
 
    Leave out `ENABLE_DESIGN_TILE` (so `/design` stays a 404), `AUTH_URL` and `AUTH_TRUST_HOST` (Auth.js reads the host from Vercel's headers). The job pipeline variables in `.env.example` are not needed until the daily search exists. Then deploy.
-5. **Google OAuth.** In Google Cloud Console, open the OAuth client (type *Web application*) and add, with your Vercel address:
+
+5. **Google OAuth.** In Google Cloud Console, open the OAuth client (type _Web application_) and add, with your Vercel address:
    - Authorized JavaScript origin: `https://<your-app>.vercel.app`
    - Authorized redirect URI: `https://<your-app>.vercel.app/api/auth/callback/google`
 
-   The same client can keep its localhost entries. If the consent screen is in *Testing*, add every allowed email as a test user.
+   The same client can keep its localhost entries. If the consent screen is in _Testing_, add every allowed email as a test user.
+
 6. **Check.** Open the address, sign in with an allowed email, and confirm that `/design` returns 404.
 
 Sign-in works only on the production address: preview deployments get a different host each time, which Google does not know.

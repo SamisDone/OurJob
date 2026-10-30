@@ -34,9 +34,10 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
   // Step 2: add the LinkedIn export, then build.
   await expect(page.getByRole("heading", { name: "Add more sources" })).toBeVisible();
 
-  // Done steps go back; future steps are not buttons.
-  await expect(page.getByRole("button", { name: /^Review profile/ })).toHaveCount(0);
-  await page.getByRole("button", { name: /^Add your CV/ }).click();
+  // Done steps link back; future steps are plain text.
+  const progress = page.getByRole("navigation", { name: "Onboarding progress" });
+  await expect(progress.getByRole("link", { name: /^Review profile/ })).toHaveCount(0);
+  await progress.getByRole("link", { name: /^Add your CV/ }).click();
   await expect(page.getByRole("heading", { name: "Add your CV" })).toBeVisible();
   await page.getByRole("button", { name: "Looks right" }).click();
   await expect(page.getByRole("heading", { name: "Add more sources" })).toBeVisible();

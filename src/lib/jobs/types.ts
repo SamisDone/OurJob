@@ -34,16 +34,13 @@ export type AtsReport = {
   checks: { id: string; label: string; pass: boolean; fix?: string }[];
 };
 
+/** What the validator found, kept with a tailoring: every issue, what was removed for accuracy, and timings. */
 export type ValidatorReport = {
-  entries: {
-    check:
-      "ids" | "source_support" | "numbers" | "bold_and_tech" | "skills" | "gap_leak" | "coverage" | "style" | "length";
-    itemRef: string;
-    ok: boolean;
-    message: string;
-  }[];
-  removed: { itemRef: string; text: string; reason: string }[];
+  issues: { check: string; ref: string; message: string; action: "fixed" | "fix" | "report" }[];
+  removed: { ref: string; text: string; reasons: string[] }[];
   fixRounds: number;
+  firstPassClean: boolean;
+  timings: { parseMs: number; tailorMs: number; fixMs: number[]; totalMs: number };
 };
 
 export type PipelineStats = {

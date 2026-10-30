@@ -31,11 +31,22 @@ describe("copy and look guard (DESIGN.md 9 and 10)", () => {
     expect(hits).toEqual([]);
   });
 
-  it("does not load banned UI faces or a second icon set", () => {
-    const all = sources.map((f) => f.text).join("\n");
-    expect(all).not.toMatch(
-      /import\s*\{[^}]*\b(Inter|Geist|Geist_Mono|Roboto)\b[^}]*\}\s*from\s*["']next\/font\/google["']/,
-    );
-    expect(all).not.toMatch(/from\s*["']lucide-react["']/);
+  it("uses one icon set, Lucide, everywhere", () => {
+    const hits = sources
+      .filter((f) => /from\s*["'](@phosphor-icons|react-icons|@heroicons|@tabler)\//.test(f.text))
+      .map((f) => f.path);
+    expect(hits).toEqual([]);
+  });
+
+  it("uses no old index-card tokens or components", () => {
+    const old =
+      /components\/legacy|\b(text|bg|border)-(ink|paper|sheet|graphite|redpen|rule)\b|rounded-(panel|control|pill)\b/;
+    const hits = sources.filter((f) => old.test(f.text)).map((f) => f.path);
+    expect(hits).toEqual([]);
+  });
+
+  it("loads Geist Sans and Geist Mono through next/font", () => {
+    const fonts = readFileSync("src/app/fonts.ts", "utf8");
+    expect(fonts).toMatch(/import\s*\{\s*Geist,\s*Geist_Mono\s*\}\s*from\s*["']next\/font\/google["']/);
   });
 });

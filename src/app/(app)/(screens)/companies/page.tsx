@@ -8,10 +8,10 @@ export default async function Page() {
   const status = await currentProfileStatus();
   if (status !== "confirmed") {
     return (
-      <NeedsProfile title="Companies" status={status}>
+      <NeedsProfile title="Companies" description="The companies whose career pages the daily search checks." status={status}>
         Companies are found for your confirmed profile and search preferences, so this list starts once you confirm it.
       </NeedsProfile>
     );
   }
-  return <ComingSoon title="Companies">Company tracking arrives in Phase 4.</ComingSoon>;
+  return <ComingSoon title="Companies" description="The companies whose career pages the daily search checks.">Company tracking arrives in Phase 4.</ComingSoon>;
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { WarningIcon } from "@phosphor-icons/react/ssr";
+import { TriangleAlert } from "lucide-react";
 import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatCvDate } from "@/lib/profile/dates";
 import { conflictLabel, type EditOp } from "@/lib/profile/edit";
 import type { MasterProfile } from "@/lib/profile/schema";
-import { cn } from "@/lib/utils";
 
 const SOURCE: Record<string, string> = {
   cv: "your CV",
@@ -45,23 +47,20 @@ export function ConflictsPanel({
   if (profile.conflicts.length === 0) return null;
   const n = profile.conflicts.length;
   return (
-    <section
-      aria-labelledby="conflicts-h"
-      className="red-rule-top relative rounded-panel border border-caution/40 bg-caution-wash px-5 pt-5 pb-4 md:px-6"
-    >
-      <h2 id="conflicts-h" className="flex items-center gap-2 text-lg font-semibold">
-        <WarningIcon size={20} aria-hidden className="text-caution" />
-        Your sources disagree on {n === 1 ? "one thing" : `${n} things`}
-      </h2>
-      <p className="mt-1 text-sm text-body">
-        Choose the right value for each. The CV&apos;s value is used until you do.
-      </p>
-      <ul className="mt-4 divide-y divide-rule">
-        {profile.conflicts.map((c) => (
-          <ConflictRow key={c.field} profile={profile} conflict={c} onResolve={onResolve} pending={pending} />
-        ))}
-      </ul>
-    </section>
+    <Alert variant="warning" role="region" aria-labelledby="conflicts-h">
+      <TriangleAlert />
+      <AlertTitle>
+        <h2 id="conflicts-h">Your sources disagree on {n === 1 ? "one thing" : `${n} things`}</h2>
+      </AlertTitle>
+      <AlertDescription>
+        <p>Choose the right value for each. The CV&apos;s value is used until you do.</p>
+        <ul className="mt-2 w-full divide-y divide-warning/20">
+          {profile.conflicts.map((c) => (
+            <ConflictRow key={c.field} profile={profile} conflict={c} onResolve={onResolve} pending={pending} />
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -79,38 +78,29 @@ function ConflictRow({
   const attr = conflict.field.split(".").at(-1) ?? "";
   const isDate = attr === "start" || attr === "end";
   const [choice, setChoice] = useState<string>();
-  const name = `${conflict.field}-choice`;
+  const id = conflict.field.replace(/[^\w-]/g, "-");
   return (
     <li className="py-3">
       <fieldset>
-        <legend className="text-sm font-medium text-body">
+        <legend className="font-medium text-foreground">
           {conflictLabel(profile, conflict.field)}: {ATTRIBUTE[attr] ?? attr}
         </legend>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {conflict.values.map((v) => (
-            <label
-              key={`${v.value}-${v.source}`}
-              className={cn(
-                "inline-flex h-9 cursor-pointer items-center gap-2 rounded-pill border px-3 text-sm max-md:h-11",
-                choice === v.value
-                  ? "border-ink bg-sheet text-ink"
-                  : "border-rule bg-sheet text-body hover:border-graphite",
-              )}
-            >
-              <input
-                type="radio"
-                name={name}
-                value={v.value}
-                className="accent-[var(--ink)]"
-                onChange={() => setChoice(v.value)}
-              />
-              <span className="font-medium">{isDate ? formatCvDate(v.value) : v.value}</span>
-              <span className="text-graphite">from {SOURCE[v.source] ?? v.source}</span>
-            </label>
-          ))}
+          <RadioGroup value={choice ?? ""} onValueChange={setChoice} className="flex flex-wrap gap-2">
+            {conflict.values.map((v, i) => (
+              <Label
+                key={`${v.value}-${v.source}`}
+                htmlFor={`${id}-${i}`}
+                className="h-9 cursor-pointer rounded-lg border bg-background px-3 font-normal has-data-checked:border-ring max-md:h-11"
+              >
+                <RadioGroupItem id={`${id}-${i}`} value={v.value} />
+                <span className="font-medium">{isDate ? formatCvDate(v.value) : v.value}</span>
+                <span className="text-muted-foreground">from {SOURCE[v.source] ?? v.source}</span>
+              </Label>
+            ))}
+          </RadioGroup>
           <Button
-            size="sm"
-            variant="secondary"
+            variant="outline"
             disabled={!choice || pending}
             onClick={() => choice && onResolve({ op: "resolveConflict", field: conflict.field, value: choice })}
           >
