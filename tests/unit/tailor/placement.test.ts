@@ -76,3 +76,36 @@ describe("copiedJobPhrase (validator check 2b)", () => {
     ).toBeNull();
   });
 });
+
+describe("job keywords his profile proves under another name", () => {
+  it("matches authentication, role-based access control and LLM APIs to Firebase Auth, role access and the Gemini API", async () => {
+    const { splitKeywords } = await import("@/lib/tailor/keywords");
+    const { normalizeProfile } = await import("@/lib/profile/normalize");
+    const { p1OutputSchema } = await import("@/lib/llm/prompts/p1-profile");
+    const { readFileSync } = await import("node:fs");
+    // Fictional profile with "role-based access (admin, editor, viewer) ... on Firebase Auth" and a Gemini API project.
+    const profile = normalizeProfile(
+      p1OutputSchema.parse(JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/farhan-kabir.json", "utf8")).output),
+    );
+    const kw = (term: string, canonical: string) => ({
+      term,
+      canonical,
+      synonyms: [],
+      importance: "must" as const,
+      kind: "hard_skill" as const,
+      evidenceQuote: term,
+    });
+    const spec = {
+      title: "Full Stack Developer",
+      responsibilities: [],
+      keywords: [
+        kw("authentication", "Authentication"),
+        kw("role-based access control", "Role-Based Access Control"),
+        kw("LLM APIs", "Large language models"),
+      ],
+    };
+    const { matched, gaps } = splitKeywords(spec as never, profile);
+    expect(gaps.map((g) => g.term)).toEqual([]);
+    expect(matched.map((m) => m.term)).toEqual(["authentication", "role-based access control", "LLM APIs"]);
+  });
+});

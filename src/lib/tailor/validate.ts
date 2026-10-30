@@ -377,6 +377,25 @@ export function validateTailored(
       });
     }
   }
+  /* 4c. Programming languages sit under a Languages heading, never under Backend or Data. */
+  const langGroup = () => {
+    let g = resume.skills.find((x) => /lang/i.test(x.group));
+    if (!g) resume.skills.unshift((g = { group: "Languages", items: [] }));
+    return g;
+  };
+  for (const group of resume.skills.filter((g) => !/lang/i.test(g.group))) {
+    const langs = group.items.filter((i) => skillById.get(i.skillId)?.category === "language");
+    if (!langs.length) continue;
+    group.items = group.items.filter((i) => !langs.includes(i));
+    const target = langGroup();
+    target.items.push(...langs);
+    issues.push({
+      check: "group",
+      ref: "skills",
+      message: `Moved ${langs.map((i) => i.name).join(", ")} from "${group.group}" to "${target.group}".`,
+      action: "fixed",
+    });
+  }
   resume.skills = resume.skills.filter((g) => g.items.length);
   const headlineLeak = leaks(resume.headline)[0];
   if (headlineLeak || !resume.headline.trim()) {
@@ -521,7 +540,11 @@ export function validateTailored(
 
   function cleanTech(tech: string[], allowed: string[], ref: string) {
     const ok = new Set(allowed.map(skillFold));
+    const seen = new Set<string>();
     const kept = tech.filter((t) => {
+      // Each tool once ("PostgreSQL, PostgreSQL" came back from the model).
+      if (seen.has(skillFold(t))) return false;
+      seen.add(skillFold(t));
       if (!ok.has(skillFold(t))) {
         issues.push({
           check: "tech",

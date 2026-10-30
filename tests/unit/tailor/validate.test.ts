@@ -222,6 +222,42 @@ describe("validator", () => {
     expect(of(issues, "numbers", "fix")).toEqual([]);
   });
 
+  it("3c. keeps each tool once on a tech line", () => {
+    const { resume } = run((r) => {
+      r.experience[1].tech = ["PostgreSQL", "Python", "PostgreSQL", "postgresql"];
+    });
+    const tech = resume.experience[1].tech;
+    expect(tech.filter((x) => x === "PostgreSQL")).toHaveLength(1);
+    expect(new Set(tech).size).toBe(tech.length);
+  });
+
+  it("4c. moves languages out of Backend or Data into Languages", () => {
+    const { resume, issues } = run((r) => {
+      r.skills = [
+        {
+          group: "Backend",
+          items: [
+            { name: "Go", skillId: "sk_go" },
+            { name: "Kafka", skillId: "sk_kafka" },
+          ],
+        },
+        {
+          group: "Data",
+          items: [
+            { name: "Python", skillId: "sk_python" },
+            { name: "PostgreSQL", skillId: "sk_postgresql" },
+          ],
+        },
+      ];
+    });
+    expect(resume.skills.map((g) => [g.group, g.items.map((i) => i.name)])).toEqual([
+      ["Languages", ["Go", "Python"]],
+      ["Backend", ["Kafka"]],
+      ["Data", ["PostgreSQL"]],
+    ]);
+    expect(of(issues, "group", "fixed")).toHaveLength(2);
+  });
+
   it("7. replaces em dashes and flags words to avoid", () => {
     const { resume, issues } = run((r) => {
       r.summary!.text = r.summary!.text.replace(" designing", " — designing");
