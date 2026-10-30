@@ -8,7 +8,12 @@ export function profileSections(p: MasterProfile): CvSections {
     summary: [p.basics.summary?.text ?? ""].filter(Boolean),
     skills: p.skills.map((s) => [s.name, ...s.aliases].join(", ")),
     experience: p.experience.flatMap((e) => [...e.bullets.map((b) => b.text), e.tech.join(", ")]),
-    projects: p.projects.flatMap((pr) => [pr.description, ...pr.bullets.map((b) => b.text), pr.tech.join(", ")]),
+    projects: p.projects.flatMap((pr) => [
+      pr.name,
+      pr.description,
+      ...pr.bullets.map((b) => b.text),
+      pr.tech.join(", "),
+    ]),
     education: p.education.map((e) => [e.degree, e.field, e.institution].filter(Boolean).join(", ")),
     other: [...p.certifications.map((c) => c.name), ...p.awards.map((a) => a.text)],
   };
@@ -24,7 +29,12 @@ export function tailoredSections(t: TailoredResume, p: MasterProfile): CvSection
     summary: t.summary ? [t.summary.text] : [],
     skills: t.skills.map((g) => g.items.map((i) => i.name).join(", ")),
     experience: t.experience.flatMap((e) => [...e.bullets.map((b) => b.text), e.tech.join(", ")]),
-    projects: t.projects.flatMap((pr) => [...pr.bullets.map((b) => b.text), pr.tech.join(", ")]),
+    projects: t.projects.flatMap((pr) => [
+      // The rendered CV shows each project's name.
+      p.projects.find((x) => x.id === pr.projectId)?.name ?? "",
+      ...pr.bullets.map((b) => b.text),
+      pr.tech.join(", "),
+    ]),
     education: p.education
       .filter((e) => edu.has(e.id))
       .map((e) => [e.degree, e.field, e.institution].filter(Boolean).join(", ")),

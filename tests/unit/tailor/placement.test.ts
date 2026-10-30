@@ -133,3 +133,28 @@ describe("placement asks for one job term per bullet", () => {
     expect(placement.b_1_1).toEqual(["role-based access control"]);
   });
 });
+
+describe("project names count as proof", () => {
+  it("matches a domain the project's name states (AI Healthcare Platform proves healthcare)", async () => {
+    const { splitKeywords } = await import("@/lib/tailor/keywords");
+    const { normalizeProfile } = await import("@/lib/profile/normalize");
+    const { p1OutputSchema } = await import("@/lib/llm/prompts/p1-profile");
+    const { readFileSync } = await import("node:fs");
+    const raw = p1OutputSchema.parse(
+      JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/farhan-kabir.json", "utf8")).output,
+    );
+    raw.projects[0].name = "ReadAloud: AI Healthcare Platform";
+    const profile = normalizeProfile(raw);
+    const kw = {
+      term: "healthcare",
+      canonical: "healthcare",
+      synonyms: [],
+      importance: "nice" as const,
+      kind: "domain" as const,
+      evidenceQuote: "healthcare",
+    };
+    const { matched, gaps } = splitKeywords({ title: "x", responsibilities: [], keywords: [kw] } as never, profile);
+    expect(gaps).toEqual([]);
+    expect(matched[0].proofIds).toContain(profile.projects[0].id);
+  });
+});

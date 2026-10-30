@@ -29,7 +29,8 @@ export function splitKeywords(
       ...e.bullets.map((b) => ({ id: b.id, text: b.text })),
     ]),
     ...profile.projects.flatMap((p) => [
-      { id: p.id, text: `${p.description}\n${p.tech.join(", ")}` },
+      // The project's name is on the CV too ("AI Healthcare Platform" proves healthcare).
+      { id: p.id, text: `${p.name}\n${p.description}\n${p.tech.join(", ")}` },
       ...p.bullets.map((b) => ({ id: b.id, text: b.text })),
     ]),
     ...profile.certifications.map((c) => ({ id: c.id, text: c.name })),

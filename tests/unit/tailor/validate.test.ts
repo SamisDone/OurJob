@@ -289,7 +289,7 @@ describe("validator", () => {
     const group = (name: string) => resume.skills.find((g) => g.items.some((i) => i.name === name))?.group;
     expect(group("Go")).toBe("Languages");
     expect(group("Python")).toBe("Languages");
-    expect(group("Kafka")).toBe("Backend");
+    expect(group("Kafka")).toBe("Data");
     expect(group("PostgreSQL")).toBe("Data");
     expect(of(issues, "group", "fixed").length).toBeGreaterThanOrEqual(2);
   });
@@ -303,8 +303,8 @@ describe("validator", () => {
     for (const s of ["Python", "PostgreSQL", "Kafka", "Django"]) expect(names).toContain(s);
     expect(of(issues, "skills", "fixed").some((i) => /Put back/.test(i.message))).toBe(true);
     const data = resume.skills.find((g) => g.items.some((i) => i.name === "PostgreSQL"))!;
-    // Postgres is a job term here, so it leads its group.
-    expect(data.items[0].name).toBe("PostgreSQL");
+    // Job terms (Postgres, Kafka here) lead their group.
+    expect(["PostgreSQL", "Kafka"]).toContain(data.items[0].name);
   });
 
   it("2e and 2f. flag a word said twice and job terms stacked in front of the source", () => {
@@ -331,6 +331,46 @@ describe("validator", () => {
         "Designed the rate-quote service in Go on Postgres with Kafka that answers about 1,200 requests per second at p99 under 80 ms.";
     });
     expect(of(issues, "style", "fix").some((i) => /Adds 2 job terms/.test(i.message))).toBe(true);
+  });
+
+  it("4e. puts skills in fixed groups and order, whatever the model sent", () => {
+    const { resume } = run((r) => {
+      r.skills = [
+        { group: "Data", items: [{ name: "PostgreSQL", skillId: "sk_postgresql" }] },
+        {
+          group: "Tools",
+          items: [
+            { name: "Python", skillId: "sk_python" },
+            { name: "Django", skillId: "sk_django" },
+          ],
+        },
+        { group: "Languages", items: [{ name: "Go", skillId: "sk_go" }] },
+      ];
+    });
+    const groups = resume.skills.map((g) => g.group);
+    const order = ["Languages", "Frontend", "Backend", "Data", "AI/ML", "Infrastructure"];
+    expect(groups).toEqual(order.filter((g) => groups.includes(g)));
+    expect(resume.skills[0]).toMatchObject({ group: "Languages" });
+    expect(resume.skills.find((g) => g.items.some((i) => i.name === "Django"))?.group).toBe("Backend");
+    expect(resume.skills.find((g) => g.items.some((i) => i.name === "PostgreSQL"))?.group).toBe("Data");
+  });
+
+  it("4e. knows where web, data, AI/ML and tool skills go", async () => {
+    const { skillGroupOf } = await import("@/lib/tailor/validate");
+    expect(skillGroupOf("Gemini API", "cloud")).toBe("Backend");
+    expect(skillGroupOf("Firebase", "cloud")).toBe("Backend");
+    expect(skillGroupOf("PyTorch", "library")).toBe("AI/ML");
+    expect(skillGroupOf("scikit-learn", "library")).toBe("AI/ML");
+    expect(skillGroupOf("Hugging Face Transformers", "library")).toBe("AI/ML");
+    expect(skillGroupOf("NLP", "practice")).toBe("AI/ML");
+    expect(skillGroupOf("multimodal deep learning", "domain")).toBe("AI/ML");
+    expect(skillGroupOf("SHAP", "library")).toBe("AI/ML");
+    expect(skillGroupOf("LaTeX", "language")).toBe("Infrastructure");
+    expect(skillGroupOf("Chrome APIs", "tool")).toBe("Frontend");
+    expect(skillGroupOf("Three.js", "library")).toBe("Frontend");
+    expect(skillGroupOf("TypeScript", "language")).toBe("Languages");
+    expect(skillGroupOf("PostgreSQL", "database")).toBe("Data");
+    expect(skillGroupOf("Docker", "tool")).toBe("Infrastructure");
   });
 
   it("2c. lets a count become the list it counts", () => {

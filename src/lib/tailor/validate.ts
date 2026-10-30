@@ -135,6 +135,59 @@ const BAAS = new Set(
   ["firebase", "supabase", "appwrite", "pocketbase", "convex", "gemini api", "openai api", "claude api"].map(skillFold),
 );
 
+/** The skills section's groups, in this order (check 4e). */
+export const SKILL_GROUPS = ["Languages", "Frontend", "Backend", "Data", "AI/ML", "Infrastructure"] as const;
+
+const AI_ML = new Set(
+  [
+    "pytorch",
+    "tensorflow",
+    "keras",
+    "jax",
+    "scikit-learn",
+    "sklearn",
+    "hugging face transformers",
+    "hugging face",
+    "transformers",
+    "nlp",
+    "natural language processing",
+    "computer vision",
+    "opencv",
+    "deep learning",
+    "multimodal deep learning",
+    "machine learning",
+    "shap",
+    "xgboost",
+    "lightgbm",
+    "numpy",
+    "pandas",
+    "langchain",
+    "llamaindex",
+    "onnx",
+    "large language models",
+  ].map(skillFold),
+);
+const TOOLS = new Set(
+  ["latex", "overleaf", "git", "github actions", "ci", "linux", "docker", "kubernetes"].map(skillFold),
+);
+const MORE_FRONTEND = new Set(["chrome apis", "chrome extensions", "web apis", "html", "css", "sass"].map(skillFold));
+const DATA_TOOLS = new Set(["kafka", "rabbitmq", "redis", "elasticsearch"].map(skillFold));
+const MORE_BACKEND = new Set(["node.js", "bun", "deno", "rest apis", "graphql", "grpc"].map(skillFold));
+
+/** Which of SKILL_GROUPS a skill belongs to. */
+export function skillGroupOf(name: string, category?: string): (typeof SKILL_GROUPS)[number] {
+  const n = skillFold(name);
+  if (AI_ML.has(n) || /machine learning|deep learning|neural|\bnlp\b/i.test(name)) return "AI/ML";
+  if (TOOLS.has(n)) return "Infrastructure";
+  if (BAAS.has(n) || SIDE_SKILLS.backend.has(n) || MORE_BACKEND.has(n)) return "Backend";
+  if (SIDE_SKILLS.frontend.has(n) || MORE_FRONTEND.has(n)) return "Frontend";
+  if (DATA_TOOLS.has(n)) return "Data";
+  if (category === "language") return "Languages";
+  if (category === "database") return "Data";
+  if (category === "framework" || category === "library") return "Backend";
+  return "Infrastructure";
+}
+
 export const BANNED_WORDS = [
   "spearheaded",
   "leveraged",
@@ -480,6 +533,27 @@ export function validateTailored(
     group.items = [...group.items.filter((i) => jobTerm(i.name)), ...group.items.filter((i) => !jobTerm(i.name))];
   }
   resume.skills = resume.skills.filter((g) => g.items.length);
+
+  /*
+   * 4e. Code decides the groups and their order, not the model: Languages, Frontend, Backend, Data, AI/ML,
+   * Infrastructure, empty ones left out. Within a group, the job's terms first, then the model's order.
+   */
+  const before4e = JSON.stringify(resume.skills.map((g) => [g.group, g.items.map((i) => i.name)]));
+  const items = resume.skills.flatMap((g) => g.items);
+  const regrouped = SKILL_GROUPS.map((group) => ({
+    group,
+    items: items.filter((i) => skillGroupOf(i.name, skillById.get(i.skillId)?.category) === group),
+  }));
+  for (const g of regrouped)
+    g.items = [...g.items.filter((i) => jobTerm(i.name)), ...g.items.filter((i) => !jobTerm(i.name))];
+  resume.skills = regrouped.filter((g) => g.items.length);
+  if (JSON.stringify(resume.skills.map((g) => [g.group, g.items.map((i) => i.name)])) !== before4e)
+    issues.push({
+      check: "group",
+      ref: "skills",
+      message: "Skills put in the standard groups and order.",
+      action: "fixed",
+    });
   const headlineLeak = leaks(resume.headline)[0];
   if (headlineLeak || !resume.headline.trim()) {
     const fallback = p.basics.headline ?? p.experience[0]?.title ?? "";
