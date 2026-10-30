@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* Old index-card tokens for screens not migrated yet. Deleted with src/components/legacy. */
-@import "../styles/legacy.css";
 
 /* next-themes puts .dark on <html>; "system" resolves to light or dark there too. */
 @custom-variant dark (&:is(.dark *));
@@ -200,6 +198,13 @@
   figcaption,
   blockquote {
     text-wrap: pretty;
+  }
+
+  /* Primary actions are at least 44 px tall on phones (DESIGN.md 9). */
+  @media (width < 48rem) {
+    [data-slot="button"][data-variant="default"]:is([data-size="default"], [data-size="lg"]) {
+      min-height: 2.75rem;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

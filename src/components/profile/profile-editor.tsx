@@ -1,21 +1,19 @@
 "use client";
 
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  DotsSixVerticalIcon,
-  PencilSimpleIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@phosphor-icons/react/ssr";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowDown, ArrowUp, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Fragment, useState, type ReactNode } from "react";
-import { Button } from "@/components/legacy/button";
-import { TokenChip } from "@/components/legacy/chip";
-import { Panel } from "@/components/legacy/feedback";
-import { SourceBadges } from "@/components/legacy/form-bits";
-import { Input, Label } from "@/components/legacy/input";
-import { Select } from "@/components/legacy/select";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+import { SourceBadges } from "@/components/forms/source-badges";
+import { Nums } from "@/components/nums";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { boldSegments } from "@/lib/cv/document";
 import { formatCvDate } from "@/lib/profile/dates";
 import type { EditOp } from "@/lib/profile/edit";
@@ -39,20 +37,22 @@ const CATEGORY_LABEL: Record<string, string> = {
   soft: "Working style",
 };
 
-const FIELDS: Record<Section, { key: string; label: string; placeholder?: string }[]> = {
+type FieldSpec = { key: string; label: string; placeholder?: string; url?: boolean };
+
+const FIELDS: Record<Section, FieldSpec[]> = {
   experience: [
     { key: "company", label: "Company" },
     { key: "title", label: "Title" },
     { key: "start", label: "Start", placeholder: "Mar 2024" },
     { key: "end", label: "End", placeholder: "Present" },
     { key: "location", label: "Location" },
-    { key: "companyUrl", label: "Company website", placeholder: "https://" },
+    { key: "companyUrl", label: "Company website", placeholder: "https://", url: true },
   ],
   projects: [
     { key: "name", label: "Name" },
     { key: "description", label: "One-line description" },
-    { key: "liveUrl", label: "Live link", placeholder: "https://" },
-    { key: "sourceUrl", label: "Source link", placeholder: "https://" },
+    { key: "liveUrl", label: "Live link", placeholder: "https://", url: true },
+    { key: "sourceUrl", label: "Source link", placeholder: "https://", url: true },
   ],
   education: [
     { key: "institution", label: "Institution" },
@@ -67,6 +67,25 @@ const FIELDS: Record<Section, { key: string; label: string; placeholder?: string
     { key: "date", label: "Date", placeholder: "2022" },
   ],
 };
+
+/** The first field names the item, so it is the one that cannot be empty. */
+function itemSchema(section: Section) {
+  return z.object(
+    Object.fromEntries(
+      FIELDS[section].map((f, i) => [
+        f.key,
+        i === 0
+          ? z.string().trim().min(1, `Add the ${f.label.toLowerCase()}.`)
+          : f.url
+            ? z
+                .string()
+                .trim()
+                .refine((s) => s === "" || /^https?:\/\/\S+$/i.test(s), "Enter a full link starting with https://")
+            : z.string(),
+      ]),
+    ),
+  );
+}
 
 function Rich({ bullet }: { bullet: Bullet }) {
   return (
@@ -84,13 +103,39 @@ function Rich({ bullet }: { bullet: Bullet }) {
   );
 }
 
-function SectionHeading({ id, children, action }: { id: string; children: ReactNode; action?: ReactNode }) {
+function SectionCard({
+  id,
+  title,
+  action,
+  children,
+}: {
+  id: string;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <div className="mt-10 flex items-end justify-between gap-4 border-b border-rule pb-2 first:mt-0">
-      <h2 id={id} className="text-lg font-semibold">
-        {children}
-      </h2>
-      {action}
+    <Card role="region" aria-labelledby={id}>
+      <CardHeader>
+        <CardTitle>
+          <h2 id={id}>{title}</h2>
+        </CardTitle>
+        {action && <CardAction>{action}</CardAction>}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+function FormButtons({ submitLabel, onCancel, disabled }: { submitLabel: string; onCancel: () => void; disabled?: boolean }) {
+  return (
+    <div className="flex gap-2">
+      <Button type="submit" disabled={disabled}>
+        {submitLabel}
+      </Button>
+      <Button type="button" variant="ghost" onClick={onCancel}>
+        Cancel
+      </Button>
     </div>
   );
 }
@@ -108,43 +153,45 @@ function ItemForm({
   onCancel: () => void;
   submitLabel: string;
 }) {
-  const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
+  const form = useForm<Record<string, string>>({
+    resolver: zodResolver(itemSchema(section)),
+    defaultValues: Object.fromEntries(
       FIELDS[section].map((f) => {
         const v = initial[f.key] ?? "";
         return [f.key, f.key === "start" || f.key === "end" || f.key === "date" ? formatCvDate(v) : v];
       }),
     ),
-  );
+  });
   return (
     <form
-      className="my-3 rounded-panel border border-rule bg-ink-wash p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(values);
-      }}
+      className="my-3 rounded-lg border bg-muted/40 p-4"
+      noValidate
+      onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
     >
-      <div className="grid gap-3 sm:grid-cols-2">
-        {FIELDS[section].map((f) => (
-          <div key={f.key} className="space-y-1">
-            <Label htmlFor={`${section}-${f.key}`}>{f.label}</Label>
-            <Input
-              id={`${section}-${f.key}`}
-              value={values[f.key]}
-              placeholder={f.placeholder}
-              onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+      <FieldGroup className="gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {FIELDS[section].map((f) => (
+            <Controller
+              key={f.key}
+              name={f.key}
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid || undefined}>
+                  <FieldLabel htmlFor={`${section}-${f.key}`}>{f.label}</FieldLabel>
+                  <Input
+                    {...field}
+                    id={`${section}-${f.key}`}
+                    placeholder={f.placeholder}
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
             />
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex gap-2">
-        <Button type="submit" size="sm">
-          {submitLabel}
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
+          ))}
+        </div>
+        <FormButtons submitLabel={submitLabel} onCancel={onCancel} />
+      </FieldGroup>
     </form>
   );
 }
@@ -191,18 +238,18 @@ function BulletList({
               setDragging(null);
             }}
             className={cn(
-              "group relative grid grid-cols-[20px_1fr_auto] items-start gap-1 rounded-[6px]",
+              "group relative grid grid-cols-[20px_1fr_auto] items-start gap-1 rounded-md",
               dragging === b.id && "opacity-50",
             )}
           >
             <span
-              className="mt-1.5 cursor-grab text-graphite opacity-60 group-hover:opacity-100"
+              className="mt-1 cursor-grab text-muted-foreground opacity-60 group-hover:opacity-100"
               aria-hidden
               title="Drag to reorder"
             >
-              <DotsSixVerticalIcon size={16} />
+              <GripVertical className="size-4" />
             </span>
-            <div className="min-w-0 text-[15px] leading-6 text-body">
+            <div className="min-w-0 text-sm leading-6">
               <EditableText
                 label={`bullet ${i + 1} in ${label}`}
                 value={b.text}
@@ -219,7 +266,7 @@ function BulletList({
                 disabled={i === 0}
                 onClick={() => move(b.id, i - 1)}
               >
-                <ArrowUpIcon aria-hidden />
+                <ArrowUp />
               </Button>
               <Button
                 variant="ghost"
@@ -228,7 +275,7 @@ function BulletList({
                 disabled={i === bullets.length - 1}
                 onClick={() => move(b.id, i + 1)}
               >
-                <ArrowDownIcon aria-hidden />
+                <ArrowDown />
               </Button>
               <Button
                 variant="ghost"
@@ -236,7 +283,7 @@ function BulletList({
                 aria-label={`Remove bullet ${i + 1}`}
                 onClick={() => edit([{ op: "removeBullet", id: b.id }])}
               >
-                <TrashIcon aria-hidden />
+                <Trash2 />
               </Button>
             </div>
           </li>
@@ -252,7 +299,7 @@ function BulletList({
         </div>
       ) : (
         <Button variant="ghost" size="sm" className="mt-1 ml-5" onClick={() => setAdding(true)}>
-          <PlusIcon aria-hidden />
+          <Plus data-icon="inline-start" />
           Add a bullet
         </Button>
       )}
@@ -298,28 +345,32 @@ function ItemHeader({
 }: {
   left: ReactNode;
   sub?: ReactNode;
-  right?: ReactNode;
+  right?: string;
   sources: string[];
   onEdit: () => void;
   onRemove: () => void;
   label: string;
 }) {
   return (
-    <div className="group flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
       <div className="min-w-0">
-        <p className="text-base">
-          <span className="font-semibold text-ink">{left}</span>
-          {sub && <span className="text-body"> | {sub}</span>}
+        <p>
+          <span className="font-semibold">{left}</span>
+          {sub && <span className="text-muted-foreground"> · {sub}</span>}
         </p>
         <SourceBadges sources={sources} className="mt-1" />
       </div>
       <div className="flex items-center gap-1">
-        {right && <span className="mr-2 text-sm text-graphite italic">{right}</span>}
+        {right && (
+          <span className="mr-2 text-sm text-muted-foreground">
+            <Nums>{right}</Nums>
+          </span>
+        )}
         <Button variant="ghost" size="icon-sm" aria-label={`Edit ${label}`} onClick={onEdit}>
-          <PencilSimpleIcon aria-hidden />
+          <Pencil />
         </Button>
         <Button variant="ghost" size="icon-sm" aria-label={`Remove ${label}`} onClick={onRemove}>
-          <TrashIcon aria-hidden />
+          <Trash2 />
         </Button>
       </div>
     </div>
@@ -332,9 +383,9 @@ function dates(start?: string, end?: string) {
 }
 
 /**
- * The master profile as a document that reads like a CV, on a white index
- * card. Every item shows where it came from; everything edits in place and
- * each change is saved as a new version.
+ * The master profile, one card per section in CV order. Every item shows
+ * where it came from; everything edits in place and each change is saved as
+ * a new version.
  */
 export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
   const p = version.data;
@@ -342,8 +393,6 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
   const editMut = useEditProfile();
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState<Section | null>(null);
-  const [skillDraft, setSkillDraft] = useState("");
-  const [skillCat, setSkillCat] = useState("tool");
 
   const edit = (ops: EditOp[]) => editMut.mutate(ops);
   /** Removals save a version; Undo restores the version before it. */
@@ -354,7 +403,7 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
     });
 
   const sectionItems = (section: Section, label: (x: Record<string, unknown>) => string) => (
-    <>
+    <div className="divide-y">
       {(p[section] as unknown as (Record<string, unknown> & { id: string; sources: string[] })[]).map((item) => {
         const key = `${section}:${item.id}`;
         if (editing === key) {
@@ -374,7 +423,7 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
         }
         const name = label(item);
         return (
-          <article key={item.id} className="mt-5" aria-label={name}>
+          <article key={item.id} className="py-4 first:pt-0 last:pb-0" aria-label={name}>
             <ItemHeader
               label={name}
               left={
@@ -414,8 +463,8 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
                   itemSources={item.sources}
                 />
                 {(item.tech as string[]).length > 0 && (
-                  <p className="mt-1 pl-6 text-sm text-body">
-                    <span className="font-medium">Tech:</span> <i>{(item.tech as string[]).join(", ")}</i>
+                  <p className="mt-1 pl-6 text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Tech:</span> {(item.tech as string[]).join(", ")}
                   </p>
                 )}
               </>
@@ -434,7 +483,7 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 
   const skillsByCat = Object.entries(
@@ -445,8 +494,8 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
   ).sort((a, b) => Object.keys(CATEGORY_LABEL).indexOf(a[0]) - Object.keys(CATEGORY_LABEL).indexOf(b[0]));
 
   const addButton = (section: Section, text: string) => (
-    <Button variant="ghost" size="sm" onClick={() => setAdding(section)}>
-      <PlusIcon aria-hidden />
+    <Button variant="outline" size="sm" onClick={() => setAdding(section)}>
+      <Plus data-icon="inline-start" />
       {text}
     </Button>
   );
@@ -455,80 +504,82 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
     <div className="space-y-6">
       <ConflictsPanel profile={p} onResolve={(op) => edit([op])} pending={editMut.isPending} />
 
-      <Panel className="px-5 pt-8 pb-10 md:px-10">
-        {/* Header, like the top of a CV */}
-        {editing === "basics" ? (
-          <BasicsForm
-            profile={p}
-            onCancel={() => setEditing(null)}
-            onSave={(fields) => (edit([{ op: "setBasics", fields }]), setEditing(null))}
-          />
-        ) : (
-          <header className="group flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold">{p.basics.name}</h1>
-              {p.basics.headline && <p className="mt-0.5 text-lg text-body">{p.basics.headline}</p>}
-              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-graphite">
-                {[p.basics.location, p.basics.email, p.basics.phone].filter(Boolean).map((x) => (
-                  <span key={x}>{x}</span>
-                ))}
-                {p.basics.links.map((l) => (
-                  <a
-                    key={l.id}
-                    href={l.url}
-                    className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {l.label}
-                  </a>
-                ))}
-              </p>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setEditing("basics")}>
-              <PencilSimpleIcon aria-hidden />
-              Edit details
-            </Button>
-          </header>
-        )}
+      <Card role="region" aria-labelledby="basics-h">
+        <CardContent>
+          {editing === "basics" ? (
+            <BasicsForm
+              profile={p}
+              onCancel={() => setEditing(null)}
+              onSave={(fields) => (edit([{ op: "setBasics", fields }]), setEditing(null))}
+            />
+          ) : (
+            <header className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 id="basics-h" className="text-xl font-semibold tracking-tight">
+                  {p.basics.name}
+                </h2>
+                {p.basics.headline && <p className="mt-0.5 text-muted-foreground">{p.basics.headline}</p>}
+                <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  {[p.basics.location, p.basics.email, p.basics.phone].filter(Boolean).map((x) => (
+                    <span key={x}>{x}</span>
+                  ))}
+                  {p.basics.links.map((l) => (
+                    <a
+                      key={l.id}
+                      href={l.url}
+                      className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {l.label}
+                    </a>
+                  ))}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setEditing("basics")}>
+                <Pencil data-icon="inline-start" />
+                Edit details
+              </Button>
+            </header>
+          )}
+          <div className="mt-6 border-t pt-4 text-sm leading-6">
+            <p id="summary-h" className="mb-1 font-medium">
+              Summary
+            </p>
+            <EditableText
+              label="summary"
+              value={p.basics.summary?.text ?? ""}
+              placeholder="Add a short summary"
+              onSave={(text) => edit([{ op: "setSummary", text }])}
+            />
+            {p.basics.summary && <SourceBadges sources={p.basics.summary.sources} className="mt-1" />}
+          </div>
+        </CardContent>
+      </Card>
 
-        <SectionHeading id="summary-h">Summary</SectionHeading>
-        <div className="mt-3 text-[15px] leading-6 text-body">
-          <EditableText
-            label="summary"
-            value={p.basics.summary?.text ?? ""}
-            placeholder="Add a short summary"
-            onSave={(text) => edit([{ op: "setSummary", text }])}
-          />
-          {p.basics.summary && <SourceBadges sources={p.basics.summary.sources} className="mt-1" />}
-        </div>
-
-        <SectionHeading id="exp-h" action={addButton("experience", "Add a role")}>
-          Experience
-        </SectionHeading>
+      <SectionCard id="exp-h" title="Experience" action={addButton("experience", "Add a role")}>
         {sectionItems("experience", (x) => `${x.title} at ${x.company}`)}
+      </SectionCard>
 
-        <SectionHeading id="proj-h" action={addButton("projects", "Add a project")}>
-          Projects
-        </SectionHeading>
+      <SectionCard id="proj-h" title="Projects" action={addButton("projects", "Add a project")}>
         {sectionItems("projects", (x) => String(x.name))}
+      </SectionCard>
 
-        <SectionHeading id="edu-h" action={addButton("education", "Add education")}>
-          Education
-        </SectionHeading>
+      <SectionCard id="edu-h" title="Education" action={addButton("education", "Add education")}>
         {sectionItems("education", (x) => String(x.institution))}
+      </SectionCard>
 
-        <SectionHeading id="skills-h">Skills</SectionHeading>
-        <dl className="mt-3 space-y-3">
+      <SectionCard id="skills-h" title="Skills">
+        <dl className="space-y-3">
           {skillsByCat.map(([cat, skills]) => (
             <div key={cat} className="grid gap-x-6 gap-y-1.5 sm:grid-cols-[140px_1fr]">
-              <dt className="pt-1.5 text-sm text-graphite">{CATEGORY_LABEL[cat] ?? cat}</dt>
-              <dd className="flex flex-wrap gap-2">
+              <dt className="pt-1 text-sm text-muted-foreground">{CATEGORY_LABEL[cat] ?? cat}</dt>
+              <dd className="flex flex-wrap gap-1.5">
                 {skills.map((s) => (
-                  <TokenChip
+                  <Badge
                     key={s.id}
-                    onRemove={() => remove({ op: "removeSkill", id: s.id }, s.name)}
-                    className={cn(s.evidence.length === 0 && "border-dashed")}
+                    variant="outline"
+                    className={cn("h-7 gap-1 pr-1 text-sm font-normal", s.evidence.length === 0 && "border-dashed")}
                   >
                     <span
                       title={
@@ -539,77 +590,120 @@ export function ProfileEditor({ version }: { version: ProfileVersionDto }) {
                     >
                       {s.name}
                     </span>
-                  </TokenChip>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-6 rounded-full"
+                      aria-label={`Remove ${s.name}`}
+                      onClick={() => remove({ op: "removeSkill", id: s.id }, s.name)}
+                    >
+                      <X />
+                    </Button>
+                  </Badge>
                 ))}
               </dd>
             </div>
           ))}
         </dl>
-        <p className="mt-2 text-xs text-graphite">
+        <p className="mt-3 text-xs text-muted-foreground">
           A dashed border means the skill is listed but no bullet or project mentions it yet.
         </p>
-        <form
-          className="mt-4 flex flex-wrap items-end gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!skillDraft.trim()) return;
-            edit([
-              {
-                op: "addSkill",
-                name: skillDraft.trim(),
-                category: skillCat as MasterProfile["skills"][number]["category"],
-              },
-            ]);
-            setSkillDraft("");
-          }}
-        >
-          <div className="w-full space-y-1 sm:w-56">
-            <Label htmlFor="new-skill">Add a skill</Label>
-            <Input
-              id="new-skill"
-              value={skillDraft}
-              placeholder="GraphQL"
-              onChange={(e) => setSkillDraft(e.target.value)}
-            />
-          </div>
-          <Select
-            aria-label="Skill category"
-            value={skillCat}
-            onValueChange={setSkillCat}
-            options={Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label }))}
-            className="w-full sm:w-44"
-          />
-          <Button type="submit" variant="secondary" disabled={!skillDraft.trim()}>
-            <PlusIcon aria-hidden />
-            Add
-          </Button>
-        </form>
+        <SkillForm onAdd={(name, category) => edit([{ op: "addSkill", name, category }])} />
+      </SectionCard>
 
-        <SectionHeading id="cert-h" action={addButton("certifications", "Add a certification")}>
-          Certifications
-        </SectionHeading>
+      <SectionCard id="cert-h" title="Certifications" action={addButton("certifications", "Add a certification")}>
         {p.certifications.length === 0 && adding !== "certifications" && (
-          <p className="mt-3 text-sm text-graphite">None yet.</p>
+          <p className="text-sm text-muted-foreground">None yet.</p>
         )}
         {sectionItems("certifications", (x) => String(x.name))}
+      </SectionCard>
 
-        {p.languages.length > 0 && (
-          <>
-            <SectionHeading id="lang-h">Languages</SectionHeading>
-            <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[15px] text-body">
-              {p.languages.map((l) => (
-                <li key={l.id}>
-                  {l.name}
-                  {l.level && <span className="text-graphite"> ({l.level})</span>}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </Panel>
+      {p.languages.length > 0 && (
+        <SectionCard id="lang-h" title="Languages">
+          <ul className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            {p.languages.map((l) => (
+              <li key={l.id}>
+                {l.name}
+                {l.level && <span className="text-muted-foreground"> ({l.level})</span>}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
     </div>
   );
 }
+
+type SkillCategory = MasterProfile["skills"][number]["category"];
+
+const skillSchema = z.object({
+  name: z.string().trim().min(1),
+  category: z.string(),
+});
+
+function SkillForm({ onAdd }: { onAdd: (name: string, category: SkillCategory) => void }) {
+  const form = useForm<z.infer<typeof skillSchema>>({
+    resolver: zodResolver(skillSchema),
+    defaultValues: { name: "", category: "tool" },
+  });
+  const name = useWatch({ control: form.control, name: "name" });
+  return (
+    <form
+      className="mt-4 flex flex-wrap items-end gap-2"
+      noValidate
+      onSubmit={(e) =>
+        void form.handleSubmit((v) => {
+          onAdd(v.name, v.category as SkillCategory);
+          form.reset({ name: "", category: v.category });
+        })(e)
+      }
+    >
+      <Field className="w-full sm:w-56">
+        <FieldLabel htmlFor="new-skill">Add a skill</FieldLabel>
+        <Input id="new-skill" placeholder="GraphQL" {...form.register("name")} />
+      </Field>
+      <Controller
+        name="category"
+        control={form.control}
+        render={({ field }) => (
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger aria-label="Skill category" className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(CATEGORY_LABEL).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      />
+      <Button type="submit" variant="outline" disabled={!name.trim()}>
+        <Plus data-icon="inline-start" />
+        Add
+      </Button>
+    </form>
+  );
+}
+
+const basicsSchema = z.object({
+  name: z.string().trim().min(1, "Add the name on your CV."),
+  headline: z.string(),
+  location: z.string(),
+  email: z.union([z.literal(""), z.email("Enter an email like name@example.com.")]),
+  phone: z.string(),
+});
+type Basics = z.infer<typeof basicsSchema>;
+
+const BASICS_FIELDS: [keyof Basics, string][] = [
+  ["name", "Name on your CV"],
+  ["headline", "Headline"],
+  ["location", "Location"],
+  ["email", "Email"],
+  ["phone", "Phone"],
+];
 
 function BasicsForm({
   profile,
@@ -620,44 +714,42 @@ function BasicsForm({
   onSave: (f: Record<string, string>) => void;
   onCancel: () => void;
 }) {
-  const [v, setV] = useState({
-    name: profile.basics.name,
-    headline: profile.basics.headline ?? "",
-    location: profile.basics.location ?? "",
-    email: profile.basics.email ?? "",
-    phone: profile.basics.phone ?? "",
+  const form = useForm<Basics>({
+    resolver: zodResolver(basicsSchema),
+    defaultValues: {
+      name: profile.basics.name,
+      headline: profile.basics.headline ?? "",
+      location: profile.basics.location ?? "",
+      email: profile.basics.email ?? "",
+      phone: profile.basics.phone ?? "",
+    },
   });
-  const fields: [keyof typeof v, string][] = [
-    ["name", "Name on your CV"],
-    ["headline", "Headline"],
-    ["location", "Location"],
-    ["email", "Email"],
-    ["phone", "Phone"],
-  ];
   return (
-    <form
-      className="rounded-panel border border-rule bg-ink-wash p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSave(v);
-      }}
-    >
-      <div className="grid gap-3 sm:grid-cols-2">
-        {fields.map(([k, label]) => (
-          <div key={k} className="space-y-1">
-            <Label htmlFor={`basics-${k}`}>{label}</Label>
-            <Input id={`basics-${k}`} value={v[k]} onChange={(e) => setV((x) => ({ ...x, [k]: e.target.value }))} />
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex gap-2">
-        <Button type="submit" size="sm" disabled={!v.name.trim()}>
-          Save
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-          Cancel
-        </Button>
-      </div>
+    <form noValidate onSubmit={(e) => void form.handleSubmit(onSave)(e)}>
+      <FieldGroup className="gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {BASICS_FIELDS.map(([k, label]) => (
+            <Controller
+              key={k}
+              name={k}
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid || undefined}>
+                  <FieldLabel htmlFor={`basics-${k}`}>{label}</FieldLabel>
+                  <Input
+                    {...field}
+                    id={`basics-${k}`}
+                    type={k === "email" ? "email" : "text"}
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          ))}
+        </div>
+        <FormButtons submitLabel="Save" onCancel={onCancel} />
+      </FieldGroup>
     </form>
   );
 }

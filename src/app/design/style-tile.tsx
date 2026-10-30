@@ -1,100 +1,98 @@
 "use client";
 
-import { ArrowSquareOutIcon, CaretDownIcon, CopyIcon, DownloadSimpleIcon, PlusIcon } from "@phosphor-icons/react/ssr";
-import { useMemo, useState, type ReactNode } from "react";
+import { ChevronDown, Copy, Download, ExternalLink, Info, Plus, Search, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
-import { CvSheet } from "@/components/cv/cv-sheet";
-import { JobRow, JobRowSkeleton } from "@/components/jobs/job-row";
-import { MarkedText } from "@/components/marks/marked-text";
-import { penTiming } from "@/components/marks/sweep";
-import { ScoreDisplay } from "@/components/score/score";
-import { AppShell } from "@/components/shell/app-shell";
-import { AccountMenu } from "@/components/shell/account-menu";
-import { Kbd } from "@/components/ui/kbd";
+import { Combobox } from "@/components/forms/combobox";
+import { DropZone } from "@/components/forms/drop-zone";
+import { SourceBadges } from "@/components/forms/source-badges";
+import { TokenInput } from "@/components/forms/token-input";
+import { MatchBadge } from "@/components/jobs/match-badge";
+import { LoadError } from "@/components/load-error";
+import { Nums } from "@/components/nums";
 import { ThemeControl } from "@/components/shell/theme-control";
-import { TailorDesk } from "@/components/tailor/desk";
-import { KanbanBoard, KanbanCard, KanbanColumn } from "@/components/tracker/kanban";
-import { Button } from "@/components/legacy/button";
-import { FilterChip, KeywordChip, Stamp, Tag, TokenChip } from "@/components/legacy/chip";
-import { CodeView } from "@/components/legacy/code-view";
-import { DataTable } from "@/components/legacy/data-table";
-import { DiffView } from "@/components/legacy/diff-view";
-import { Callout, CautionBar, EmptyState, ErrorState, Panel, Skeleton } from "@/components/legacy/feedback";
-import { FieldError, FieldHint, Input, Label, Textarea } from "@/components/legacy/input";
+import { LogoMark } from "@/components/shell/wordmark";
+import { ScoreCard } from "@/components/tailor/score-card";
+import { TaskSteps } from "@/components/task-steps";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  Tooltip,
-  TooltipProvider,
-} from "@/components/legacy/overlay";
-import { Combobox, Select } from "@/components/legacy/select";
-import { ProgressSteps, TaskSteps } from "@/components/legacy/steps";
-import { Segmented, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/legacy/tabs";
-import { toast } from "sonner";
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldTitle,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Kbd } from "@/components/ui/kbd";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CvDocument } from "@/lib/cv/document";
-import { findSampleMarks, sampleAts, sampleCompanies, sampleCv, sampleJd, sampleJobs } from "@/lib/design/sample";
-import { cn } from "@/lib/utils";
+import { sampleAts, sampleCv, sampleJd } from "@/lib/design/sample";
 
-const lightTokens = [
-  ["paper", "#E6E4DF", "The desk the cards sit on"],
-  ["sheet", "#FFFFFF", "Index cards, panels, popovers"],
-  ["ink", "#1F3A93", "Headings, titles, fit score, primary buttons, links"],
-  ["body", "#2A3145", "Running text: descriptions, bullets, reasons"],
-  ["graphite", "#4F5D80", "Secondary text: company, source, dates, hints"],
-  ["rule", "#C9D8F0", "Ruled lines between rows, borders"],
-  ["control-edge", "#6F7EA5", "Edges of text fields and selects"],
-  ["red-rule", "#D7263D", "The red line at the top of a card. Never text"],
-  ["redpen", "#C41E3A", "Missing keywords, destructive actions, the stamp"],
-  ["circle-fill", "#DCE6FA", "Behind a circled keyword, focus halo"],
-  ["circle-stroke", "#1F3A93", "The blue pen circle"],
-  ["ok", "#186A41", "Eligible, passed checks"],
-  ["caution", "#8A5100", "Pipeline warnings, eligibility unclear"],
-] as const;
-const darkHex: Record<string, string> = {
-  paper: "#10162A",
-  sheet: "#182039",
-  ink: "#DCE4F7",
-  body: "#C9D0E0",
-  graphite: "#9AA6C4",
-  rule: "#2A3557",
-  "control-edge": "#6878A6",
-  "red-rule": "#FF6B7A",
-  redpen: "#FF6B7A",
-  "circle-fill": "#2A3A6E",
-  "circle-stroke": "#8FB0FF",
-  ok: "#5CC48A",
-  caution: "#F0A63C",
-};
+export type Viewer = { name: string; email: string } | null;
 
-const latexExcerpt = String.raw`%-----------EXPERIENCE-----------
-\section{Professional Experience}
-  \resumeSubHeadingListStart
-
-    \resumeSubheading
-      {\underline{Parcelwise}{}}{Senior Backend Engineer}{Jun 2023 -- Present}
-      \resumeItemListStart
-        \resumeItem{Designed the \textbf{rate-quote service} in Go that answers about \textbf{1,200 requests per second} at p99 under 80 ms, and moved nightly billing jobs to a \textbf{Kafka}-based event pipeline that cut failed invoice runs by roughly \textbf{60\%}.}
-        \tech{Go, PostgreSQL, Kafka, Redis, Docker, Kubernetes, gRPC}
-      \resumeItemListEnd
-
-  \resumeSubHeadingListEnd`;
+/** Puts the signed-in person's name on the sample. Nothing about them is stored or committed. */
+function personalize(viewer: Viewer): { cv: CvDocument; label: string } {
+  if (!viewer) return { cv: sampleCv, label: "Nadia Chowdhury (sample)" };
+  const contact = sampleCv.contact.map((c) =>
+    c.url?.startsWith("mailto:") ? { text: viewer.email, url: `mailto:${viewer.email}` } : c,
+  );
+  return { cv: { ...sampleCv, name: viewer.name, contact }, label: viewer.name };
+}
 
 function Section({ id, title, intro, children }: { id: string; title: string; intro?: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-6 border-t border-rule pt-8 pb-14">
-      <h2 id={`${id}-h`} className="text-xl font-semibold text-ink">
-        {title}
-      </h2>
-      {intro && <p className="mt-1 measure text-graphite">{intro}</p>}
-      <div className="mt-7">{children}</div>
+    <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-6 border-t py-10">
+      <div className="mb-6 space-y-1">
+        <h2 id={`${id}-h`} className="text-xl font-semibold tracking-tight">
+          {title}
+        </h2>
+        {intro && <p className="max-w-prose text-muted-foreground">{intro}</p>}
+      </div>
+      {children}
     </section>
   );
 }
@@ -102,949 +100,454 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
 function Sub({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <h3 className="mb-3 text-sm font-medium text-graphite">{title}</h3>
+      <h3 className="mb-3 text-sm font-medium text-muted-foreground">{title}</h3>
       {children}
     </div>
   );
 }
 
-function TokenPanel({ theme }: { theme: "light" | "dark" }) {
-  return (
-    <div
-      data-theme={theme}
-      className="relative overflow-hidden rounded-panel border red-rule-top border-rule bg-paper text-body"
-    >
-      <div className="flex items-baseline justify-between border-b border-rule bg-sheet px-4 py-3">
-        <span className="font-medium text-ink">{theme === "light" ? "Light" : "Dark, carbon paper"}</span>
-        <span className="text-sm text-graphite">tokens.css</span>
-      </div>
-      <ul className="divide-y divide-rule">
-        {lightTokens.map(([name, light, use]) => (
-          <li key={name} className="flex items-center gap-3 px-4 py-2.5">
-            <span
-              className="size-8 shrink-0 rounded-control border border-rule"
-              style={{ background: `var(--${name})` }}
-              aria-hidden
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">--{name}</span>
-              <span className="block truncate text-xs text-graphite">{use}</span>
-            </span>
-            <span className="text-sm text-graphite tabular">{theme === "light" ? light : darkHex[name]}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+const THEME_SWATCHES = [
+  ["background", "bg-background"],
+  ["card", "bg-card"],
+  ["muted", "bg-muted"],
+  ["primary", "bg-primary"],
+  ["secondary", "bg-secondary"],
+  ["border", "bg-border"],
+] as const;
 
-function ProofingDesk({ cv }: { cv: CvDocument }) {
-  const marks = useMemo(() => findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing), []);
-  const [phase, setPhase] = useState<"static" | "pending" | "run">("static");
-  const [run, setRun] = useState(0);
-  const timing = penTiming(marks.filter((m) => m.kind === "matched").length);
+const STATUS = [
+  { name: "success", text: "text-success", soft: "bg-success-soft", use: "Matched keywords, saved, up." },
+  { name: "warning", text: "text-warning", soft: "bg-warning-soft", use: "A late search, unclear location." },
+  { name: "destructive", text: "text-destructive", soft: "bg-destructive-soft", use: "Missing keywords, errors." },
+  { name: "info", text: "text-info", soft: "bg-info-soft", use: "Focus, notes, added by you." },
+] as const;
 
-  const replay = () => {
-    setPhase("pending");
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        setPhase("run");
-        setRun((r) => r + 1);
-      }),
-    );
-  };
+const COUNTRIES = [
+  { value: "BD", label: "Bangladesh" },
+  { value: "IN", label: "India" },
+  { value: "PK", label: "Pakistan" },
+  { value: "LK", label: "Sri Lanka" },
+];
 
-  const diff = (
-    <DiffView
-      items={[
-        {
-          kind: "rewritten",
-          where: "Parcelwise",
-          before:
-            "Moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.",
-          after:
-            "Moved nightly billing jobs to a Kafka-based event pipeline that cut failed invoice runs by roughly 60%.",
-        },
-        {
-          kind: "moved",
-          where: "Technical Skills",
-          text: "Data: PostgreSQL, Redis",
-          note: "Moved to the first line: the job asks for PostgreSQL early",
-        },
-        {
-          kind: "dropped",
-          where: "Taka Pay",
-          text: "Added PostgreSQL row-level security for multi-tenant reporting.",
-          reason: "One bullet per role keeps the CV to one page",
-        },
-      ]}
-    />
-  );
+/** The style tile (DESIGN.md 10.3): theme, status colors, type, every component in use, and the states. */
+export function StyleTile({ viewer }: { viewer: Viewer }) {
+  const { cv, label } = personalize(viewer);
+  const [titles, setTitles] = useState(["Backend Engineer", "Platform Engineer"]);
+  const [country, setCountry] = useState<string>("BD");
+  const [remote, setRemote] = useState("world");
+  const [seniority, setSeniority] = useState(["mid", "senior"]);
+  const [showUnlisted, setShowUnlisted] = useState(true);
 
   return (
-    <TailorDesk
-      job={
-        <>
-          <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
-          <p className="mb-4 text-sm text-graphite">at {sampleJd.company}</p>
-          <MarkedText text={sampleJd.text} marks={marks} phase={phase} />
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Button variant="secondary" onClick={replay}>
-              Replay the pen
-            </Button>
-            <span className="text-sm text-graphite">
-              The pen takes {Math.round(timing.totalMs)} ms, {Math.round(timing.staggerMs)} ms between circles.
-            </span>
-          </div>
-        </>
-      }
-      cv={
-        <Tabs defaultValue="preview">
-          <TabsList aria-label="CV view">
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="latex">LaTeX</TabsTrigger>
-            <TabsTrigger value="changes">Changes</TabsTrigger>
-          </TabsList>
-          <TabsContent value="preview">
-            <CvPreview doc={cv} />
-          </TabsContent>
-          <TabsContent value="latex">
-            <CodeView code={latexExcerpt} />
-          </TabsContent>
-          <TabsContent value="changes">{diff}</TabsContent>
-        </Tabs>
-      }
-      scoreSummary={
-        <>
-          <span className="font-medium text-ink">Estimated ATS match</span>{" "}
-          <span className="text-lg font-semibold text-ink tabular">{sampleAts.tailored}</span>
-          <span className="text-graphite">
-            , master CV <span className="tabular">{sampleAts.master}</span>
-          </span>
-        </>
-      }
-      score={
-        <div className="space-y-8">
-          <ScoreDisplay
-            key={run}
-            score={sampleAts.tailored}
-            masterScore={sampleAts.master}
-            components={sampleAts.components}
-            animate={phase === "run"}
-            durationMs={timing.totalMs}
-          />
-          <div>
-            <h3 className="text-sm font-medium text-ink">
-              Matched <span className="text-graphite tabular">({sampleJd.matched.length})</span>
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1">
-              {sampleJd.matched.map((k) => (
-                <KeywordChip key={k} kind="matched">
-                  {k}
-                </KeywordChip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-ink">
-              Missing <span className="text-graphite tabular">({sampleJd.missing.length})</span>
-            </h3>
-            <ul className="mt-2 divide-y divide-rule border-y border-rule">
-              {sampleJd.missing.map((k, i) => (
-                <li key={k} className="flex items-center justify-between gap-2 py-2">
-                  <KeywordChip kind="missing" importance={i < 3 ? "must" : "nice"}>
-                    {k}
-                  </KeywordChip>
-                  <IHaveThis term={k} />
+    <main className="mx-auto w-full max-w-6xl bg-background px-6 pt-8 pb-24 md:px-8 lg:px-10">
+      <header className="flex flex-col gap-4 pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1.5">
+          <LogoMark className="size-7" />
+          <h1 className="text-2xl font-semibold tracking-tight">Style tile</h1>
+          <p className="max-w-prose text-muted-foreground">
+            Standard shadcn/ui (nova, neutral) with four status colors. Sample person: {label}. Screens with fictional
+            data: <Link className="underline underline-offset-4" href="/preview/today">Today</Link> and{" "}
+            <Link className="underline underline-offset-4" href="/preview/tailor">Tailor</Link>.
+          </p>
+        </div>
+        <ThemeControl />
+      </header>
+
+      <Section id="color" title="Color" intro="Neutral everywhere. Color only carries meaning, never decoration.">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Sub title="Theme">
+            <ul className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {THEME_SWATCHES.map(([name, cls]) => (
+                <li key={name} className="space-y-1.5">
+                  <div className={`h-12 rounded-lg border ${cls}`} />
+                  <p className="text-xs text-muted-foreground">{name}</p>
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-      }
-      actions={
-        <>
-          <Button onClick={() => toast("Opened in Overleaf in a new tab.")}>
-            <ArrowSquareOutIcon aria-hidden />
-            Open in Overleaf
-          </Button>
-          <div className="flex gap-2 [&>*]:flex-1">
-            <Button variant="secondary" onClick={() => toast("Copied LaTeX.")}>
-              Copy LaTeX
-            </Button>
-            <Button variant="secondary" aria-label="Download .tex">
-              <DownloadSimpleIcon aria-hidden />
-              .tex
-            </Button>
-          </div>
-        </>
-      }
-      mobileActions={
-        <>
-          <Button onClick={() => toast("Opened in Overleaf in a new tab.")}>
-            <ArrowSquareOutIcon aria-hidden />
-            Open in Overleaf
-          </Button>
-          <Button variant="secondary" size="icon" aria-label="Copy LaTeX" onClick={() => toast("Copied LaTeX.")}>
-            <CopyIcon aria-hidden />
-          </Button>
-          <Button variant="secondary" size="icon" aria-label="Download .tex">
-            <DownloadSimpleIcon aria-hidden />
-          </Button>
-        </>
-      }
-    />
-  );
-}
-
-function IHaveThis({ term }: { term: string }) {
-  const [where, setWhere] = useState<string>();
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="sm">
-          I have this
-        </Button>
-      </SheetTrigger>
-      <SheetContent
-        title={`Where have you used ${term}?`}
-        description="This goes into your master profile as added by you. Then the CV is tailored again."
-        footer={
-          <>
-            <Button variant="ghost">Not for this job</Button>
-            <Button>Add and re-tailor</Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="where">Role or project</Label>
-            <Select
-              id="where"
-              value={where}
-              onValueChange={setWhere}
-              placeholder="Choose a role or project"
-              options={[
-                { value: "exp_1", label: "Senior Backend Engineer, Parcelwise" },
-                { value: "exp_2", label: "Backend Developer, Taka Pay" },
-                { value: "proj_1", label: "pgwatch-lite (project)" },
-              ]}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="how">How you used it</Label>
-            <Input id="how" placeholder={`One line, for example: Built the ${term} schema for order search`} />
-            <FieldHint>Required. Only facts you can talk about in an interview.</FieldHint>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function TodayPreview({ firstName }: { firstName: string }) {
-  const [chips, setChips] = useState({ remote: true, pay: false, direct: false });
-  return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <div>
-          <p className="text-2xl font-semibold text-ink">Good morning, {firstName}</p>
-          <p className="mt-1 text-lg text-body">24 new remote jobs that fit you</p>
-        </div>
-        <div className="flex items-center gap-4 text-sm text-graphite">
-          <span>Last checked at 6:32, 412 companies</span>
-          <Button variant="secondary" size="sm">
-            Run now
-          </Button>
-        </div>
-      </div>
-      <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Filters">
-        <FilterChip menu>Fit</FilterChip>
-        <FilterChip pressed={chips.remote} onClick={() => setChips((c) => ({ ...c, remote: !c.remote }))}>
-          Remote: worldwide + Asia
-        </FilterChip>
-        <FilterChip pressed={chips.pay} onClick={() => setChips((c) => ({ ...c, pay: !c.pay }))}>
-          Pay listed
-        </FilterChip>
-        <FilterChip pressed={chips.direct} onClick={() => setChips((c) => ({ ...c, direct: !c.direct }))}>
-          Direct only
-        </FilterChip>
-        <FilterChip menu>Seniority</FilterChip>
-      </div>
-
-      <Panel className="mt-6" aria-labelledby="new-h">
-        <h3 id="new-h" className="border-b border-rule px-4 pt-4 pb-3 text-sm font-medium text-graphite md:px-6">
-          New since yesterday
-        </h3>
-        {sampleJobs.map((job, i) => (
-          <JobRow
-            key={job.id}
-            job={job}
-            defaultOpen={i === 0}
-            onDismiss={() => toast("Dismissed.", { action: { label: "Undo", onClick: () => toast("Restored.") } })}
-            onSave={() => toast("Saved to Tracker.", { action: { label: "Undo", onClick: () => {} } })}
-            onApplied={() => toast("Marked as applied.", { action: { label: "Undo", onClick: () => {} } })}
-          />
-        ))}
-        <JobRowSkeleton />
-      </Panel>
-
-      <details className="group relative mt-6 rounded-panel border red-rule-top border-rule bg-sheet px-4 md:px-6">
-        <summary className="flex h-12 cursor-pointer list-none items-center justify-between pt-0.5 text-sm font-medium text-ink">
-          <span>
-            Eligibility unclear <span className="text-graphite tabular">(7)</span>
-          </span>
-          <CaretDownIcon
-            size={16}
-            aria-hidden
-            className="text-graphite transition-transform duration-200 ease-ink group-open:rotate-180"
-          />
-        </summary>
-        <p className="mb-4 measure border-l-2 border-caution pl-3 text-sm text-body">
-          These say remote but do not say where you can work from. They are kept apart so you can check each one.
-        </p>
-      </details>
-    </div>
-  );
-}
-
-export type Viewer = { name: string; email: string } | null;
-
-/** Puts the signed-in person's name on the sample. Nothing about them is stored or committed. */
-function personalize(viewer: Viewer): { cv: CvDocument; firstName: string; label: string } {
-  if (!viewer) return { cv: sampleCv, firstName: "Nadia", label: "Nadia Chowdhury (sample)" };
-  const contact = sampleCv.contact.map((c) =>
-    c.url?.startsWith("mailto:") ? { text: viewer.email, url: `mailto:${viewer.email}` } : c,
-  );
-  return {
-    cv: { ...sampleCv, name: viewer.name, contact },
-    firstName: viewer.name.split(/\s+/)[0],
-    label: viewer.name,
-  };
-}
-
-export function StyleTile({ viewer }: { viewer: Viewer }) {
-  const { cv, firstName, label } = personalize(viewer);
-  const [country, setCountry] = useState("BD");
-  const [scope, setScope] = useState("region");
-  const [seniority, setSeniority] = useState<string>();
-  const [titles, setTitles] = useState(["Backend Engineer", "Platform Engineer", "Senior Backend Engineer"]);
-  const [jd, setJd] = useState("");
-
-  return (
-    <TooltipProvider>
-      <AppShell user={{ name: label, email: viewer?.email ?? "nadia.chowdhury@example.com", image: null }}>
-        <div className="mx-auto max-w-[1240px] px-4 pt-8 pb-16 md:px-8 lg:px-12">
-          <header className="flex flex-wrap items-end justify-between gap-4 pb-8">
-            <div>
-              <h1 className="text-2xl font-semibold text-ink">Style tile</h1>
-              <p className="mt-1 measure text-graphite">
-                Tokens, type and every component in their states.{" "}
-                {viewer
-                  ? "Your name is on the sample; everything else in it is fictional."
-                  : "All content is fictional."}{" "}
-                For review before real screens are built.
-              </p>
-            </div>
-            <ThemeControl />
-          </header>
-
-          <nav aria-label="Style tile sections" className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {[
-              ["desk", "Tailoring desk"],
-              ["reading", "Long post"],
-              ["today", "Today rows"],
-              ["color", "Color"],
-              ["type", "Type"],
-              ["controls", "Controls"],
-              ["overlays", "Overlays"],
-              ["progress", "Progress"],
-              ["tracker", "Tracker"],
-              ["companies", "Companies"],
-              ["states", "States"],
-            ].map(([id, label]) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                className="text-graphite underline decoration-rule hover:text-ink hover:decoration-ink"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-
-          <Section
-            id="desk"
-            title="The tailoring desk"
-            intro="The signature moment. A blue pen circles each matched word in reading order while the score counts up from the master CV score; red pen underlines land on the missing words at the end."
-          >
-            {/* The desk needs the full page width, like the real tailor page. */}
-            <div className="lg:-mx-8">
-              <ProofingDesk cv={cv} />
-            </div>
-          </Section>
-
-          <Section
-            id="reading"
-            title="Reading a long job post"
-            intro="The full post at its reading width, marked up. Running text in --body at 16 px, with a 28 px line height so pen marks never touch the next line, 72 characters a line."
-          >
-            <Panel className="px-5 pt-7 pb-6 md:px-10 md:pt-9 md:pb-8">
-              <p className="text-lg font-semibold text-ink">{sampleJd.title}</p>
-              <p className="mb-5 text-sm text-graphite">Lumen Labs, direct from careers page (Ashby)</p>
-              <MarkedText
-                text={sampleJd.text}
-                marks={findSampleMarks(sampleJd.text, sampleJd.matched, sampleJd.missing)}
-              />
-            </Panel>
-          </Section>
-
-          <Section
-            id="today"
-            title="Today rows"
-            intro="Rows on a white index card, separated by blue ruled lines, with the red rule across the top. Fit in tabular figures with a thin bar. Click a row to expand it."
-          >
-            <TodayPreview firstName={firstName} />
-          </Section>
-
-          <Section
-            id="color"
-            title="Color"
-            intro="Both themes, side by side. Light is an index card on a desk; dark is carbon paper. The CV sheet stays white in both."
-          >
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-2">
-              <TokenPanel theme="light" />
-              <TokenPanel theme="dark" />
-            </div>
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {(["light", "dark"] as const).map((t) => (
-                <div key={t} data-theme={t} className="rounded-panel border border-rule bg-paper p-6">
-                  <div className="max-w-[340px]">
-                    <CvSheet doc={cv} />
-                  </div>
-                </div>
+          </Sub>
+          <Sub title="Status">
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {STATUS.map((s) => (
+                <li key={s.name} className={`rounded-lg px-3 py-2 ${s.soft}`}>
+                  <p className={`text-sm font-medium ${s.text}`}>{s.name}</p>
+                  <p className="text-xs text-foreground">{s.use}</p>
+                </li>
               ))}
-            </div>
-          </Section>
+            </ul>
+          </Sub>
+        </div>
+      </Section>
 
-          <Section
-            id="type"
-            title="Type"
-            intro="IBM Plex Sans for the interface, Plex Mono only for LaTeX, Latin Modern Roman for the CV."
-          >
-            <dl className="divide-y divide-rule border-y border-rule">
-              {[
-                [
-                  "text-2xl",
-                  "31 / 38",
-                  <span key="a" className="text-2xl font-semibold text-ink">
-                    Good afternoon, {firstName}
-                  </span>,
-                ],
-                [
-                  "text-xl",
-                  "25 / 32",
-                  <span key="b" className="text-xl font-semibold text-ink">
-                    Companies
-                  </span>,
-                ],
-                [
-                  "text-lg",
-                  "20 / 28",
-                  <span key="c" className="text-lg font-semibold text-ink">
-                    Senior Backend Engineer
-                  </span>,
-                ],
-                [
-                  "text-base",
-                  "16 / 24",
-                  <span key="d" className="block measure">
-                    You will write services in Go, keep the schema healthy as clinics grow, and ship weekly behind
-                    feature flags.
-                  </span>,
-                ],
-                [
-                  "text-sm",
-                  "14 / 20",
-                  <span key="e" className="text-sm text-graphite">
-                    Direct from careers page (Greenhouse)
-                  </span>,
-                ],
-                [
-                  "text-xs",
-                  "12 / 16",
-                  <span key="f" className="text-xs text-graphite">
-                    Checked today at 6:32
-                  </span>,
-                ],
-                [
-                  "text-score",
-                  "48 / 48",
-                  <span key="g" className="text-score text-ink tabular">
-                    74
-                  </span>,
-                ],
-                [
-                  "Plex Mono",
-                  "13 / 20",
-                  <code key="h" className="font-mono text-[13px]">
-                    {String.raw`\resumeItem{Designed the \textbf{rate-quote service}}`}
-                  </code>,
-                ],
-                [
-                  "CV serif",
-                  "Latin Modern",
-                  <span key="i" className="font-cv text-[17px] leading-6">
-                    Designed the <b>rate-quote service</b> in Go that answers about <b>1,200 requests per second</b>.{" "}
-                    <i>Tech: Go, PostgreSQL, Kafka</i>
-                  </span>,
-                ],
-              ].map(([token, size, sample]) => (
-                <div key={token as string} className="grid gap-x-6 gap-y-1 py-4 md:grid-cols-[160px_1fr]">
-                  <dt className="text-sm">
-                    <span className="block font-medium text-ink">{token}</span>
-                    <span className="text-graphite tabular">{size}</span>
-                  </dt>
-                  <dd className="min-w-0 text-body">{sample}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
-              <div>
-                <p className="text-sm text-graphite">--ink: headings, titles, fit score, links</p>
-                <p className="mt-2 text-lg font-semibold text-ink">Senior Backend Engineer</p>
-              </div>
-              <div>
-                <p className="text-sm text-graphite">--body: all running text</p>
-                <p className="mt-2 text-base text-body">
-                  You will work with our product designer and one frontend engineer to split the availability service
-                  into smaller steps.
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-graphite">--graphite: secondary lines</p>
-                <p className="mt-2 text-sm text-graphite">Lumen Labs, direct from careers page (Ashby). 2 days ago</p>
-              </div>
-            </div>
-          </Section>
-
-          <Section id="controls" title="Controls">
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
-              <Sub title="Buttons">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button>Tailor CV</Button>
-                  <Button variant="secondary">Open job</Button>
-                  <Button variant="ghost">Save</Button>
-                  <Button variant="destructive">Delete all data</Button>
-                  <Button variant="link">Copy LaTeX</Button>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Button size="sm">Run now</Button>
-                  <Button size="sm" variant="secondary">
-                    <PlusIcon aria-hidden />
-                    Add a company
-                  </Button>
-                  <Button disabled>Tailoring</Button>
-                  <Button variant="secondary" disabled>
-                    Re-tailor
-                  </Button>
-                </div>
-              </Sub>
-
-              <Sub title="Chips">
-                <div className="flex flex-wrap gap-2">
-                  <FilterChip pressed>Pay listed</FilterChip>
-                  <FilterChip>Direct only</FilterChip>
-                  <FilterChip menu>Seniority</FilterChip>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <KeywordChip kind="matched">PostgreSQL</KeywordChip>
-                  <KeywordChip kind="missing" importance="must">
-                    Terraform
-                  </KeywordChip>
-                  <KeywordChip kind="missing">GraphQL</KeywordChip>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Tag>New company</Tag>
-                  <Tag tone="ok">Eligible</Tag>
-                  <Tag tone="caution">Eligibility unclear</Tag>
-                  <Tag tone="redpen">Staffing agency</Tag>
-                  <Tag tone="new">New</Tag>
-                  <Stamp>Applied</Stamp>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {titles.map((t) => (
-                    <TokenChip key={t} onRemove={() => setTitles((x) => x.filter((y) => y !== t))}>
-                      {t}
-                    </TokenChip>
-                  ))}
-                </div>
-              </Sub>
-
-              <Sub title="Text fields">
-                <div className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="gh">GitHub username</Label>
-                    <Input id="gh" defaultValue="example-nadia" />
-                    <FieldHint>12 public repos, 6 with READMEs</FieldHint>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="url">Portfolio URL</Label>
-                    <Input id="url" placeholder="https://" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="sal">Minimum annual salary in USD</Label>
-                    <Input id="sal" defaultValue="about forty" aria-invalid aria-describedby="sal-err" />
-                    <FieldError id="sal-err">Enter an amount like 40k, 40,000 or 40000.</FieldError>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="dis">Email on the CV</Label>
-                    <Input id="dis" disabled defaultValue="nadia.chowdhury@example.com" />
-                  </div>
-                </div>
-              </Sub>
-
-              <Sub title="Paste area, select, combobox, segmented">
-                <div className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="jd" className="sr-only">
-                      Job post
-                    </Label>
-                    <Textarea
-                      id="jd"
-                      value={jd}
-                      onChange={(e) => setJd(e.target.value)}
-                      placeholder="Paste the full job post. Messy text is fine."
-                      className="min-h-36"
-                    />
-                    <FieldHint>
-                      <Kbd>Ctrl</Kbd> + <Kbd>Enter</Kbd> to tailor
-                    </FieldHint>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="sen">Seniority</Label>
-                      <Select
-                        id="sen"
-                        value={seniority}
-                        onValueChange={setSeniority}
-                        placeholder="Any level"
-                        options={[
-                          { value: "junior", label: "Junior" },
-                          { value: "mid", label: "Mid" },
-                          { value: "senior", label: "Senior" },
-                        ]}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="text-sm font-medium text-ink">Country</span>
-                      <Combobox
-                        aria-label="Country"
-                        value={country}
-                        onValueChange={setCountry}
-                        searchPlaceholder="Search countries"
-                        options={[
-                          { value: "BD", label: "Bangladesh" },
-                          { value: "IN", label: "India" },
-                          { value: "PK", label: "Pakistan" },
-                          { value: "NP", label: "Nepal" },
-                          { value: "LK", label: "Sri Lanka" },
-                          { value: "DE", label: "Germany" },
-                        ]}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <span className="block text-sm font-medium text-ink">What kind of remote?</span>
-                    <Segmented
-                      aria-label="What kind of remote?"
-                      value={scope}
-                      onValueChange={setScope}
-                      options={[
-                        { value: "world", label: "Worldwide" },
-                        { value: "region", label: "My region" },
-                        { value: "onsite", label: "Also on-site in..." },
-                      ]}
-                    />
-                  </div>
-                </div>
-              </Sub>
-            </div>
-          </Section>
-
-          <Section
-            id="overlays"
-            title="Overlays"
-            intro="Dialog, sheet, popover, tooltip, toast, the command palette and the account menu (it also sits at the bottom of the rail)."
-          >
-            <div className="flex flex-wrap gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="secondary">Add a company</Button>
-                </DialogTrigger>
-                <DialogContent
-                  title="Add a company"
-                  description="Paste a careers page or company website."
-                  footer={
-                    <>
-                      <DialogClose asChild>
-                        <Button variant="ghost">Cancel</Button>
-                      </DialogClose>
-                      <Button>Track this company</Button>
-                    </>
-                  }
-                >
-                  <div className="space-y-3">
-                    <Input defaultValue="https://jobs.ashbyhq.com/lumenlabs" aria-label="Careers or website URL" />
-                    <p className="flex items-center gap-2 text-sm text-ink">
-                      <span className="size-2 rounded-pill bg-ok" aria-hidden />
-                      Found an Ashby board with 12 open roles.
-                    </p>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="secondary">Version history</Button>
-                </SheetTrigger>
-                <SheetContent title="Version history" description="Every save is kept. Restore any version.">
-                  <ol className="divide-y divide-rule border-y border-rule">
-                    {[
-                      ["Version 4", "Today at 9:14", "Added Terraform to Parcelwise"],
-                      ["Version 3", "Yesterday at 21:02", "Resolved end date for Taka Pay"],
-                      ["Version 2", "Oct 26 at 18:40", "Imported LinkedIn PDF"],
-                    ].map(([v, when, what], i) => (
-                      <li key={v} className="flex items-center justify-between gap-3 py-3">
-                        <div className="text-sm">
-                          <p className="font-medium text-ink">
-                            {v} {i === 0 && <span className="font-normal text-graphite">(current)</span>}
-                          </p>
-                          <p className="text-graphite">
-                            {when}. {what}
-                          </p>
-                        </div>
-                        {i > 0 && (
-                          <Button variant="secondary" size="sm">
-                            Restore
-                          </Button>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </SheetContent>
-              </Sheet>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="secondary">Where this appears</Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 text-sm">
-                  <p className="font-medium text-ink">PostgreSQL appears in</p>
-                  <ul className="mt-2 space-y-1 text-graphite">
-                    <li>Summary</li>
-                    <li>Technical skills, Data</li>
-                    <li>Parcelwise, Tech line</li>
-                  </ul>
-                </PopoverContent>
-              </Popover>
-
-              <div className="w-56 rounded-panel border border-dashed border-rule p-1">
-                <AccountMenu
-                  user={{ name: label, email: viewer?.email ?? "nadia.chowdhury@example.com", image: null }}
-                />
-              </div>
-              <Tooltip content="Real ATS systems differ. This is an estimate.">
-                <Button variant="secondary">Hover for a tooltip</Button>
-              </Tooltip>
-
-              <Button
-                variant="secondary"
-                onClick={() => toast("Dismissed.", { action: { label: "Undo", onClick: () => toast("Restored.") } })}
-              >
-                Show a toast
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
-              >
-                Command palette <Kbd>Ctrl K</Kbd>
-              </Button>
-            </div>
-          </Section>
-
-          <Section id="progress" title="Progress">
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
-              <Sub title="Onboarding steps">
-                <ProgressSteps
-                  steps={["Add your CV", "More sources", "Review profile", "What you want", "First search"]}
-                  current={2}
-                />
-              </Sub>
-              <Sub title="Tailoring progress">
-                <TaskSteps
-                  steps={[
-                    { label: "Reading the job", state: "done", detail: "14 keywords, 9 required" },
-                    { label: "Tailoring your CV", state: "running" },
-                    { label: "Checking every claim against your profile", state: "todo" },
-                  ]}
-                />
-              </Sub>
-            </div>
-          </Section>
-
-          <Section id="tracker" title="Tracker" intro="Drag cards between columns, or use Move to from the keyboard.">
-            <KanbanBoard>
-              <KanbanColumn name="Saved" count={2}>
-                <KanbanCard
-                  title="Product Engineer, Billing"
-                  company="Paperplane Payroll"
-                  moved="Saved 2 days ago"
-                  column="Saved"
-                />
-                <KanbanCard title="Backend Engineer" company="Fieldnote" moved="Saved today" column="Saved" dragging />
-              </KanbanColumn>
-              <KanbanColumn name="Applied" count={1} dropping>
-                <KanbanCard
-                  title="Senior Backend Engineer"
-                  company="Lumen Labs"
-                  moved="Applied yesterday"
-                  tailoredHref="#desk"
-                  column="Applied"
-                />
-              </KanbanColumn>
-              <KanbanColumn name="Interviewing" count={1}>
-                <KanbanCard
-                  title="Backend Developer (Go, Python)"
-                  company="Tallow Health"
-                  moved="Moved Oct 24"
-                  tailoredHref="#desk"
-                  column="Interviewing"
-                />
-              </KanbanColumn>
-              <KanbanColumn name="Offer" count={0}>
-                <p className="px-1 text-sm text-graphite">Nothing here yet.</p>
-              </KanbanColumn>
-              <KanbanColumn name="Closed" count={0}>
-                <p className="px-1 text-sm text-graphite">Nothing here yet.</p>
-              </KanbanColumn>
-            </KanbanBoard>
-          </Section>
-
-          <Section id="companies" title="Companies">
-            <DataTable
-              caption="Tracked companies"
-              rows={sampleCompanies}
-              rowKey={(r) => r.name}
-              columns={[
-                {
-                  key: "name",
-                  header: "Company",
-                  cell: (r) => (
-                    <span>
-                      <span className="block font-medium">{r.name}</span>
-                      <span className="text-graphite">{r.website}</span>
-                    </span>
-                  ),
-                },
-                { key: "ats", header: "Board", cell: (r) => r.ats },
-                { key: "roles", header: "Open roles", align: "right", cell: (r) => r.roles },
-                {
-                  key: "checked",
-                  header: "Last checked",
-                  cell: (r) => <span className="text-graphite">{r.checked}</span>,
-                },
-                { key: "via", header: "Found through", cell: (r) => <span className="text-graphite">{r.via}</span> },
-                {
-                  key: "flags",
-                  header: "Flags",
-                  cell: (r) => (
-                    <span className="flex flex-wrap gap-1">
-                      {r.flags.map((f) => (
-                        <Tag key={f} tone={f === "Staffing agency" ? "redpen" : f === "Paused" ? "caution" : "neutral"}>
-                          {f}
-                        </Tag>
-                      ))}
-                    </span>
-                  ),
-                },
-              ]}
-            />
-          </Section>
-
-          <Section
-            id="states"
-            title="States"
-            intro="Loading, empty, error and partial states. Every screen gets all of them."
-          >
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
-              <Sub title="Pipeline warning">
-                <CautionBar
-                  action={
-                    <Button size="sm" variant="secondary">
-                      Run search now
-                    </Button>
-                  }
-                >
-                  The last search ran 31 hours ago. It may be running late, or the daily search may have been paused.
-                </CautionBar>
-              </Sub>
-              <Sub title="Error">
-                <ErrorState title="Gemini's rate limit was reached." onRetry={() => {}} retryLabel="Try again now">
-                  Your CV will finish tailoring in about a minute, or you can try again now.
-                </ErrorState>
-              </Sub>
-              <Sub title="Empty">
-                <EmptyState
-                  title="No new matches today."
-                  action={
-                    <Button variant="secondary">
-                      <PlusIcon aria-hidden />
-                      Add a company
-                    </Button>
-                  }
-                >
-                  412 companies checked at 6:32. Add a company you like on the Companies page to watch it too.
-                </EmptyState>
-              </Sub>
-              <Sub title="Calm note">
-                <Callout>
-                  On Gemini&apos;s free tier, Google can use what you send to improve its products. Use a paid key or
-                  another provider if you would rather it did not.
-                </Callout>
-              </Sub>
-              <Sub title="Loading: score panel" className="lg:col-span-2">
-                <div className="grid grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-[300px_1fr]">
-                  <div aria-busy className="space-y-3">
-                    <Skeleton className="h-5 w-40" />
-                    <Skeleton className="h-12 w-24" />
-                    {Array.from({ length: 4 }, (_, i) => (
-                      <div key={i} className="space-y-1.5">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-1 w-full" />
-                      </div>
-                    ))}
-                  </div>
-                  <div aria-busy className="rounded-sheet bg-cv-paper p-8 shadow-sheet">
-                    <Skeleton className="mx-auto h-6 w-48 bg-cv-rule" />
-                    <Skeleton className="mx-auto mt-2 h-3 w-80 max-w-full bg-cv-rule" />
-                    {Array.from({ length: 3 }, (_, i) => (
-                      <div key={i} className="mt-6 space-y-2">
-                        <Skeleton className="h-4 w-40 bg-cv-rule" />
-                        <Skeleton className="h-3 w-full bg-cv-rule" />
-                        <Skeleton className="h-3 w-11/12 bg-cv-rule" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Sub>
-            </div>
-          </Section>
-          <p className={cn("text-sm text-graphite")}>
-            Everything on this page is fictional sample content. Not shown in production builds.
+      <Section id="type" title="Type" intro="Geist Sans for words, Geist Mono for numbers only.">
+        <div className="space-y-3">
+          <p className="text-2xl font-semibold tracking-tight">Page title, 24 px semibold</p>
+          <p className="text-xl font-semibold tracking-tight">Section title, 20 px semibold</p>
+          <p className="font-medium">Card title, 16 px medium</p>
+          <p>Body text, 16 px. Short sentences, plain verbs, sentence case.</p>
+          <p className="text-sm text-muted-foreground">Secondary text, 14 px muted. Company, source and date lines.</p>
+          <p className="text-sm">
+            Numbers: <Nums>{"$95k to $130k a year, posted 2 days ago, 74 out of 100"}</Nums>
           </p>
         </div>
-      </AppShell>
-    </TooltipProvider>
+      </Section>
+
+      <Section id="controls" title="Controls" intro="One primary button per view. Everything else is outline, ghost or in a menu.">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <Sub title="Buttons">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button>Tailor my CV</Button>
+              <Button variant="outline">
+                <Copy data-icon="inline-start" />
+                Copy LaTeX
+              </Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="ghost">Cancel</Button>
+              <Button variant="destructive">Delete</Button>
+              <Button variant="link">Link</Button>
+              <Button variant="outline" size="icon" aria-label="Download">
+                <Download />
+              </Button>
+              <Button disabled>Saving</Button>
+            </div>
+          </Sub>
+
+          <Sub title="Badges">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Default</Badge>
+              <Badge variant="secondary">Secondary</Badge>
+              <Badge variant="outline">Outline</Badge>
+              <Badge variant="success">Go</Badge>
+              <Badge variant="destructive">Terraform</Badge>
+              <Badge variant="warning">Location unclear</Badge>
+              <Badge variant="info">New company</Badge>
+              <MatchBadge fit={86} />
+              <MatchBadge fit={null} />
+              <SourceBadges sources={["cv", "linkedin", "user_added"]} />
+            </div>
+          </Sub>
+
+          <Sub title="Fields">
+            <FieldGroup className="gap-5">
+              <Field>
+                <FieldLabel htmlFor="tile-name">Name on your CV</FieldLabel>
+                <Input id="tile-name" defaultValue={cv.name} />
+                <FieldDescription>Shown at the top of every tailored CV.</FieldDescription>
+              </Field>
+              <Field data-invalid>
+                <FieldLabel htmlFor="tile-pay">Minimum pay, in US dollars a year</FieldLabel>
+                <Input id="tile-pay" defaultValue="forty" aria-invalid />
+                <FieldError>Enter an amount like 40k, 40,000 or 40000.</FieldError>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="tile-search">Search</FieldLabel>
+                <InputGroup>
+                  <InputGroupAddon>
+                    <Search />
+                  </InputGroupAddon>
+                  <InputGroupInput id="tile-search" placeholder="Title, company or skill" />
+                </InputGroup>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="tile-jd">Job post</FieldLabel>
+                <Textarea id="tile-jd" className="min-h-24" defaultValue={sampleJd.text.slice(0, 180)} />
+              </Field>
+            </FieldGroup>
+          </Sub>
+
+          <Sub title="Choices">
+            <FieldGroup className="gap-5">
+              <Field>
+                <FieldLabel htmlFor="tile-titles">Job titles to search for</FieldLabel>
+                <TokenInput id="tile-titles" label="Job titles" values={titles} onChange={setTitles} placeholder="Frontend Engineer" />
+              </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="tile-country">Where you work from</FieldLabel>
+                  <Combobox
+                    id="tile-country"
+                    value={country}
+                    onValueChange={setCountry}
+                    options={COUNTRIES}
+                    searchPlaceholder="Search countries"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="tile-diff">Largest time difference</FieldLabel>
+                  <Select defaultValue="4">
+                    <SelectTrigger id="tile-diff" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="4">Up to 4 hours</SelectItem>
+                      <SelectItem value="8">Up to 8 hours</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <Field>
+                <FieldTitle id="tile-remote">What kind of remote?</FieldTitle>
+                <RadioGroup
+                  aria-labelledby="tile-remote"
+                  value={remote}
+                  onValueChange={setRemote}
+                  className="flex flex-wrap gap-x-6 gap-y-3"
+                >
+                  {[
+                    ["world", "Worldwide"],
+                    ["region", "My region"],
+                    ["onsite", "Also on-site in..."],
+                  ].map(([value, text]) => (
+                    <Field key={value} orientation="horizontal" className="w-auto">
+                      <RadioGroupItem value={value} id={`tile-remote-${value}`} />
+                      <FieldLabel htmlFor={`tile-remote-${value}`} className="font-normal max-md:min-h-11">
+                        {text}
+                      </FieldLabel>
+                    </Field>
+                  ))}
+                </RadioGroup>
+              </Field>
+              <Field>
+                <FieldTitle id="tile-seniority">Seniority</FieldTitle>
+                <ToggleGroup
+                  type="multiple"
+                  variant="outline"
+                  aria-labelledby="tile-seniority"
+                  value={seniority}
+                  onValueChange={setSeniority}
+                  className="flex-wrap"
+                >
+                  {["intern", "junior", "mid", "senior"].map((s) => (
+                    <ToggleGroupItem key={s} value={s} className="capitalize max-md:h-11">
+                      {s}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </Field>
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <FieldLabel htmlFor="tile-unlisted">Show jobs that do not list pay</FieldLabel>
+                  <FieldDescription>Unknown pay is shown as unknown, never guessed.</FieldDescription>
+                </FieldContent>
+                <Switch id="tile-unlisted" checked={showUnlisted} onCheckedChange={setShowUnlisted} />
+              </Field>
+            </FieldGroup>
+          </Sub>
+
+          <Sub title="Upload" className="lg:col-span-2">
+            <DropZone
+              accept=".pdf,.docx,.md,.tex"
+              label="Sample file"
+              hint="LaTeX (.tex), PDF, Word (.docx) or Markdown, up to 5 MB. Only you can see it."
+              onFile={(f) => toast(`Would upload ${f.name}.`)}
+            />
+          </Sub>
+        </div>
+      </Section>
+
+      <Section id="overlays" title="Overlays and menus" intro="Details open on demand instead of crowding the page.">
+        <div className="flex flex-wrap items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus data-icon="inline-start" />
+                Add a company
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a company</DialogTitle>
+                <DialogDescription>Paste its careers page. The app finds its job board.</DialogDescription>
+              </DialogHeader>
+              <Field>
+                <FieldLabel htmlFor="tile-careers">Careers page</FieldLabel>
+                <Input id="tile-careers" placeholder="https://" />
+              </Field>
+              <DialogFooter>
+                <Button>Add company</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline">Open a sheet</Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Senior Backend Engineer</SheetTitle>
+                <SheetDescription>Lumen Labs, from their Greenhouse board.</SheetDescription>
+              </SheetHeader>
+            </SheetContent>
+          </Sheet>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                More
+                <ChevronDown data-icon="inline-end" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Download />
+                Download .tex
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <ExternalLink />
+                Open in Overleaf
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Delete all data</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete all your data?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your profile, tailored CVs and saved jobs are removed for good. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep my data</AlertDialogCancel>
+                <AlertDialogAction>Delete everything</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="About the score">
+                <Info />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>An estimate, not a real screener result.</TooltipContent>
+          </Tooltip>
+          <Button variant="outline" onClick={() => toast("Saved your preferences.")}>
+            Show a toast
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Search <Kbd>Ctrl</Kbd> <Kbd>K</Kbd>
+          </span>
+        </div>
+      </Section>
+
+      <Section id="progress" title="Progress" intro="Named steps while something runs. Never a spinner on its own.">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tailoring your CV</CardTitle>
+              <CardDescription>Usually under a minute.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TaskSteps steps={["Reading the job", "Tailoring your CV", "Checking every fact against your profile"]} current={1} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Score parts</CardTitle>
+              <CardDescription>Progress bars for each part of the estimate.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {sampleAts.components.slice(0, 3).map((c) => (
+                <div key={c.id} className="space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span>{c.label}</span>
+                    <Nums>{`${c.points} of ${c.max}`}</Nums>
+                  </div>
+                  <Progress value={(c.points / c.max) * 100} aria-label={c.label} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </Section>
+
+      <Section id="cv" title="CV and score" intro="The preview matches the PDF: Latin Modern, US Letter, never below 9 px.">
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
+          <Tabs defaultValue="preview">
+            <TabsList>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="latex">LaTeX</TabsTrigger>
+            </TabsList>
+            <TabsContent value="preview" className="pt-2">
+              <CvPreview doc={cv} />
+            </TabsContent>
+            <TabsContent value="latex" className="pt-2">
+              <p className="text-sm text-muted-foreground">The LaTeX tab shows the rendered source in Tailor.</p>
+            </TabsContent>
+          </Tabs>
+          <ScoreCard
+            score={sampleAts.tailored}
+            master={sampleAts.master}
+            parts={sampleAts.components}
+            matched={sampleJd.matched}
+            missing={sampleJd.missing}
+          />
+        </div>
+      </Section>
+
+      <Section id="states" title="States" intro="Every screen has a designed loading, empty and error state.">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Sub title="Warning">
+            <Alert variant="warning">
+              <TriangleAlert />
+              <AlertTitle>The daily search is late.</AlertTitle>
+              <AlertDescription>It last finished 2 days ago. Jobs below may be missing new posts.</AlertDescription>
+            </Alert>
+          </Sub>
+          <Sub title="Error">
+            <LoadError title="The job feed did not load." onRetry={() => toast("Trying again.")}>
+              The database did not answer in time. Your jobs are safe; try again in a moment.
+            </LoadError>
+          </Sub>
+          <Sub title="Calm note">
+            <Alert>
+              <Info />
+              <AlertDescription>
+                On Gemini&apos;s free tier, Google can use what you send to improve its products.
+              </AlertDescription>
+            </Alert>
+          </Sub>
+          <Sub title="Loading">
+            <div aria-busy className="space-y-2 rounded-xl border p-4">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-4/5" />
+            </div>
+          </Sub>
+          <Sub title="Empty" className="lg:col-span-2">
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Search />
+                </EmptyMedia>
+                <EmptyTitle>No new matches today.</EmptyTitle>
+                <EmptyDescription>The search checked 412 companies. Widen your titles or time zones to see more.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline">Edit preferences</Button>
+              </EmptyContent>
+            </Empty>
+          </Sub>
+          <Sub title="Card with actions" className="lg:col-span-2">
+            <Card className="max-w-md">
+              <CardHeader>
+                <CardTitle>Recent</CardTitle>
+                <CardDescription>CVs you tailored before.</CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm">
+                Senior Backend Engineer <span className="text-muted-foreground">at Lumen Labs</span>
+              </CardContent>
+              <CardFooter className="gap-2">
+                <Button size="sm">Open</Button>
+                <Button size="sm" variant="ghost">
+                  Remove
+                </Button>
+              </CardFooter>
+            </Card>
+          </Sub>
+        </div>
+      </Section>
+    </main>
   );
 }

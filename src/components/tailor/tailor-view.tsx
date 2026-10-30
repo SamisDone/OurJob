@@ -1,11 +1,12 @@
 "use client";
 
-import { Check, ChevronDown, CircleAlert, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
+import { ChevronDown, CircleAlert, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
 import { Page, PageHeader } from "@/components/shell/page-states";
+import { TaskSteps } from "@/components/task-steps";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,6 @@ import {
 import { Kbd } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { CvDocument } from "@/lib/cv/document";
@@ -132,24 +132,7 @@ export function TailorWorking({ step }: { step: 0 | 1 | 2 }) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ol className="space-y-3" aria-live="polite">
-              {steps.map((label, i) => (
-                <li key={label} className="flex items-center gap-3">
-                  {i < step ? (
-                    <Check className="size-4 text-success" aria-hidden />
-                  ) : i === step ? (
-                    <Spinner className="size-4" />
-                  ) : (
-                    <span className="size-4 rounded-full border" aria-hidden />
-                  )}
-                  <span className={i > step ? "text-muted-foreground" : undefined}>
-                    {label}
-                    {i < step && <span className="sr-only">, done</span>}
-                    {i === step && <span className="sr-only">, in progress</span>}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <TaskSteps steps={steps} current={step} />
           </CardContent>
         </Card>
       </div>

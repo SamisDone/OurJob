@@ -1,48 +1,65 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Page, PageHeader } from "@/components/shell/page-states";
 import { SignOutButton } from "@/components/shell/sign-out";
 import { ThemeControl } from "@/components/shell/theme-control";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { AiSection } from "./ai-section";
 import { PreferencesSection } from "./preferences-section";
 
 export const metadata: Metadata = { title: "Settings" };
 
-function SettingsSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function SettingsCard({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
   return (
-    <section aria-labelledby={id} className="grid gap-x-10 gap-y-3 border-t border-rule py-8 md:grid-cols-[200px_1fr]">
-      <h2 id={id} className="text-lg font-semibold">
-        {title}
-      </h2>
-      <div className="min-w-0">{children}</div>
-    </section>
+    <Card aria-labelledby={id} role="region">
+      <CardHeader>
+        <CardTitle>
+          <h2 id={id}>{title}</h2>
+        </CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   );
 }
 
 export default async function SettingsPage() {
   const user = await requireUser();
   return (
-    <div className="mx-auto max-w-[960px] px-4 pt-8 pb-16 md:px-8 lg:px-12">
-      <h1 className="mb-6 text-xl font-semibold">Settings</h1>
+    <Page className="max-w-3xl">
+      <PageHeader title="Settings" description="Your account, what the daily search looks for, and how the app works." />
+      <div className="space-y-6">
+        <SettingsCard id="account" title="Account" description={`Signed in as ${user.email}.`}>
+          <SignOutButton />
+        </SettingsCard>
 
-      <SettingsSection id="account" title="Account">
-        <p className="text-body">
-          Signed in as <span className="font-medium">{user.email}</span>
-        </p>
-        <SignOutButton className="mt-4" />
-      </SettingsSection>
+        <SettingsCard
+          id="preferences"
+          title="Search preferences"
+          description="What the daily job search looks for. Changes apply from the next run."
+        >
+          <PreferencesSection />
+        </SettingsCard>
 
-      <SettingsSection id="preferences" title="Search preferences">
-        <PreferencesSection />
-      </SettingsSection>
+        <SettingsCard id="ai" title="AI provider" description="The model that reads job posts and tailors your CV.">
+          <AiSection />
+        </SettingsCard>
 
-      <SettingsSection id="ai" title="AI provider">
-        <AiSection />
-      </SettingsSection>
-
-      <SettingsSection id="theme" title="Theme">
-        <ThemeControl />
-      </SettingsSection>
-    </div>
+        <SettingsCard id="theme" title="Theme" description="System follows your device.">
+          <ThemeControl />
+        </SettingsCard>
+      </div>
+    </Page>
   );
 }

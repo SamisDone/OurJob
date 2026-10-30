@@ -96,14 +96,15 @@ const SPECIAL: Record<string, string> = {
   "<": "\\textless{}",
   ">": "\\textgreater{}",
   "|": "\\textbar{}",
-  "–": "--",
-  "—": "--",
-  " ": "~",
+  "\u2013": "--",
+  // An em dash becomes an en dash: no em dashes in CV text (golden rule 8).
+  "\u2014": "--",
+  "\u00a0": "~",
 };
 
 /** Escapes text for LaTeX body text. Dashes become TeX dashes. */
 export function escapeLatex(s: string): string {
-  return s.replace(/[\\&%$#_{}~^<>|–— ]/g, (c) => SPECIAL[c]);
+  return s.replace(/[\\&%$#_{}~^<>|\u2013\u2014\u00a0]/g, (c) => SPECIAL[c]);
 }
 
 /** URLs inside \href: only %, # and \ need escaping there. */

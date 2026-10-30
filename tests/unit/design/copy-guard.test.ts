@@ -31,12 +31,16 @@ describe("copy and look guard (DESIGN.md 9 and 10)", () => {
     expect(hits).toEqual([]);
   });
 
-  it("uses one icon set, Lucide, in the migrated screens", () => {
-    // Grows to all of src once every screen is on shadcn/ui and src/components/legacy is gone.
-    const migrated = /[\\/](ui|shell|preview|tailor[\\/](?!desk)|jobs[\\/](?!job-row)|cv)[\\/]?/;
+  it("uses one icon set, Lucide, everywhere", () => {
     const hits = sources
-      .filter((f) => migrated.test(f.path) && /from\s*["']@phosphor-icons\//.test(f.text))
+      .filter((f) => /from\s*["'](@phosphor-icons|react-icons|@heroicons|@tabler)\//.test(f.text))
       .map((f) => f.path);
+    expect(hits).toEqual([]);
+  });
+
+  it("uses no old index-card tokens or components", () => {
+    const old = /components\/legacy|\b(text|bg|border)-(ink|paper|sheet|graphite|redpen|rule)\b|rounded-(panel|control|pill)\b/;
+    const hits = sources.filter((f) => old.test(f.text)).map((f) => f.path);
     expect(hits).toEqual([]);
   });
 

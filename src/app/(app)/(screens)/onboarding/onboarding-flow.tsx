@@ -1,22 +1,26 @@
 "use client";
 
-import {
-  CheckIcon,
-  GithubLogoIcon,
-  LinkedinLogoIcon,
-  GlobeSimpleIcon,
-  NotePencilIcon,
-} from "@phosphor-icons/react/ssr";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, CircleCheck, Clock, FileUser, FolderGit2, Globe, NotebookPen } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
+import { DropZone } from "@/components/forms/drop-zone";
+import { LoadError } from "@/components/load-error";
+import { Nums } from "@/components/nums";
 import { PreferencesForm } from "@/components/profile/preferences-form";
 import { ProfileEditor } from "@/components/profile/profile-editor";
-import { Button } from "@/components/legacy/button";
-import { EmptyState, ErrorState, Panel, Skeleton } from "@/components/legacy/feedback";
-import { DropZone } from "@/components/legacy/form-bits";
-import { FieldHint, Input, Label, Textarea } from "@/components/legacy/input";
-import { ProgressSteps, TaskSteps } from "@/components/legacy/steps";
+import { TaskSteps } from "@/components/task-steps";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useBuildProfile,
   useConfirmProfile,
@@ -29,6 +33,7 @@ import {
   useUploadSource,
   type SourceSummary,
 } from "@/lib/query/profile";
+import { cn } from "@/lib/utils";
 
 const STEPS = ["Add your CV", "More sources", "Review profile", "What you want", "First search"];
 const CV_KINDS = ["cv_tex", "cv_pdf", "cv_docx", "cv_md"];
@@ -43,24 +48,78 @@ function useStep() {
     router.push(`${pathname}?step=${n}`);
     window.scrollTo({ top: 0 });
   };
-  return { step, go };
+  return { step, go, href: (n: number) => `${pathname}?step=${n}` };
+}
+
+/**
+ * Onboarding progress: step names, the current one in the foreground color,
+ * done ones with a check. Done steps link back to that step; future steps are
+ * muted text. One line on phones.
+ */
+function ProgressSteps({ current, href }: { current: number; href: (step: number) => string }) {
+  return (
+    <nav aria-label="Onboarding progress" className="mb-8">
+      <p className="text-sm text-muted-foreground md:hidden">
+        <Nums>{`Step ${current + 1} of ${STEPS.length}`}</Nums>:{" "}
+        <span className="font-medium text-foreground">{STEPS[current]}</span>
+      </p>
+      <ol className="hidden items-center text-sm md:flex">
+        {STEPS.map((label, i) => {
+          const state = i < current ? "done" : i === current ? "current" : "todo";
+          const marker = (
+            <span
+              className={cn(
+                "num inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs",
+                state === "done" && "bg-primary text-primary-foreground",
+                state === "current" && "border-2 border-foreground font-semibold",
+                state === "todo" && "border text-muted-foreground",
+              )}
+              aria-hidden
+            >
+              {state === "done" ? <Check className="size-3" strokeWidth={3} /> : i + 1}
+            </span>
+          );
+          return (
+            <li key={label} className="flex min-w-0 items-center" aria-current={state === "current" ? "step" : undefined}>
+              {i > 0 && <span className="mx-2 h-px w-4 shrink-0 bg-border" aria-hidden />}
+              {state === "done" ? (
+                <Link
+                  href={href(i + 1)}
+                  className="group inline-flex items-center gap-2 rounded-md py-1 whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {marker}
+                  <span className="underline-offset-4 group-hover:underline">{label}</span>
+                  <span className="sr-only"> (done, go back to this step)</span>
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-2 py-1 whitespace-nowrap">
+                  {marker}
+                  <span className={state === "current" ? "font-medium" : "text-muted-foreground"}>{label}</span>
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
 }
 
 function StepTitle({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="mt-8 mb-6 lg:mt-12">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      {children && <p className="mt-2 measure text-body">{children}</p>}
+    <div className="mb-6 space-y-1.5">
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      {children && <p className="max-w-prose text-muted-foreground">{children}</p>}
     </div>
   );
 }
 
 /** Onboarding steps 1 to 4 (DESIGN.md 5.2). Step 5, the live first search, arrives with the job feed. */
 export function OnboardingFlow() {
-  const { step, go } = useStep();
+  const { step, go, href } = useStep();
   return (
     <>
-      <ProgressSteps steps={STEPS} current={step - 1} onSelect={(i) => go(i + 1)} />
+      <ProgressSteps current={step - 1} href={href} />
       {/* Reading width for the form steps; the profile review keeps the full width. */}
       <div className={step === 3 ? undefined : "max-w-[640px]"}>
         {step === 1 && <CvStep next={() => go(2)} />}
@@ -70,6 +129,70 @@ export function OnboardingFlow() {
         {step === 5 && <DoneStep back={() => go(4)} />}
       </div>
     </>
+  );
+}
+
+/** One text box and a button: GitHub username, portfolio link, pasted text, notes. */
+function TextForm({
+  id,
+  label,
+  hideLabel,
+  placeholder,
+  submitLabel,
+  pendingLabel,
+  pending,
+  multiline,
+  schema = z.string().trim().min(1),
+  onSubmit,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  hideLabel?: boolean;
+  placeholder: string;
+  submitLabel: string;
+  pendingLabel?: string;
+  pending: boolean;
+  multiline?: boolean;
+  schema?: z.ZodType<string, string>;
+  onSubmit: (value: string) => void;
+  error?: string;
+  children?: ReactNode;
+}) {
+  const form = useForm<{ value: string }>({
+    resolver: zodResolver(z.object({ value: schema })),
+    defaultValues: { value: "" },
+  });
+  const value = useWatch({ control: form.control, name: "value" });
+  return (
+    <form noValidate onSubmit={(e) => void form.handleSubmit((v) => onSubmit(v.value.trim()))(e)}>
+      <Controller
+        name="value"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid || error ? true : undefined}>
+            <FieldLabel htmlFor={id} className={hideLabel ? "sr-only" : undefined}>
+              {label}
+            </FieldLabel>
+            <div className={multiline ? "space-y-2" : "flex gap-2"}>
+              {multiline ? (
+                <Textarea {...field} id={id} placeholder={placeholder} className="min-h-24" />
+              ) : (
+                <Input {...field} id={id} placeholder={placeholder} aria-invalid={fieldState.invalid || undefined} />
+              )}
+              <Button type="submit" variant="outline" disabled={!value.trim() || pending}>
+                {pending && <Spinner data-icon="inline-start" />}
+                {pending && pendingLabel ? pendingLabel : submitLabel}
+              </Button>
+            </div>
+            {children}
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            {error && <FieldError>{error}</FieldError>}
+          </Field>
+        )}
+      />
+    </form>
   );
 }
 
@@ -84,71 +207,63 @@ function CvStep({ next }: { next: () => void }) {
   const cv = sources.data?.find((s) => CV_KINDS.includes(s.kind));
   const [replacing, setReplacing] = useState(false);
   const [pasting, setPasting] = useState(false);
-  const [text, setText] = useState("");
 
   const done = () => {
     setReplacing(false);
     setPasting(false);
-    setText("");
   };
 
   return (
     <>
       <StepTitle title="Add your CV" />
       {sources.isPending ? (
-        <Skeleton className="h-56 w-full rounded-panel" />
+        <Skeleton className="h-56 w-full rounded-xl" />
       ) : cv && !replacing ? (
         <CvPreview source={cv} onReplace={() => setReplacing(true)} next={next} />
       ) : pasting ? (
-        <Panel className="px-6 pt-6 pb-6 md:px-8">
-          <Label htmlFor="cv-text" className="text-lg font-semibold text-ink">
-            Paste your CV
-          </Label>
-          <Textarea
-            id="cv-text"
-            className="mt-3 min-h-64"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Everything from your name to your last line. Formatting does not matter."
-          />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              disabled={!text.trim() || pasteCv.isPending}
-              onClick={() => pasteCv.mutate({ kind: "cv", text }, { onSuccess: done })}
-            >
-              {pasteCv.isPending ? "Saving" : "Use this text"}
-            </Button>
+        <Card>
+          <CardContent className="space-y-4">
+            <TextForm
+              id="cv-text"
+              label="Paste your CV"
+              multiline
+              placeholder="Everything from your name to your last line. Formatting does not matter."
+              submitLabel="Use this text"
+              pendingLabel="Saving"
+              pending={pasteCv.isPending}
+              error={pasteCv.isError ? pasteCv.error.message : undefined}
+              onSubmit={(text) => pasteCv.mutate({ kind: "cv", text }, { onSuccess: done })}
+            />
             <Button variant="ghost" onClick={() => setPasting(false)}>
               Upload a file instead
             </Button>
-          </div>
-          {pasteCv.isError && (
-            <p role="alert" className="mt-3 text-sm text-redpen">
-              {pasteCv.error.message}
-            </p>
-          )}
-        </Panel>
+          </CardContent>
+        </Card>
       ) : (
         <>
-          <DropZone
-            accept=".tex,.pdf,.docx,.md,.markdown,.txt"
-            busy={upload.isPending}
-            label="Your CV file"
-            hint={`${CV_TYPES} Only you can see it.`}
-            onFile={(file) => upload.mutate({ file }, { onSuccess: done })}
-          />
-          <p className="mt-4 text-sm text-graphite">
+          <Card>
+            <CardContent>
+              <DropZone
+                accept=".tex,.pdf,.docx,.md,.markdown,.txt"
+                busy={upload.isPending}
+                label="Your CV file"
+                hint={`${CV_TYPES} Only you can see it.`}
+                onFile={(file) => upload.mutate({ file }, { onSuccess: done })}
+              />
+            </CardContent>
+          </Card>
+          <p className="mt-4 text-sm text-muted-foreground">
             Using Overleaf? Open Menu, then Download source, and upload the .tex file.
           </p>
-          <Button variant="link" size="sm" className="mt-2 text-sm" onClick={() => setPasting(true)}>
+          <Button variant="link" className="mt-1 px-0" onClick={() => setPasting(true)}>
             Paste your CV as text instead
           </Button>
         </>
       )}
       {upload.isError && (
-        <ErrorState className="mt-4" title="That file could not be used.">
+        <LoadError className="mt-4" title="That file could not be used.">
           {upload.error.message}
-        </ErrorState>
+        </LoadError>
       )}
     </>
   );
@@ -156,34 +271,36 @@ function CvStep({ next }: { next: () => void }) {
 
 function CvPreview({ source, onReplace, next }: { source: SourceSummary; onReplace: () => void; next: () => void }) {
   return (
-    <Panel className="px-5 pt-6 pb-5 md:px-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">{source.filename ?? "Your CV"}</h2>
-        <p className="text-sm text-graphite">
-          {source.chars.toLocaleString()} characters read
-          {source.meta.structured ? ", sections recognized" : ""}
-        </p>
-      </div>
-      <p className="mt-1 text-sm text-body">
-        Check that this is your CV and the text came through. Formatting does not matter here.
-      </p>
-      <div
-        className="mt-4 max-h-[420px] overflow-y-auto rounded-control border border-rule bg-paper px-4 py-3 text-sm leading-6 whitespace-pre-wrap text-body"
-        tabIndex={0}
-        aria-label="Text read from your CV"
-      >
-        {source.preview}
-      </div>
-      <div className="mt-5 flex flex-wrap gap-2">
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>{source.filename ?? "Your CV"}</h2>
+        </CardTitle>
+        <CardDescription>
+          <Nums>{`${source.chars.toLocaleString()} characters read`}</Nums>
+          {source.meta.structured ? ", sections recognized" : ""}. Check that this is your CV and the text came through.
+          Formatting does not matter here.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div
+          className="max-h-[420px] overflow-y-auto rounded-lg border bg-muted/40 px-4 py-3 text-sm leading-6 whitespace-pre-wrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          tabIndex={0}
+          aria-label="Text read from your CV"
+        >
+          {source.preview}
+        </div>
+      </CardContent>
+      <CardFooter className="flex flex-wrap gap-2">
         <Button onClick={next}>
-          <CheckIcon aria-hidden />
+          <Check data-icon="inline-start" />
           Looks right
         </Button>
-        <Button variant="secondary" onClick={onReplace}>
+        <Button variant="outline" onClick={onReplace}>
           Upload a different file
         </Button>
-      </div>
-    </Panel>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -191,12 +308,15 @@ function CvPreview({ source, onReplace, next }: { source: SourceSummary; onRepla
 
 function SourceRow({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
-    <section className="grid gap-x-5 gap-y-3 py-6 md:grid-cols-[28px_1fr]" aria-label={title}>
-      <span className="hidden pt-0.5 text-graphite md:block" aria-hidden>
+    <section className="grid gap-x-4 gap-y-3 py-5 first:pt-0 last:pb-0 md:grid-cols-[32px_1fr]" aria-label={title}>
+      <span
+        className="hidden size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground md:flex [&_svg]:size-4"
+        aria-hidden
+      >
         {icon}
       </span>
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="font-medium">{title}</h2>
         <div className="mt-2">{children}</div>
       </div>
     </section>
@@ -205,15 +325,24 @@ function SourceRow({ icon, title, children }: { icon: ReactNode; title: string; 
 
 function Added({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
   return (
-    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-body">
-      <CheckIcon size={16} aria-hidden className="text-ok" />
+    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <CircleCheck className="size-4 text-success" aria-hidden />
       {children}
-      <Button variant="link" size="sm" onClick={onRemove}>
+      <Button variant="link" size="sm" className="px-0" onClick={onRemove}>
         Remove
       </Button>
     </p>
   );
 }
+
+const githubUsername = z
+  .string()
+  .trim()
+  .regex(/^[a-z\d](?:[a-z\d-]{0,38})$/i, "A GitHub username has letters, numbers and dashes only.");
+const portfolioUrl = z
+  .string()
+  .trim()
+  .refine((s) => /^(https?:\/\/)?[^\s.]+\.\S+$/i.test(s), "Enter your site's address, like https://example.com");
 
 function MoreSourcesStep({ back, next }: { back: () => void; next: () => void }) {
   const sources = useSources();
@@ -223,10 +352,6 @@ function MoreSourcesStep({ back, next }: { back: () => void; next: () => void })
   const saveText = useSaveTextSource();
   const remove = useRemoveSource();
   const build = useBuildProfile();
-  const [username, setUsername] = useState("");
-  const [url, setUrl] = useState("");
-  const [pasted, setPasted] = useState("");
-  const [notes, setNotes] = useState("");
   const find = (kind: string) => sources.data?.find((s) => s.kind === kind);
   const li = find("linkedin_pdf");
   const gh = find("github");
@@ -239,182 +364,156 @@ function MoreSourcesStep({ back, next }: { back: () => void; next: () => void })
         Optional. Each one fills gaps your CV leaves. Anything that disagrees with your CV is shown to you, never picked
         silently.
       </StepTitle>
-      <Panel className="px-5 md:px-8">
-        <div className="divide-y divide-rule">
-          <SourceRow icon={<LinkedinLogoIcon size={20} />} title="LinkedIn profile">
+      <Card>
+        <CardContent className="divide-y">
+          <SourceRow icon={<FileUser />} title="LinkedIn profile">
             {li ? (
               <Added onRemove={() => remove.mutate("linkedin_pdf")}>
-                LinkedIn export added, {li.chars.toLocaleString()} characters.
+                <Nums>{`LinkedIn export added, ${li.chars.toLocaleString()} characters.`}</Nums>
               </Added>
             ) : (
-              <>
-                <p className="measure text-sm text-body">
+              <Field>
+                <FieldDescription>
                   On your LinkedIn profile, choose More, then Save to PDF. Upload that file here. The app never visits
                   linkedin.com.
-                </p>
-                <div className="mt-3">
-                  <label className="inline-flex">
-                    <span className="sr-only">LinkedIn PDF</span>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      aria-label="LinkedIn PDF"
-                      className="text-sm text-body file:mr-3 file:h-10 file:cursor-pointer file:rounded-control file:border file:border-rule file:bg-sheet file:px-4 file:text-sm file:font-medium file:text-body hover:file:border-graphite"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) upload.mutate({ file: f, linkedin: true });
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                </div>
-                {upload.isPending && <FieldHint className="mt-2">Reading the file</FieldHint>}
-                {upload.isError && (
-                  <p role="alert" className="mt-2 text-sm text-redpen">
-                    {upload.error.message}
+                </FieldDescription>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  aria-label="LinkedIn PDF"
+                  className="max-w-sm"
+                  disabled={upload.isPending}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) upload.mutate({ file: f, linkedin: true });
+                    e.target.value = "";
+                  }}
+                />
+                {upload.isPending && (
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Spinner className="size-4" />
+                    Reading the file
                   </p>
                 )}
-              </>
+                {upload.isError && <FieldError>{upload.error.message}</FieldError>}
+              </Field>
             )}
           </SourceRow>
 
-          <SourceRow icon={<GithubLogoIcon size={20} />} title="GitHub">
+          <SourceRow icon={<FolderGit2 />} title="GitHub">
             {gh ? (
               <Added onRemove={() => remove.mutate("github")}>
-                {String(gh.meta.login ?? "GitHub")}: {Number(gh.meta.publicRepos ?? 0)} public repos,{" "}
-                {Number(gh.meta.withReadme ?? 0)} with READMEs.
+                <Nums>
+                  {`${String(gh.meta.login ?? "GitHub")}: ${Number(gh.meta.publicRepos ?? 0)} public repos, ${Number(gh.meta.withReadme ?? 0)} with READMEs.`}
+                </Nums>
               </Added>
             ) : (
-              <form
-                className="flex max-w-md gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (username.trim()) github.mutate(username.trim());
-                }}
-              >
-                <Input
-                  aria-label="GitHub username"
-                  placeholder="Your GitHub username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-                <Button type="submit" variant="secondary" disabled={!username.trim() || github.isPending}>
-                  {github.isPending ? "Looking" : "Find"}
-                </Button>
-              </form>
-            )}
-            {github.isError && (
-              <p role="alert" className="mt-2 text-sm text-redpen">
-                {github.error.message}
-              </p>
+              <TextForm
+                id="github-username"
+                label="GitHub username"
+                hideLabel
+                placeholder="Your GitHub username"
+                submitLabel="Find"
+                pendingLabel="Looking"
+                pending={github.isPending}
+                schema={githubUsername}
+                error={github.isError ? github.error.message : undefined}
+                onSubmit={(u) => github.mutate(u)}
+              />
             )}
           </SourceRow>
 
-          <SourceRow icon={<GlobeSimpleIcon size={20} />} title="Portfolio site">
+          <SourceRow icon={<Globe />} title="Portfolio site">
             {pf ? (
               <Added onRemove={() => remove.mutate("portfolio")}>
-                {pf.meta.pasted ? "Pasted portfolio text" : `Read ${String(pf.meta.url ?? "your site")}`},{" "}
-                {pf.chars.toLocaleString()} characters.
+                <Nums>
+                  {`${pf.meta.pasted ? "Pasted portfolio text" : `Read ${String(pf.meta.url ?? "your site")}`}, ${pf.chars.toLocaleString()} characters.`}
+                </Nums>
               </Added>
             ) : portfolio.data?.thin ? (
-              <div className="space-y-2">
-                <p className="measure text-sm text-body">
+              <TextForm
+                id="portfolio-text"
+                label="Portfolio text"
+                hideLabel
+                multiline
+                placeholder="About, projects, anything useful"
+                submitLabel="Save text"
+                pending={saveText.isPending}
+                error={saveText.isError ? saveText.error.message : undefined}
+                onSubmit={(text) => saveText.mutate({ kind: "portfolio", text, url: portfolio.data?.url })}
+              >
+                <FieldDescription>
                   {portfolio.data.url} has very little text in its HTML, so it probably builds the page in the browser.
                   Paste the text from your site instead.
-                </p>
-                <Textarea
-                  aria-label="Portfolio text"
-                  value={pasted}
-                  onChange={(e) => setPasted(e.target.value)}
-                  placeholder="About, projects, anything useful"
-                />
-                <Button
-                  variant="secondary"
-                  disabled={!pasted.trim() || saveText.isPending}
-                  onClick={() => saveText.mutate({ kind: "portfolio", text: pasted, url: portfolio.data?.url })}
-                >
-                  Save text
-                </Button>
-              </div>
+                </FieldDescription>
+              </TextForm>
             ) : (
-              <form
-                className="flex max-w-xl gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (url.trim()) portfolio.mutate(url.trim());
-                }}
-              >
-                <Input
-                  aria-label="Portfolio URL"
-                  placeholder="https://"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-                <Button type="submit" variant="secondary" disabled={!url.trim() || portfolio.isPending}>
-                  {portfolio.isPending ? "Reading" : "Read"}
-                </Button>
-              </form>
-            )}
-            {portfolio.isError && (
-              <p role="alert" className="mt-2 text-sm text-redpen">
-                {portfolio.error.message}
-              </p>
+              <TextForm
+                id="portfolio-url"
+                label="Portfolio URL"
+                hideLabel
+                placeholder="https://"
+                submitLabel="Read"
+                pendingLabel="Reading"
+                pending={portfolio.isPending}
+                schema={portfolioUrl}
+                error={portfolio.isError ? portfolio.error.message : undefined}
+                onSubmit={(u) => portfolio.mutate(u)}
+              />
             )}
           </SourceRow>
 
-          <SourceRow icon={<NotePencilIcon size={20} />} title="Things your CV leaves out">
+          <SourceRow icon={<NotebookPen />} title="Things your CV leaves out">
             {nt ? (
               <Added onRemove={() => remove.mutate("notes")}>
-                Notes added, {nt.chars.toLocaleString()} characters.
+                <Nums>{`Notes added, ${nt.chars.toLocaleString()} characters.`}</Nums>
               </Added>
             ) : (
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="sr-only">
-                  Things your CV leaves out
-                </Label>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="A side project, a tool you use daily, a result you are proud of. Facts only."
-                />
-                <Button
-                  variant="secondary"
-                  disabled={!notes.trim() || saveText.isPending}
-                  onClick={() => saveText.mutate({ kind: "notes", text: notes })}
-                >
-                  Save notes
-                </Button>
-              </div>
+              <TextForm
+                id="notes"
+                label="Things your CV leaves out"
+                hideLabel
+                multiline
+                placeholder="A side project, a tool you use daily, a result you are proud of. Facts only."
+                submitLabel="Save notes"
+                pending={saveText.isPending}
+                error={saveText.isError ? saveText.error.message : undefined}
+                onSubmit={(text) => saveText.mutate({ kind: "notes", text })}
+              />
             )}
           </SourceRow>
-        </div>
-      </Panel>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         {build.isPending ? (
-          <TaskSteps
-            steps={[
-              { label: "Reading your sources", state: "done" },
-              { label: "Building your profile", state: "running", detail: "This takes up to a minute." },
-            ]}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Building your profile</CardTitle>
+              <CardDescription>This takes up to a minute.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TaskSteps steps={["Reading your sources", "Building your profile"]} current={1} />
+            </CardContent>
+          </Card>
         ) : (
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => build.mutate(undefined, { onSuccess: next })}>Build my profile</Button>
-            <Button variant="ghost" onClick={back}>
+            <Button size="lg" onClick={() => build.mutate(undefined, { onSuccess: next })}>
+              Build my profile
+            </Button>
+            <Button size="lg" variant="ghost" onClick={back}>
               Back
             </Button>
           </div>
         )}
         {build.isError && (
-          <ErrorState
+          <LoadError
             className="mt-4"
             title="Your profile was not built."
             onRetry={() => build.mutate(undefined, { onSuccess: next })}
           >
             {build.error.message}
-          </ErrorState>
+          </LoadError>
         )}
       </div>
     </>
@@ -433,33 +532,42 @@ function ReviewStep({ back, next }: { back: () => void; next: () => void }) {
         This is the only thing the app will ever say about you. Fix anything wrong, add anything missing. Nothing is
         used for tailoring until you confirm.
       </StepTitle>
-      {q.isPending && <Skeleton className="h-96 w-full rounded-panel" />}
+      {q.isPending && <Skeleton className="h-96 w-full rounded-xl" />}
       {q.isError && (
-        <ErrorState title="Your profile did not load." onRetry={() => void q.refetch()}>
+        <LoadError title="Your profile did not load." onRetry={() => void q.refetch()}>
           {q.error.message}
-        </ErrorState>
+        </LoadError>
       )}
       {q.data === null && (
-        <EmptyState title="No profile yet." action={<Button onClick={back}>Back to sources</Button>}>
-          Build it from your sources first.
-        </EmptyState>
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyTitle>No profile yet.</EmptyTitle>
+            <EmptyDescription>Build it from your sources first.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={back}>Back to sources</Button>
+          </EmptyContent>
+        </Empty>
       )}
       {q.data && <ProfileEditor version={q.data} />}
       {q.data && (
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button
+            size="lg"
             disabled={conflicts > 0 || confirm.isPending}
             onClick={() => confirm.mutate(undefined, { onSuccess: next })}
           >
-            <CheckIcon aria-hidden />
+            <Check data-icon="inline-start" />
             This is right
           </Button>
-          <Button variant="ghost" onClick={back}>
+          <Button size="lg" variant="ghost" onClick={back}>
             Back
           </Button>
-          {conflicts > 0 && <FieldHint>Choose a value for each disagreement above first.</FieldHint>}
+          {conflicts > 0 && (
+            <p className="text-sm text-muted-foreground">Choose a value for each disagreement above first.</p>
+          )}
           {confirm.isError && (
-            <p role="alert" className="text-sm text-redpen">
+            <p role="alert" className="text-sm text-destructive">
               {confirm.error.message}
             </p>
           )}
@@ -477,9 +585,11 @@ function PreferencesStep({ back, next }: { back: () => void; next: () => void })
       <StepTitle title="Set what you are looking for">
         These decide which jobs reach your daily feed. You can change them in Settings.
       </StepTitle>
-      <Panel className="px-5 pt-7 pb-7 md:px-8">
-        <PreferencesForm onSaved={next} saveLabel="Save and continue" />
-      </Panel>
+      <Card>
+        <CardContent>
+          <PreferencesForm onSaved={next} saveLabel="Save and continue" />
+        </CardContent>
+      </Card>
       <Button variant="ghost" className="mt-4" onClick={back}>
         Back
       </Button>
@@ -493,25 +603,31 @@ function DoneStep({ back }: { back: () => void }) {
   return (
     <>
       <StepTitle title="Your profile is ready" />
-      <EmptyState
-        title="The daily job search is not switched on yet."
-        action={
-          <div className="flex flex-wrap gap-2">
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Clock />
+          </EmptyMedia>
+          <EmptyTitle>The daily job search is not switched on yet.</EmptyTitle>
+          <EmptyDescription>
+            Your first search runs here once job sources are added to this deployment. Your profile and preferences are
+            saved.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <div className="flex flex-wrap justify-center gap-2">
             <Button asChild>
               <Link href="/profile">Go to your profile</Link>
             </Button>
-            <Button asChild variant="secondary">
+            <Button asChild variant="outline">
               <Link href="/settings">Settings</Link>
             </Button>
             <Button variant="ghost" onClick={back}>
               Back
             </Button>
           </div>
-        }
-      >
-        Your first search runs here once job sources are added to this deployment. Your profile and preferences are
-        saved.
-      </EmptyState>
+        </EmptyContent>
+      </Empty>
     </>
   );
 }
