@@ -22,6 +22,13 @@ export type GeminiOptions = {
   model: string;
   /** Tried after the main model keeps answering 429 or 503. */
   fallbackModel?: string;
+  /**
+   * Asked as well when the main model is slow (slowMs). Default: the main
+   * model again, a second request that often comes back sooner. Busy errors
+   * (429, 503) still go to fallbackModel, since asking the same model again
+   * cannot help there.
+   */
+  hedgeModel?: string;
   /** Requests per minute to stay under. Free-tier limits are shown in AI Studio. */
   rpm?: number;
   retries?: number;
@@ -30,7 +37,7 @@ export type GeminiOptions = {
   /**
    * When the main model has not answered after this many ms, the fallback
    * model is asked too and the first answer wins (the other request is
-   * cancelled). Default 20 s.
+   * cancelled). Default 10 s.
    */
   slowMs?: number;
   models?: Models;
@@ -69,7 +76,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
   const now = opts.now ?? Date.now;
   const rpm = opts.rpm ?? 8;
   const retries = opts.retries ?? 3;
-  const slowMs = opts.slowMs ?? 20_000;
+  const slowMs = opts.slowMs ?? 10_000;
   const log =
     opts.log ??
     ((e) => console.info(`[llm] ${e.promptId} ${e.model} ${e.ms}ms in=${e.inputTokens} out=${e.outputTokens}`));
@@ -157,7 +164,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
    */
   function callOnce<T>(args: GenerateArgs<T>, user: string): Promise<{ text: string; usage: Usage }> {
     const fallback = opts.fallbackModel && opts.fallbackModel !== opts.model ? opts.fallbackModel : null;
-    if (!fallback) return callModel(opts.model, args, user);
+    const slowHedge = opts.hedgeModel ?? opts.model;
     const main = new AbortController();
     const hedge = new AbortController();
     return new Promise((resolve, reject) => {
@@ -180,12 +187,12 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
         // The fallback's error says more when the main model was only busy.
         reject(busyError(mainError) && hedgeError ? hedgeError : (mainError ?? hedgeError));
       };
-      const startHedge = (why: string) => {
-        if (hedged || done) return;
+      const startHedge = (why: string, model: string | null) => {
+        if (hedged || done || !model) return;
         hedged = true;
         running++;
-        console.info(`[llm] ${args.promptId}: ${opts.model} ${why}, also asking ${fallback}`);
-        callModel(fallback, args, user, hedge.signal).then(
+        console.info(`[llm] ${args.promptId}: ${opts.model} ${why}, also asking ${model}`);
+        callModel(model, args, user, hedge.signal).then(
           (v) => win(v, main),
           (e) => {
             hedgeError = e;
@@ -193,12 +200,12 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
           },
         );
       };
-      const timer = setTimeout(() => startHedge(`has not answered in ${slowMs / 1000} s`), slowMs);
+      const timer = setTimeout(() => startHedge(`has not answered in ${slowMs / 1000} s`, slowHedge), slowMs);
       callModel(opts.model, args, user, main.signal).then(
         (v) => win(v, hedge),
         (e) => {
           mainError = e;
-          if (busyError(e)) startHedge("is busy");
+          if (busyError(e)) startHedge("is busy", fallback);
           failed();
         },
       );

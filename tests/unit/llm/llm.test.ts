@@ -262,7 +262,7 @@ describe("llm cache", () => {
 
 describe("Gemini provider hedge (slow main model)", () => {
   /** lite answers after `liteMs`; flash answers at once, or with `flashError`. Records aborts. */
-  function slowLite(liteMs: number, flashError?: Error) {
+  function slowLite(liteMs: number, flashError?: Error, hedgeModel?: string, secondLiteMs = liteMs) {
     const calls: string[] = [];
     const aborted: string[] = [];
     const answer = (model: string) => ({
@@ -276,8 +276,16 @@ describe("Gemini provider hedge (slow main model)", () => {
           if (flashError) throw flashError;
           return answer(req.model);
         }
+        const ms = calls.filter((m) => m === req.model).length > 1 ? secondLiteMs : liteMs;
         return new Promise((resolve, reject) => {
-          const t = setTimeout(() => resolve(answer(req.model)), liteMs);
+          const t = setTimeout(
+            () =>
+              resolve({
+                ...answer(req.model),
+                text: JSON.stringify({ title: `from ${req.model} #${calls.length}`, skills: [] }),
+              }),
+            ms,
+          );
           req.config.abortSignal?.addEventListener("abort", () => {
             clearTimeout(t);
             aborted.push(req.model);
@@ -290,6 +298,7 @@ describe("Gemini provider hedge (slow main model)", () => {
       apiKey: "test",
       model: "gemini-3.5-flash-lite",
       fallbackModel: "gemini-3.8-flash",
+      hedgeModel,
       slowMs: 30,
       models: models as unknown as NonNullable<GeminiOptions["models"]>,
       ...fast,
@@ -297,8 +306,16 @@ describe("Gemini provider hedge (slow main model)", () => {
     return { p, calls, aborted };
   }
 
-  it("asks the fallback when the main model is slow, takes the first answer and cancels the other", async () => {
-    const { p, calls, aborted } = slowLite(500);
+  it("by default asks lite again when lite is slow, takes the first answer and never spends Flash quota", async () => {
+    const { p, calls, aborted } = slowLite(500, undefined, undefined, 5);
+    const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
+    expect(res.data.title).toBe("from gemini-3.5-flash-lite #2");
+    expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.5-flash-lite"]);
+    expect(aborted).toEqual(["gemini-3.5-flash-lite"]);
+  });
+
+  it("asks the hedge model when the main model is slow, takes the first answer and cancels the other", async () => {
+    const { p, calls, aborted } = slowLite(500, undefined, "gemini-3.8-flash");
     const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
     expect(res.data.title).toBe("from gemini-3.8-flash");
     expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.8-flash"]);
@@ -309,16 +326,16 @@ describe("Gemini provider hedge (slow main model)", () => {
     const quota = Object.assign(new Error('{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}'), {
       status: 429,
     });
-    const { p, calls } = slowLite(100, quota);
+    const { p, calls } = slowLite(100, quota, "gemini-3.8-flash");
     const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
-    expect(res.data.title).toBe("from gemini-3.5-flash-lite");
+    expect(res.data.title).toMatch(/^from gemini-3.5-flash-lite/);
     expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.8-flash"]);
   });
 
   it("does not ask the fallback when the main model answers in time", async () => {
     const { p, calls } = slowLite(5);
     const res = await p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
-    expect(res.data.title).toBe("from gemini-3.5-flash-lite");
+    expect(res.data.title).toMatch(/^from gemini-3.5-flash-lite/);
     expect(calls).toEqual(["gemini-3.5-flash-lite"]);
   });
 });

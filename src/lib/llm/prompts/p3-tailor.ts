@@ -1,9 +1,10 @@
 import { tailoredResumeSchema, type JobSpec, type MasterProfile } from "@/lib/profile/schema";
+import { mentions } from "@/lib/profile/skills";
 import type { GapKeyword, MatchedKeyword } from "@/lib/tailor/keywords";
 
 /** P3: tailor (docs/AI_PROMPTS.md). The deterministic validator checks every answer (src/lib/tailor/validate.ts). */
 export const P3_PROMPT_ID = "p3-tailor";
-export const P3_PROMPT_VERSION = "p3.6";
+export const P3_PROMPT_VERSION = "p3.8";
 export const p3OutputSchema = tailoredResumeSchema;
 
 export type TailorOptions = { pages: 1 | 2; spelling: "US" | "UK"; emphasis?: string };
@@ -25,23 +26,30 @@ Hard rules:
 7. tech lists: every item of that role's or project's tech in the master profile, and nothing else. Reorder so the ones the job asks for come first; never drop one.
 8. Length: ${
     opts.pages === 1
-      ? "the CV is one dense page. Fit it by cutting filler words and by choosing fewer projects (up to 6, 1 bullet each), never by dropping role bullets or the details rule F keeps; summary max 2 lines."
+      ? "the CV is one dense page. Fit it by cutting filler words and by choosing fewer projects (up to 6), never by dropping role bullets or the details rule F keeps. A project on the CV keeps each of its source bullets, once each; summary max 2 lines."
       : "the CV may use two pages. Every role bullet, and up to 2 bullets per project."
   }
 9. skills: group the profile's skills under short headings ("Languages", "Frontend", "Backend", "Data", "Infrastructure"). A heading holds only what it names: React, Tailwind CSS, HTML and CSS are Frontend, never Backend; Django, Laravel and Express are Backend. Each item's skillId is the profile skill's id and its name is the profile skill's name.
 
 How to write each bullet (this is the main job):
 A. Order. Within each role, put first the source bullets that carry the most terms in <placement> and match the job's responsibilities. For projects, pick the most relevant.
-B. Place keywords. <placement> lists, for each source bullet id, the matched terms that bullet's own text proves. When you use a source bullet, write every term listed for it into your bullet, in the job's exact wording. One tailored bullet per source bullet; do not merge two into one. List the terms you placed in keywordsUsed.
+B. Place keywords. <placement> lists, for some source bullet ids, one matched term that bullet's own text proves in other words. Write that term into the bullet, once, in the job's exact wording. Do not add other job terms to it; terms the bullet already proves are counted as they are. One tailored bullet per source bullet, and each source bullet used exactly once: never two bullets from the same source, never merge two into one. List the terms you placed in keywordsUsed.
 C. Terms in <tech_only> are proven only by a tech line or the skills list. Put them in skills and the tech line. Never claim them in a bullet.
-D. Reword for this job: put first the part this job cares about most and tighten the wording. The facts, numbers and hedges stay exactly as in the source.
+D. Reword lightly for this job. Lead with the part of the bullet this job cares about most. Where <placement> lists a term for this source bullet, write that term in the job's exact wording, once, in place of the source's own words for the same thing ("three-role access" becomes "role-based access control"); never put job terms in front of the unchanged source sentence. The bullet must read like a person wrote it: no word twice, no list of keywords glued on. Every fact and detail of the source stays (rule F); a count may become the list it counts ("three roles" and "(admin, editor, viewer)"). Return a source bullet unchanged only when it already leads with what the job needs and already uses its placement terms.
 F. Keep the details. Shortening removes filler, never substance. Every word of the source bullet that also appears in the job post stays (if the job asks for auth and role-based access, "three-role access (admin, doctor, patient) on Firebase Auth" keeps "Firebase Auth" and the three roles). Every number (digits or words: "six input methods"), every named tool, everything in parentheses ("(EN/FR)") and every possessive ("peers' tasks") stays.
 G. Add nothing the bullet's own source bullets do not state. Never move a tool from the tech line, or a number or detail from another bullet, into a bullet.
 E. A bullet describes only the work its source describes. Never paste the job's responsibilities or requirements into a bullet ("Ingest data from APIs and SFTP drops by..." when the source never mentions APIs or SFTP is an invented claim). When a source bullet has little to do with the job, keep it, reworded plainly; do not bend it toward the job.
 
-Example (fictional). The job is about reliable billing and lists "Kafka" and "billing". Source b_9_1: "Moved nightly cron scripts for invoices to a Kafka queue; failed runs dropped by roughly 60%." <placement> gives b_9_1: ["Kafka", "billing"].
-Good: "Rebuilt nightly invoice billing on a Kafka queue, cutting failed billing runs by roughly 60%." (sourceIds ["b_9_1"], keywordsUsed ["Kafka", "billing"])
-Bad: the source sentence unchanged. Bad: adding "with Terraform" when no source says Terraform. Bad: "by 60%" (the hedge "roughly" was dropped).
+Examples (fictional).
+1. The job is about reliable billing and lists "Kafka" and "billing". Source b_9_1: "Moved nightly cron scripts for invoices to a Kafka queue; failed runs dropped by roughly 60%." <placement> gives b_9_1: ["billing"] (it already says "Kafka").
+Good: "Moved nightly invoice billing from cron scripts to a Kafka queue; failed runs dropped by roughly 60%." (sourceIds ["b_9_1"], keywordsUsed ["billing"])
+Bad: the source sentence unchanged. Bad: dropping "cron scripts" or "nightly" to shorten it. Bad: adding "with Terraform" when no source says Terraform. Bad: "by 60%" (the hedge "roughly" was dropped).
+2. The job asks for role-based access control. Source b_8_2: "Added three-role access (admin, editor, viewer) on Firebase Auth, with per-role routes and reads." <placement> gives b_8_2: ["role-based access control"].
+Good: "Added role-based access control (admin, editor, viewer) with Firebase Auth, with per-role routes and reads."
+Bad: "Built role-based access control and authentication on Firebase: three-role access (admin, editor, viewer) on Firebase Auth, with per-role routes and reads." (job terms stacked in front of the unchanged sentence; "Firebase" twice). Bad: "Built role-based access control on Firebase" (lost "Auth", the roles and per-role routes).
+3. The job asks for LLM APIs. Source b_8_3: "Integrated the Gemini API to summarize meeting notes into action items and owners." <placement> gives b_8_3: ["LLM APIs"].
+Good: "Integrated the Gemini API (LLM) to summarize meeting notes into action items and owners."
+Bad: "Integrated LLM APIs through the Gemini API to summarize meeting notes into action items and owners." (the term glued on in front).
 
 Writing rules (the person's house style):
 - Bullets are dense, 1 to 3 lines, and can join two related clauses with a semicolon.
@@ -95,13 +103,24 @@ export function promptProfile(p: MasterProfile) {
  * tech_only: putting them in a bullet would join two facts into a new claim.
  */
 export function placementHints(profile: MasterProfile, matched: MatchedKeyword[]) {
-  const bulletIds = new Set([...profile.experience, ...profile.projects].flatMap((x) => x.bullets.map((b) => b.id)));
-  const placement: Record<string, string[]> = {};
+  const bullets = new Map(
+    [...profile.experience, ...profile.projects].flatMap((x) => x.bullets.map((b) => [b.id, b.text])),
+  );
+  const candidates: Record<string, MatchedKeyword[]> = {};
   const techOnly: string[] = [];
   for (const m of matched) {
-    const ids = m.proofIds.filter((id) => bulletIds.has(id));
+    const ids = m.proofIds.filter((id) => bullets.has(id));
     if (!ids.length) techOnly.push(m.term);
-    for (const id of ids) (placement[id] ??= []).push(m.term);
+    // A bullet that already says the job's exact term needs nothing; one that proves it in its own words may say it.
+    for (const id of ids) if (!mentions(bullets.get(id)!, m.term)) (candidates[id] ??= []).push(m);
+  }
+  // One term per bullet, so it reads like a person wrote it: a must-have first, then the longest.
+  const placement: Record<string, string[]> = {};
+  for (const [id, ms] of Object.entries(candidates)) {
+    const best = [...ms].sort(
+      (a, b) => Number(b.importance === "must") - Number(a.importance === "must") || b.term.length - a.term.length,
+    )[0];
+    placement[id] = [best.term];
   }
   return { placement, techOnly };
 }

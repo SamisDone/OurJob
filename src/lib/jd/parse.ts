@@ -5,6 +5,7 @@ import type { LLMProvider } from "@/lib/llm/types";
 import type { JobSpec } from "@/lib/profile/schema";
 import { canonicalSkill, knownAliases, skillFold } from "@/lib/profile/skills";
 import { cleanJobText } from "./clean";
+import { addStatedTerms } from "./terms";
 
 const loose = (s: string) =>
   s.normalize("NFKC").toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
@@ -95,5 +96,7 @@ export async function parseJob(
     schema: p2OutputSchema,
     temperature: 0.1,
   });
-  return { cleaned, ...checkJobSpec(res.data, cleaned), cached: res.cached };
+  const { spec, dropped } = checkJobSpec(res.data, cleaned);
+  // Terms the post states that the model left out, and must or nice from where each sits in the post.
+  return { cleaned, spec: addStatedTerms(spec, cleaned), dropped, cached: res.cached };
 }

@@ -13,7 +13,8 @@ export type CvSections = Partial<Record<SectionName, string[]>>;
 export type KeywordLike = { term: string; canonical?: string; synonyms?: string[] };
 export type MatchResult = { found: boolean; locations: SectionName[]; matchedForm: string };
 
-const dictionary = Object.entries(synonymsJson as Record<string, string[] | string>).filter(
+/** data/skill-synonyms.json as [canonical, aliases] pairs. */
+export const dictionary = Object.entries(synonymsJson as Record<string, string[] | string>).filter(
   (e): e is [string, string[]] => !e[0].startsWith("_") && Array.isArray(e[1]),
 );
 

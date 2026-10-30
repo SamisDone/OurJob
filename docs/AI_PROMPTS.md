@@ -121,6 +121,8 @@ Return JSON that matches the schema.
 
 **Input:** cleaned JD text.
 
+**After P2, in code** (`src/lib/jd/terms.ts`): every term of `data/skill-synonyms.json` that the post states becomes a keyword even when the model left it out, and must or nice comes from where each keyword sits in the post (a "Nice to have" line or section), not from the model. The same post then reads the same way every run.
+
 **Output schema: JobSpec**
 ```ts
 type JobSpec = {
@@ -216,7 +218,7 @@ How to write each bullet (added in p3.2, 2026-10-29):
 A. Pick source bullets that carry the most terms in <placement> and match the job's responsibilities.
 B. <placement> lists, for each source bullet id, the matched terms that bullet's own text proves. When a source bullet is used, every term listed for it goes into the bullet in the job's exact wording, and into keywordsUsed.
 C. Terms in <tech_only> are proven only by a tech line or the skills list: skills and the tech line only, never a bullet (joining a role's tech line to one of its bullets can invent a claim, "built the rate-quote service in Go" when the source never says the language).
-D. Never copy a source bullet word for word: put first what the job cares about, tighten, cut what it does not care about. Facts, numbers and hedges stay as in the source.
+D. Reword lightly (p3.7): lead with the part the job cares about most, and where <placement> lists a term the bullet proves, write it in the job's wording ("role-based access control" for three-role access on Firebase Auth). Every fact and detail stays (F); only order and connecting words change.
 E. A bullet describes only the work its source describes. Never paste the job's responsibilities into a bullet; leave a source bullet out rather than bend it. (Enforced in code by validator check 2b.)
 Plus one fictional before-and-after example (see `src/lib/llm/prompts/p3-tailor.ts`).
 
@@ -256,15 +258,18 @@ Checks, each producing a report entry:
 3. **Numbers:** extract numbers from each bullet and the summary (digits, "1,000", percentages, "10k", "2M", "3x", "~10x", "20+", "5+ years", "p99 under 105 ms", spelled numbers one through twenty). Each must appear in the metrics or text of its source items, with the same or a weaker claim ("20+" may become "20+", never "30+"). If the source metric has a hedge, the bullet must keep a hedge. Failing bullets go to the fix loop. Unit-test every form listed here.
 2c. **Kept details:** a tailored bullet keeps, from each source bullet it uses, every number (digits or words), named tool, word in parentheses, possessive, and every word the job post also uses (`droppedDetails` in `src/lib/tailor/fidelity.ts`).
 2d. **Nothing added:** numbers and named tools in a bullet must appear in the bullets it cites, not only in the role's tech line or other bullets (`addedDetails`).
-When a bullet from a single source bullet fails 2c or 2d, code puts that source bullet's own text back (no model call). Bullets merged from several sources go to the fix loop.
+2e. **Reads like a person wrote it:** no content word twice that the source says once, one job term per bullet (not a term and its synonym, not two terms), and no job terms stacked in front of the source sentence left nearly unchanged (`repeatedWords`, `stackedTerms`).
+2f. **Term placed in code** (`placeTerm`): for a single-source bullet that fails 2e, or one the model returned unchanged, code writes the bullet's one placement term into his own sentence: the words that prove it are replaced ("three-role access" becomes "role-based access control", the count kept as the list in parentheses), or a tool name gets a short gloss ("Gemini API (LLM)"). The result is kept only if it passes 2c, 2d and 2e. <placement> holds at most one term per bullet, and only one the bullet does not already state.
+When a bullet from a single source bullet fails 2c or 2d, code puts that source bullet's own text back, with its term placed when that passes (no model call). Bullets merged from several sources go to the fix loop.
 3b. **Bold phrases and tech:** every `boldPhrases` entry is an exact substring of its bullet; every `tech` item exists in that role's or project's tech in the master profile, and every item of that tech line stays (missing ones are put back).
+4d. **Core skills kept:** every language, framework, library, database and tool named in his bullets or tech lines stays in the skills section; each group lists the job's terms first; backend services (Firebase, LLM APIs such as the Gemini API) sit under Backend, frontend libraries (Three.js) under Frontend.
 4b. **Skill groups:** frontend tools (React, Tailwind CSS, HTML, CSS) are never under a Backend heading, and backend frameworks never under Frontend; code moves them.
 4. **Skills:** every skill in `skills` maps to a profile skill ID. Any skill or tool name found in bullet text that matches the synonym dictionary but is not in the profile fails.
 5. **Gap leak:** no gap keyword (or its synonyms) appears anywhere in the output. Failing bullets go to the fix loop.
 6. **Matched coverage:** every matched keyword appears at least once (exact term, case-insensitive). Missing ones are reported; the fix loop asks the model to add them where proofIds allow.
 7. **Style:** no em dash (U+2014) and no banned words; auto-fix em dashes to a comma or period in code, flag banned words for the fix loop.
 8. **Length:** estimate rendered length (characters per line heuristic); if over the page target, ask the fix loop to shorten bullets, then drop projects; a role bullet goes only if it is clearly irrelevant.
-9. **Kept experience:** every source bullet of every role is used by some tailored bullet. One left out without a note naming its id goes to the fix loop, which adds it back; one with a note is reported ("Left out from Parcelwise: ..."). Bullets removed for accuracy after the fix loop get such a note automatically.
+9. **Kept experience, each source bullet exactly once:** every source bullet of every role, and of every project on the CV, is used by exactly one tailored bullet. A bullet that only repeats source bullets used earlier is removed (9a); a source bullet left out without a note naming its id with a specific reason is put back in his own words, in code; one with such a note is reported ("Left out from Parcelwise: ..."). Bullets removed for accuracy after the fix loop get such a note automatically. (Counting bullets per item was not enough: a CV once had two bullets from one source and lost the other.)
 
 **Fix loop:** send only the failing items back to the model with the specific errors, max 2 rounds, and no round starts after 30 s (`FIX_BUDGET_MS`). A single-source bullet still failing gets its source text back; anything else still failing is dropped, and the UI lists what was dropped and why in a "Removed for accuracy" panel.
 

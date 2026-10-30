@@ -67,3 +67,28 @@ describe("addedDetails", () => {
     expect(addedDetails("Tuned slow PostgreSQL queries", "Tuned slow Postgres queries", vocab)).toEqual([]);
   });
 });
+
+describe("placeTerm (check 2g)", () => {
+  it("replaces the words that prove the term, joined hyphenated words included", async () => {
+    const { placeTerm } = await import("@/lib/tailor/fidelity");
+    const { keywordForms } = await import("@/lib/ats/match");
+    const k = { term: "role-based access control", canonical: "Role-based access control" };
+    const src = "Built three-role access (admin, editor, viewer) on Firebase Auth, with per-role routes and reads.";
+    const out = placeTerm(src, k.term, "role access", keywordForms(k));
+    expect(out).toBe(
+      "Built role-based access control (admin, editor, viewer) on Firebase Auth, with per-role routes and reads.",
+    );
+    // The count survives as the list it counts, so nothing is lost.
+    expect(droppedDetails(src, out!, "role-based access control", vocab)).toEqual([]);
+  });
+
+  it("names the term once after a tool, in its shortest form", async () => {
+    const { placeTerm } = await import("@/lib/tailor/fidelity");
+    const { keywordForms } = await import("@/lib/ats/match");
+    const k = { term: "LLM APIs", canonical: "Large language models" };
+    const src = "Integrated the Gemini API to summarize meeting notes into action items.";
+    expect(placeTerm(src, k.term, "Gemini API", keywordForms(k))).toBe(
+      "Integrated the Gemini API (LLM) to summarize meeting notes into action items.",
+    );
+  });
+});

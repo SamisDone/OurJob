@@ -8,6 +8,7 @@ import type { TailoredResume } from "@/lib/profile/schema";
 import type { GapKeyword, MatchedKeyword } from "@/lib/tailor/keywords";
 import { splitKeywords } from "@/lib/tailor/keywords";
 import { tailorCv } from "@/lib/tailor/pipeline";
+import { droppedDetails } from "@/lib/tailor/fidelity";
 import { validateTailored, type Issue } from "@/lib/tailor/validate";
 
 const profile = normalizeProfile(
@@ -114,18 +115,44 @@ const of = (issues: Issue[], check: Issue["check"], action?: Issue["action"]) =>
   issues.filter((i) => i.check === check && (!action || i.action === action));
 
 describe("validator", () => {
-  it("sends an unexplained left-out role bullet back to the fix loop, and reports an explained one", () => {
+  it("puts an unexplained left-out role bullet back in his words, and reports an explained one", () => {
     const silent = run((r) => (r.notes = r.notes.filter((n) => !n.includes("b_1_3"))));
-    expect(of(silent.issues, "kept", "fix").map((i) => i.message)).toEqual([
-      expect.stringContaining("Keep b_1_3 from Parcelwise"),
+    expect(of(silent.issues, "kept", "fixed").map((i) => i.message)).toEqual([
+      expect.stringContaining("Put back b_1_3 from Parcelwise"),
     ]);
+    expect(silent.resume.experience[0].bullets.at(-1)).toMatchObject({
+      text: profile.experience[0].bullets[2].text,
+      sourceIds: ["b_1_3"],
+    });
     const explained = run(() => {});
     expect(of(explained.issues, "kept", "fix")).toEqual([]);
     expect(of(explained.issues, "kept", "report")).toHaveLength(3);
     const generic = run(
       (r) => (r.notes = r.notes.map((n) => (n.includes("b_1_3") ? "Left out b_1_3: irrelevant to this job." : n))),
     );
-    expect(of(generic.issues, "kept", "fix")).toHaveLength(1);
+    expect(of(generic.issues, "kept", "fixed")).toHaveLength(1);
+  });
+
+  it("9a. uses each source bullet exactly once: removes a repeat and puts back the one it replaced", () => {
+    // The real failure: two bullets from the same source, and the other source bullet gone, so the count looked right.
+    const { resume, issues } = run((r) => {
+      r.experience[0].bullets = [
+        r.experience[0].bullets[0],
+        {
+          ...r.experience[0].bullets[0],
+          text: `${r.experience[0].bullets[0].text.replace(/\.$/, "")} for a logistics platform.`,
+        },
+      ];
+    });
+    const used = resume.experience[0].bullets.flatMap((b) => b.sourceIds);
+    expect(used.filter((id) => id === "b_1_1")).toHaveLength(1);
+    expect(used).toContain("b_1_2");
+    expect(of(issues, "kept", "fixed").map((i) => i.message)).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/Removed a repeat in Parcelwise/),
+        expect.stringMatching(/Put back b_1_2/),
+      ]),
+    );
   });
 
   it("passes a CV that only uses profile facts", () => {
@@ -198,12 +225,21 @@ describe("validator", () => {
   });
 
   it("6. reports matched keywords the CV leaves out", () => {
-    const { issues } = run((r) => {
-      // Tech lines are never trimmed, so only leaving out the role that shows Kafka loses it.
-      r.experience.splice(0, 1);
-      r.skills[1].items = [{ name: "PostgreSQL", skillId: "sk_postgresql" }];
-    });
-    expect(of(issues, "coverage", "fix").map((i) => i.message)).toEqual([expect.stringMatching(/^Kafka is missing/)]);
+    // Skills and tech lines are never trimmed, so test with a term only the summary proves.
+    const { issues } = validateTailored(
+      (() => {
+        const r = good();
+        r.summary = undefined;
+        return r;
+      })(),
+      {
+        ...ctx,
+        matched: [...matched, { term: "logistics", canonical: "logistics", importance: "nice", proofIds: ["summary"] }],
+      },
+    );
+    expect(of(issues, "coverage", "fix").map((i) => i.message)).toEqual([
+      expect.stringMatching(/^logistics is missing/),
+    ]);
   });
 
   it("2c. puts his original bullet back when a rewrite drops the job's words or adds a detail", () => {
@@ -250,12 +286,62 @@ describe("validator", () => {
         },
       ];
     });
-    expect(resume.skills.map((g) => [g.group, g.items.map((i) => i.name)])).toEqual([
-      ["Languages", ["Go", "Python"]],
-      ["Backend", ["Kafka"]],
-      ["Data", ["PostgreSQL"]],
-    ]);
-    expect(of(issues, "group", "fixed")).toHaveLength(2);
+    const group = (name: string) => resume.skills.find((g) => g.items.some((i) => i.name === name))?.group;
+    expect(group("Go")).toBe("Languages");
+    expect(group("Python")).toBe("Languages");
+    expect(group("Kafka")).toBe("Backend");
+    expect(group("PostgreSQL")).toBe("Data");
+    expect(of(issues, "group", "fixed").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("4d. keeps every language and tool his bullets or tech lines name, job terms first, Firebase-type services under Backend", () => {
+    const { resume, issues } = run((r) => {
+      r.skills = [{ group: "Languages", items: [{ name: "Go", skillId: "sk_go" }] }];
+    });
+    const names = resume.skills.flatMap((g) => g.items.map((i) => i.name));
+    // Python, PostgreSQL, Kafka, Django... are in Nadia's bullets and tech lines.
+    for (const s of ["Python", "PostgreSQL", "Kafka", "Django"]) expect(names).toContain(s);
+    expect(of(issues, "skills", "fixed").some((i) => /Put back/.test(i.message))).toBe(true);
+    const data = resume.skills.find((g) => g.items.some((i) => i.name === "PostgreSQL"))!;
+    // Postgres is a job term here, so it leads its group.
+    expect(data.items[0].name).toBe("PostgreSQL");
+  });
+
+  it("2e and 2f. flag a word said twice and job terms stacked in front of the source", () => {
+    const { issues } = run((r) => {
+      r.experience[0].bullets[1].text =
+        "Built Postgres billing for billing: moved nightly billing jobs from cron scripts to a Kafka-based event pipeline; cut failed invoice runs by roughly 60%.";
+    });
+    const msgs = of(issues, "style", "fix").map((i) => i.message);
+    expect(msgs.some((m) => /twice/.test(m))).toBe(true);
+    expect(msgs.some((m) => /in front of the unchanged source/.test(m))).toBe(true);
+  });
+
+  it("2e. flags one job term written twice in different words", () => {
+    const { issues } = run((r) => {
+      r.experience[1].bullets[0].text =
+        "Built the merchant settlement API in Python (Django) on Postgres and PostgreSQL used by 2,000+ merchants.";
+    });
+    expect(of(issues, "style", "fix").some((i) => /Postgres twice in different words/.test(i.message))).toBe(true);
+  });
+
+  it("2e. flags a bullet that adds more than one job term", () => {
+    const { issues } = run((r) => {
+      r.experience[0].bullets[0].text =
+        "Designed the rate-quote service in Go on Postgres with Kafka that answers about 1,200 requests per second at p99 under 80 ms.";
+    });
+    expect(of(issues, "style", "fix").some((i) => /Adds 2 job terms/.test(i.message))).toBe(true);
+  });
+
+  it("2c. lets a count become the list it counts", () => {
+    expect(
+      droppedDetails(
+        "Built three-role access (admin, editor, viewer) on Firebase Auth",
+        "Built role-based access control (admin, editor, viewer) with Firebase Auth",
+        "",
+        [["Firebase Auth"]],
+      ),
+    ).toEqual([]);
   });
 
   it("7. replaces em dashes and flags words to avoid", () => {
@@ -278,7 +364,7 @@ describe("validator", () => {
   it("8. asks to trim a CV that will not fit the page", () => {
     const { issues } = run((r) => {
       const b = r.experience[0].bullets[0];
-      r.experience[0].bullets = Array.from({ length: 40 }, () => ({ ...b }));
+      r.experience[0].bullets[0] = { ...b, text: Array.from({ length: 60 }, () => b.text).join(" ") };
     });
     expect(of(issues, "length", "fix")).toHaveLength(1);
   });

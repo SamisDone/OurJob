@@ -67,8 +67,14 @@ export function droppedDetails(source: string, tailored: string, jobText: string
 
   // Numbers, digits or words ("six input methods").
   const tailoredNumbers = extractNumbers(tailored);
+  // A count may become the list it counts: "three-role access" and "(admin, doctor, patient)" say the same.
+  const listLengths = [...tailored.matchAll(/\(([^)]+)\)/g)].map(
+    (m) => m[1].split(/,|\band\b/).filter((x) => x.trim()).length,
+  );
   for (const n of extractNumbers(source)) {
-    if (!tailoredNumbers.some((t) => t.value === n.value && t.unit === n.unit)) missing.push(n.raw.trim());
+    if (tailoredNumbers.some((t) => t.value === n.value && t.unit === n.unit)) continue;
+    if (n.unit === "" && n.value <= 12 && listLengths.includes(n.value)) continue;
+    missing.push(n.raw.trim());
   }
   // Named tools ("Firebase Auth", "Gemini API").
   for (const names of namedTerms(source, vocab)) {
@@ -110,4 +116,74 @@ export function addedDetails(source: string, tailored: string, vocab: Vocabulary
     if (!names.some((n) => mentions(source, n))) added.push(names.find((n) => mentions(tailored, n)) ?? names[0]);
   }
   return [...new Set(added)];
+}
+
+/**
+ * Check 2e, readability: content words a tailored bullet repeats that its
+ * source does not ("...on Firebase: ... on Firebase Auth").
+ */
+export function repeatedWords(source: string, tailored: string): string[] {
+  const count = (s: string) => {
+    const m = new Map<string, number>();
+    for (const w of tokens(s).flatMap((x) => x.split(/[-/]/))) {
+      if (w.length < 3 || STOP.has(w) || /^\d/.test(w)) continue;
+      m.set(stem(w), (m.get(stem(w)) ?? 0) + 1);
+    }
+    return m;
+  };
+  const src = count(source);
+  return [...count(tailored)].filter(([w, n]) => n > 1 && n > (src.get(w) ?? 0)).map(([w]) => w);
+}
+
+/**
+ * Check 2f, readability: job terms stacked in front of the source sentence
+ * ("Built role-based access control and authentication on Firebase:
+ * three-role access (admin, doctor, patient) on Firebase Auth, ..."). True
+ * when three quarters of the source's words still run on unchanged in the
+ * bullet and a job term the source does not use sits before that run.
+ */
+export function stackedTerms(source: string, tailored: string, jobTerms: string[]): boolean {
+  const s = tokens(source);
+  const t = tokens(tailored);
+  // Longest run of words shared in order (common substring over tokens).
+  let best = 0;
+  let bestEnd = 0;
+  const prev = new Array(s.length + 1).fill(0);
+  for (let i = 1; i <= t.length; i++) {
+    let diag = 0;
+    for (let j = 1; j <= s.length; j++) {
+      const up = prev[j];
+      prev[j] = t[i - 1] === s[j - 1] ? diag + 1 : 0;
+      if (prev[j] > best) [best, bestEnd] = [prev[j], i];
+      diag = up;
+    }
+  }
+  if (s.length < 6 || best < s.length * 0.75) return false;
+  const before = t.slice(0, bestEnd - best).join(" ");
+  return jobTerms.some((term) => mentions(before, term) && !mentions(source, term));
+}
+
+/**
+ * The job's term written into a source bullet in code, the way a person would
+ * (check 2g): the words that prove it are replaced by it ("three-role access"
+ * becomes "role-based access control"), or, when they name a tool, the term
+ * follows as a short gloss ("Gemini API (LLM)"). Null when the bullet does not
+ * prove the term. The caller keeps the result only if it passes the fidelity
+ * checks, so a count dropped this way must survive as the list it counts.
+ */
+export function placeTerm(source: string, term: string, hit: string, forms: string[]): string | null {
+  const at = source.toLowerCase().indexOf(hit.toLowerCase());
+  if (at < 0) return null;
+  if (mentions(source, term)) return source;
+  const named = /^\p{Lu}/u.test(hit) || /\p{Lu}{2}/u.test(hit);
+  if (named) {
+    // A tool name: keep it, and name the job's term after it once, in its shortest form.
+    const gloss = [...forms].filter((f) => f.length <= 12 && !mentions(hit, f)).sort((a, b) => a.length - b.length)[0];
+    if (!gloss) return null;
+    const end = at + hit.length;
+    return `${source.slice(0, end)} (${gloss})${source.slice(end)}`;
+  }
+  // Plain words: replace them, with any hyphenated words joined to them ("three-role access").
+  const prefix = /(?:[\p{L}\p{N}]+-)+$/u.exec(source.slice(0, at))?.[0] ?? "";
+  return `${source.slice(0, at - prefix.length)}${term}${source.slice(at + hit.length)}`;
 }

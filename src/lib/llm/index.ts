@@ -55,8 +55,10 @@ export function getLLMProvider(tier: ModelTier = "standard"): LLMProvider {
       model: useTier === "thorough" ? thorough! : standard,
       fallbackModel: useTier === "thorough" ? standard : process.env.LLM_FALLBACK_MODEL || DEFAULT_FALLBACK_MODEL,
       rpm: Number(process.env.LLM_RPM) || undefined,
-      // Ask the fallback too when the main model is this slow (ms); default 20 s.
+      // When the main model is this slow (ms; default 10 s), a second request goes out: to lite again for the
+      // standard tier (lite's daily quota is large), to lite for Thorough (Flash's free quota is 20 a day).
       slowMs: Number(process.env.LLM_SLOW_MS) || undefined,
+      hedgeModel: standard,
     });
   } else {
     throw new LLMError("auth", `Unknown LLM_PROVIDER "${kind}". Use gemini or mock.`);

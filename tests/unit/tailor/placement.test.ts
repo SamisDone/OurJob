@@ -109,3 +109,27 @@ describe("job keywords his profile proves under another name", () => {
     expect(matched.map((m) => m.term)).toEqual(["authentication", "role-based access control", "LLM APIs"]);
   });
 });
+
+describe("placement asks for one job term per bullet", () => {
+  it("picks the one the bullet states in other words, and skips terms it already says", async () => {
+    const { placementHints } = await import("@/lib/llm/prompts/p3-tailor");
+    const { normalizeProfile } = await import("@/lib/profile/normalize");
+    const { p1OutputSchema } = await import("@/lib/llm/prompts/p1-profile");
+    const { readFileSync } = await import("node:fs");
+    const profile = normalizeProfile(
+      p1OutputSchema.parse(JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/farhan-kabir.json", "utf8")).output),
+    );
+    // b_1_1: "Built role-based access (admin, editor, viewer) for the publishing dashboard on Firebase Auth."
+    const { placement } = placementHints(profile, [
+      { term: "authentication", canonical: "Authentication", importance: "must", proofIds: ["b_1_1"] },
+      {
+        term: "role-based access control",
+        canonical: "Role-based access control",
+        importance: "must",
+        proofIds: ["b_1_1"],
+      },
+      { term: "Firebase Auth", canonical: "Firebase Auth", importance: "nice", proofIds: ["b_1_1"] },
+    ]);
+    expect(placement.b_1_1).toEqual(["role-based access control"]);
+  });
+});

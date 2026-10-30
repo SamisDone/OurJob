@@ -1,10 +1,11 @@
 import synonymsJson from "../../../data/skill-synonyms.json";
-import { findKeyword, matchKeyword } from "@/lib/ats/match";
+import { findKeyword, keywordForms, matchKeyword } from "@/lib/ats/match";
 import { tailoredSections } from "@/lib/ats/sections";
 import type { MasterProfile, TailoredBullet, TailoredResume } from "@/lib/profile/schema";
-import { skillFold } from "@/lib/profile/skills";
+import { mentions, skillFold } from "@/lib/profile/skills";
 import type { GapKeyword, MatchedKeyword } from "./keywords";
-import { addedDetails, droppedDetails, type Vocabulary } from "./fidelity";
+import { placementHints } from "@/lib/llm/prompts/p3-tailor";
+import { addedDetails, droppedDetails, placeTerm, repeatedWords, stackedTerms, type Vocabulary } from "./fidelity";
 import { extractNumbers, unsupportedReason } from "./numbers";
 
 /**
@@ -83,7 +84,7 @@ export function copiedJobPhrase(text: string, sources: string, jobText: string, 
 }
 
 /** Headings and tools for check 4b. A full-stack group ("Web") may hold both. */
-const SIDE = { frontend: /front|client|ui/i, backend: /back|server/i } as const;
+const SIDE = { frontend: /front|client|\bui\b/i, backend: /back|server/i } as const;
 const SIDE_SKILLS = {
   frontend: new Set(
     [
@@ -104,6 +105,8 @@ const SIDE_SKILLS = {
       "jquery",
       "bootstrap",
       "vite",
+      "three.js",
+      "zustand",
     ].map(skillFold),
   ),
   backend: new Set(
@@ -125,6 +128,12 @@ const SIDE_SKILLS = {
     ].map(skillFold),
   ),
 };
+
+/** Backend services that are not infrastructure tools (check 4d). */
+// Hosted services an app calls from its backend: Firebase, and LLM APIs such as the Gemini API.
+const BAAS = new Set(
+  ["firebase", "supabase", "appwrite", "pocketbase", "convex", "gemini api", "openai api", "claude api"].map(skillFold),
+);
 
 export const BANNED_WORDS = [
   "spearheaded",
@@ -226,6 +235,21 @@ export function validateTailored(
   const sourceBullets = new Map(
     [...p.experience.flatMap((e) => e.bullets), ...p.projects.flatMap((pr) => pr.bullets)].map((b) => [b.id, b]),
   );
+  /** His bullet with its one placement term written in (2g), when that passes every fidelity check; else his bullet. */
+  const placement = placementHints(p, ctx.matched).placement;
+  const placed = (text: string, id: string) => {
+    const term = placement[id]?.[0];
+    const m = term ? ctx.matched.find((x) => x.term === term) : undefined;
+    const hit = m ? findKeyword(m, text, false, { techTerms }) : null;
+    const out = m && hit ? placeTerm(text, m.term, hit, keywordForms(m)) : null;
+    if (!m || !out || out === text) return text;
+    const termNames = new Set(keywordForms(m).map(skillFold));
+    const ok =
+      !droppedDetails(text, out, ctx.jobText ?? "", vocab).length &&
+      !addedDetails(text, out, vocab).filter((x) => !termNames.has(skillFold(x))).length &&
+      !repeatedWords(text, out).length;
+    return ok ? out : text;
+  };
   /** The text a bullet's own sources state: the cited bullets, never the role's tech line or its other bullets. */
   const strictSource = (ids: string[]) =>
     ids
@@ -397,6 +421,65 @@ export function validateTailored(
     });
   }
   resume.skills = resume.skills.filter((g) => g.items.length);
+
+  /*
+   * 4d. Core skills are never trimmed: every language, framework, library, database and tool that his own
+   * bullets or tech lines name stays in the skills section. Backend services such as Firebase sit under
+   * Backend, not Infrastructure. Each group then puts the job's terms first.
+   */
+  const workText = [...p.experience, ...p.projects]
+    .flatMap((x) => [...x.bullets.map((b) => b.text), x.tech.join(", ")])
+    .join("\n");
+  const listed = new Set(resume.skills.flatMap((g) => g.items.map((i) => i.skillId)));
+  const groupFor = (s: MasterProfile["skills"][number]) => {
+    const name = skillFold(s.name);
+    const find = (re: RegExp, fallback: string) => {
+      let g = resume.skills.find((x) => re.test(x.group));
+      if (!g) resume.skills.push((g = { group: fallback, items: [] }));
+      return g;
+    };
+    if (s.category === "language") return find(/lang/i, "Languages");
+    if (BAAS.has(name) || SIDE_SKILLS.backend.has(name)) return find(SIDE.backend, "Backend");
+    if (SIDE_SKILLS.frontend.has(name)) return find(SIDE.frontend, "Frontend");
+    if (s.category === "database") return find(/data/i, "Data");
+    if (s.category === "framework" || s.category === "library") return find(/framework|librar|backend/i, "Frameworks");
+    return find(/infra|cloud|tool|devops/i, "Infrastructure");
+  };
+  const restored: string[] = [];
+  for (const s of p.skills) {
+    if (!["language", "framework", "library", "database", "cloud", "tool"].includes(s.category) || listed.has(s.id))
+      continue;
+    if (![s.name, ...s.aliases].some((n) => mentions(workText, n))) continue;
+    if (leaks(s.name, true).length) continue;
+    groupFor(s).items.push({ name: s.name, skillId: s.id });
+    restored.push(s.name);
+  }
+  if (restored.length)
+    issues.push({
+      check: "skills",
+      ref: "skills",
+      message: `Put back ${restored.join(", ")}: your bullets or tech lines name them, so they stay in your skills.`,
+      action: "fixed",
+    });
+  for (const group of resume.skills.filter((g) => /infra|cloud|tool|devops/i.test(g.group))) {
+    const baas = group.items.filter((i) => BAAS.has(skillFold(i.name)));
+    if (!baas.length) continue;
+    group.items = group.items.filter((i) => !baas.includes(i));
+    let target = resume.skills.find((g) => SIDE.backend.test(g.group));
+    if (!target) resume.skills.push((target = { group: "Backend", items: [] }));
+    target.items.push(...baas);
+    issues.push({
+      check: "group",
+      ref: "skills",
+      message: `Moved ${baas.map((i) => i.name).join(", ")} from "${group.group}" to "${target.group}".`,
+      action: "fixed",
+    });
+  }
+  const jobTerm = (name: string) => ctx.matched.some((m) => findKeyword(m, name, true, { techTerms }));
+  for (const group of resume.skills) {
+    group.items = [...group.items.filter((i) => jobTerm(i.name)), ...group.items.filter((i) => !jobTerm(i.name))];
+  }
+  resume.skills = resume.skills.filter((g) => g.items.length);
   const headlineLeak = leaks(resume.headline)[0];
   if (headlineLeak || !resume.headline.trim()) {
     const fallback = p.basics.headline ?? p.experience[0]?.title ?? "";
@@ -501,8 +584,8 @@ export function validateTailored(
     if (what && ctx.restoreOriginals !== false && cited.length === 1 && b.sourceIds.length === 1) {
       // One source bullet: his own words are always true, so put them back instead of asking the model again.
       const original = sourceBullets.get(cited[0])!;
-      b.text = original.text;
-      b.boldPhrases = original.boldPhrases.filter((ph) => original.text.includes(ph));
+      b.text = placed(original.text, cited[0]);
+      b.boldPhrases = original.boldPhrases.filter((ph) => b.text.includes(ph));
       issues.push({
         check: "fidelity",
         ref,
@@ -517,9 +600,124 @@ export function validateTailored(
         action: "fix",
       });
     }
-    const own = cited.length === 1 && b.text === sourceBullets.get(cited[0])!.text;
-    checkText(b.text, b.sourceIds, ref, own);
+    let own = cited.length === 1 && b.text === sourceBullets.get(cited[0])!.text;
+    // 2g. His exact words, with the job's term placed once when the bullet proves it in other words.
+    if (own && ctx.restoreOriginals !== false && b.sourceIds.length === 1) {
+      const next = placed(b.text, cited[0]);
+      if (next !== b.text) {
+        b.text = next;
+        own = false;
+        issues.push({ check: "style", ref, message: `Placed the job's term once: "${next}".`, action: "fixed" });
+      }
+    }
+    /* 2e and 2f. Reads like a person wrote it: no word said twice, no job terms stacked in front of the source. */
+    const before = issues.length;
+    // Text code wrote itself (2g) is already checked.
+    const byCode = cited.length === 1 && b.text === placed(sourceBullets.get(cited[0])!.text, cited[0]);
+    if (!own && !byCode && cited.length) {
+      const source = cited.map((id) => sourceBullets.get(id)!.text).join(" ");
+      const twice = repeatedWords(source, b.text);
+      if (twice.length)
+        issues.push({
+          check: "style",
+          ref,
+          message: `Says ${twice.map((w) => `"${w}"`).join(", ")} twice. Use each word once; write the job's term in place of the source's own words for the same thing.`,
+          action: "fix",
+        });
+      // One job term in two forms ("Firebase Auth and authentication") says the same thing twice.
+      for (const m of ctx.matched) {
+        // Forms inside a longer form found ("role-based access" in "role-based access control") and a gloss in
+        // parentheses ("Gemini API (LLM)") name the term once, not twice.
+        const outside = b.text.replace(/\([^)]*\)/g, " ");
+        // Longest forms first; each found form is blanked out, so a shorter one only counts on its own.
+        let rest = outside;
+        const forms: string[] = [];
+        for (const f of [...keywordForms(m)].sort((x, y) => y.length - x.length)) {
+          if (!mentions(rest, f)) continue;
+          forms.push(f);
+          rest = blankOut(rest, f);
+        }
+        const own = keywordForms(m).filter((f) => mentions(source, f));
+        const distinct = new Set(forms.map(skillFold));
+        if (distinct.size > 1 && distinct.size > own.length)
+          issues.push({
+            check: "style",
+            ref,
+            message: `Says ${m.term} twice in different words (${forms.join(", ")}). Keep one.`,
+            action: "fix",
+          });
+      }
+      // One job term per bullet: more reads like keywords glued on.
+      const addedTerms = ctx.matched.filter((m) => mentions(b.text, m.term) && !mentions(source, m.term));
+      if (addedTerms.length > 1)
+        issues.push({
+          check: "style",
+          ref,
+          message: `Adds ${addedTerms.length} job terms (${addedTerms.map((m) => m.term).join(", ")}). Use one.`,
+          action: "fix",
+        });
+      if (
+        stackedTerms(
+          source,
+          b.text,
+          ctx.matched.map((m) => m.term),
+        )
+      )
+        issues.push({
+          check: "style",
+          ref,
+          message:
+            "Puts job terms in front of the unchanged source sentence. Work the term into the sentence once, in place of the words it stands for.",
+          action: "fix",
+        });
+    }
+    // 2g. A single-source bullet that does not read well gets the job's term placed in code (or his words back).
+    const styleIssues = issues.slice(before).filter((i) => i.check === "style" && i.action === "fix");
+    if (styleIssues.length && cited.length === 1 && b.sourceIds.length === 1 && ctx.restoreOriginals !== false) {
+      issues.splice(before, issues.length - before, ...issues.slice(before).filter((i) => !styleIssues.includes(i)));
+      const original = sourceBullets.get(cited[0])!;
+      b.text = placed(original.text, cited[0]);
+      b.boldPhrases = original.boldPhrases.filter((ph) => b.text.includes(ph));
+      issues.push({
+        check: "style",
+        ref,
+        message: `Rewrote it from your own words with the job's term placed once: "${b.text}".`,
+        action: "fixed",
+      });
+    }
+    checkText(b.text, b.sourceIds, ref, own || b.text === sourceBullets.get(cited[0] ?? "")?.text);
   };
+
+  /* 9a. Each source bullet once: a bullet that only repeats source bullets used earlier is a duplicate. */
+  const seen = new Set<string>();
+  for (const item of [...resume.experience, ...resume.projects]) {
+    const name =
+      "experienceId" in item
+        ? p.experience.find((x) => x.id === item.experienceId)?.company
+        : p.projects.find((x) => x.id === item.projectId)?.name;
+    item.bullets = item.bullets.filter((b, i) => {
+      const ids = b.sourceIds.filter((id) => sourceBullets.has(id));
+      const repeats = ids.filter((id) => seen.has(id));
+      ids.forEach((id) => seen.add(id));
+      if (ids.length && repeats.length === ids.length) {
+        issues.push({
+          check: "kept",
+          ref: "resume",
+          message: `Removed a repeat in ${name}: "${b.text}" uses ${repeats.join(", ")}, which another bullet already uses.`,
+          action: "fixed",
+        });
+        return false;
+      }
+      if (repeats.length)
+        issues.push({
+          check: "kept",
+          ref: `${"experienceId" in item ? "experience" : "projects"}:${"experienceId" in item ? item.experienceId : item.projectId}:${i}`,
+          message: `${repeats.join(", ")} is already used by another bullet. Each source bullet appears once: write this bullet from its other sources only.`,
+          action: "fix",
+        });
+      return true;
+    });
+  }
 
   for (const e of resume.experience) {
     const role = p.experience.find((x) => x.id === e.experienceId)!;
@@ -585,25 +783,48 @@ export function validateTailored(
     }
   }
 
-  /* 9. Kept experience: every source bullet of every role is used, unless the notes say why it was left out. */
+  /*
+   * 9. Kept experience: every source bullet of every role, and of every project on the CV, appears exactly once.
+   * A missing one comes back in his own words, unless a note says specifically why it was left out.
+   */
   for (const left of leftOutBullets(resume, p)) {
     // A reason counts only when it says something specific: "irrelevant to this job" does not.
     const note = resume.notes.find((n) => n.includes(left.bulletId) && reasonWords(n) >= 6);
-    issues.push(
-      note
-        ? {
-            check: "kept",
-            ref: "resume",
-            message: `Left out from ${left.company}: "${left.text}" (${note})`,
-            action: "report",
-          }
-        : {
-            check: "kept",
-            ref: "resume",
-            message: `Keep ${left.bulletId} from ${left.company} ("${left.text}"): add it as a bullet to experience:${left.roleId}. Leave it out only if it is clearly irrelevant to this job, with a note saying what it is about and what the job needs instead.`,
-            action: "fix",
-          },
-    );
+    if (note) {
+      issues.push({
+        check: "kept",
+        ref: "resume",
+        message: `Left out from ${left.company}: "${left.text}" (${note})`,
+        action: "report",
+      });
+      continue;
+    }
+    const source = sourceBullets.get(left.bulletId)!;
+    const restored = {
+      text: source.text,
+      boldPhrases: source.boldPhrases.filter((ph) => source.text.includes(ph)),
+      sourceIds: [source.id],
+      keywordsUsed: [],
+    };
+    if (left.section === "experience") {
+      let entry = resume.experience.find((e) => e.experienceId === left.itemId);
+      if (!entry) {
+        entry = {
+          experienceId: left.itemId,
+          bullets: [],
+          tech: [...(p.experience.find((e) => e.id === left.itemId)?.tech ?? [])],
+        };
+        resume.experience.push(entry);
+        resume.experience.sort((a, b) => expIds.get(a.experienceId)! - expIds.get(b.experienceId)!);
+      }
+      entry.bullets.push(restored);
+    } else resume.projects.find((x) => x.projectId === left.itemId)!.bullets.push(restored);
+    issues.push({
+      check: "kept",
+      ref: "resume",
+      message: `Put back ${left.bulletId} from ${left.company} in your own words ("${left.text}"): every source bullet appears once.`,
+      action: "fixed",
+    });
   }
 
   /* 8. Length. Shorten first: real experience is not dropped to fit (check 9). */
@@ -629,16 +850,44 @@ const reasonWords = (note: string) =>
     .split(/\s+/)
     .filter(Boolean).length;
 
-export type LeftOutBullet = { roleId: string; company: string; bulletId: string; text: string };
+export type LeftOutBullet = {
+  section: "experience" | "projects";
+  itemId: string;
+  company: string;
+  bulletId: string;
+  text: string;
+};
 
-/** Source bullets of the profile's roles that no tailored bullet uses, including those of a role left out entirely. */
+/**
+ * Source bullets that no tailored bullet uses: of every role (a role left out
+ * entirely included), and of every project that is on the CV. A project left
+ * out as a whole is allowed; a project on the CV keeps each of its bullets.
+ */
 export function leftOutBullets(resume: TailoredResume, p: MasterProfile): LeftOutBullet[] {
-  const used = new Set(resume.experience.flatMap((e) => e.bullets.flatMap((b) => b.sourceIds)));
-  return p.experience.flatMap((e) =>
-    e.bullets
-      .filter((b) => !used.has(b.id))
-      .map((b) => ({ roleId: e.id, company: e.company, bulletId: b.id, text: b.text })),
+  const used = new Set(
+    [...resume.experience, ...resume.projects].flatMap((e) => e.bullets.flatMap((b) => b.sourceIds)),
   );
+  const onCv = new Set(resume.projects.map((x) => x.projectId));
+  return [
+    ...p.experience.flatMap((e) =>
+      e.bullets
+        .filter((b) => !used.has(b.id))
+        .map((b) => ({
+          section: "experience" as const,
+          itemId: e.id,
+          company: e.company,
+          bulletId: b.id,
+          text: b.text,
+        })),
+    ),
+    ...p.projects
+      .filter((x) => onCv.has(x.id))
+      .flatMap((x) =>
+        x.bullets
+          .filter((b) => !used.has(b.id))
+          .map((b) => ({ section: "projects" as const, itemId: x.id, company: x.name, bulletId: b.id, text: b.text })),
+      ),
+  ];
 }
 
 /** Bullet refs and the summary that still need the model, with their messages. */
@@ -646,4 +895,15 @@ export function failing(issues: Issue[]): Map<string, string[]> {
   const m = new Map<string, string[]>();
   for (const i of issues.filter((x) => x.action === "fix")) m.set(i.ref, [...(m.get(i.ref) ?? []), i.message]);
   return m;
+}
+
+/** The text with every occurrence of `part` (any case) replaced by spaces of the same length. */
+function blankOut(text: string, part: string): string {
+  const lower = text.toLowerCase();
+  const p = part.toLowerCase();
+  let out = text;
+  for (let i = lower.indexOf(p); p && i >= 0; i = lower.indexOf(p, i + p.length)) {
+    out = out.slice(0, i) + " ".repeat(p.length) + out.slice(i + p.length);
+  }
+  return out;
 }
