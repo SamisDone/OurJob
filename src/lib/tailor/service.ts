@@ -21,6 +21,7 @@ export async function runTailoring(
   userId: string,
   pasted: string,
   onStage?: (s: TailorStage) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   const current = await getCurrentProfile(db, userId);
   if (!current?.confirmedAt) throw new ApiError(409, "Confirm your profile first. Tailoring only uses facts from it.");
@@ -31,7 +32,10 @@ export async function runTailoring(
     jobProvider: getLLMProvider("standard"),
     cache: dbCacheStore,
     onStage,
+    signal,
   });
+  // Past the deadline he has already been told it failed: save nothing he would find later.
+  signal?.throwIfAborted();
   const latex = renderLatex(buildCvDocument(profile, res.resume));
   const ats = atsReports(res.spec, profile, res.resume);
   const [row] = await db

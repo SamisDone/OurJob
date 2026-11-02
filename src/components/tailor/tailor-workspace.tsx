@@ -7,6 +7,9 @@ import { TailorPaste, TailorWorking } from "./tailor-view";
 
 const STEP = { reading: 0, tailoring: 1, checking: 2 } as const;
 
+/** A little past the server's 90 s deadline, so the server's own message usually arrives first. */
+export const CLIENT_LIMIT_MS = 100_000;
+
 /**
  * Paste, then the three named steps as the server reports them, then the
  * saved tailoring. The request streams one JSON line per stage.
@@ -21,11 +24,15 @@ export function TailorWorkspace({ recent }: { recent?: ReactNode }) {
     setText(jd);
     setError(null);
     setStep(0);
+    // The server gives up at 90 s; if no answer arrives by 100 s (a killed function, a dropped connection), stop here too.
+    const limit = new AbortController();
+    const timer = setTimeout(() => limit.abort(), CLIENT_LIMIT_MS);
     try {
       const res = await fetch("/api/tailor", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ jd }),
+        signal: limit.signal,
       });
       if (!res.ok || !res.body) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -51,8 +58,16 @@ export function TailorWorkspace({ recent }: { recent?: ReactNode }) {
       }
       throw new Error("The connection closed before the CV was ready. Try again.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Try again.");
+      setError(
+        limit.signal.aborted
+          ? "Tailoring took too long and was stopped. Gemini is slow right now; try again in a minute."
+          : e instanceof Error
+            ? e.message
+            : "Something went wrong. Try again.",
+      );
       setStep(null);
+    } finally {
+      clearTimeout(timer);
     }
   };
 

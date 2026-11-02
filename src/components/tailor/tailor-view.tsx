@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronDown, CircleAlert, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
+import { ChevronDown, CircleAlert, RotateCw, Copy, Download, ExternalLink, FilePlus2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
 import { Page, PageHeader } from "@/components/shell/page-states";
 import { TaskSteps } from "@/components/task-steps";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -84,6 +84,14 @@ export function TailorPaste({
               <CircleAlert />
               <AlertTitle>The CV was not tailored.</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
+              {ready && (
+                <AlertAction>
+                  <Button size="sm" variant="outline" onClick={() => onSubmit(text)}>
+                    <RotateCw data-icon="inline-start" />
+                    Try again
+                  </Button>
+                </AlertAction>
+              )}
             </Alert>
           )}
           <Textarea

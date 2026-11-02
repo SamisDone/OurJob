@@ -58,7 +58,9 @@ export function getLLMProvider(tier: ModelTier = "standard"): LLMProvider {
       // When the main model is this slow (ms; default 10 s), a second request goes out: to lite again for the
       // standard tier (lite's daily quota is large), to lite for Thorough (Flash's free quota is 20 a day).
       slowMs: Number(process.env.LLM_SLOW_MS) || undefined,
-      hedgeModel: standard,
+      // The slow-answer backup is lite even when LLM_MODEL is Flash: a second Flash request doubles a 20-a-day quota.
+      hedgeModel: process.env.LLM_HEDGE_MODEL || DEFAULT_GEMINI_MODEL,
+      callTimeoutMs: Number(process.env.LLM_CALL_TIMEOUT_MS) || undefined,
     });
   } else {
     throw new LLMError("auth", `Unknown LLM_PROVIDER "${kind}". Use gemini or mock.`);

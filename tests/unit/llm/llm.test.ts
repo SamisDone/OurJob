@@ -339,3 +339,65 @@ describe("Gemini provider hedge (slow main model)", () => {
     expect(calls).toEqual(["gemini-3.5-flash-lite"]);
   });
 });
+
+describe("Gemini provider time limits (2026-11-02: a request that never answered held a tailoring for 300 s)", () => {
+  type Behaviour = "hang" | "answer" | "busy";
+  function provider(behaviour: Record<string, Behaviour[]>, extra: Partial<GeminiOptions> = {}) {
+    const calls: string[] = [];
+    const count = new Map<string, number>();
+    const models = {
+      async generateContent(req: { model: string; config: { abortSignal?: AbortSignal } }) {
+        calls.push(req.model);
+        const n = count.get(req.model) ?? 0;
+        count.set(req.model, n + 1);
+        const b = behaviour[req.model]?.[Math.min(n, behaviour[req.model].length - 1)] ?? "answer";
+        if (b === "answer")
+          return {
+            text: JSON.stringify({ title: `from ${req.model}`, skills: [] }),
+            usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 },
+          };
+        if (b === "busy") throw Object.assign(new Error("Resource exhausted"), { status: 429 });
+        // Hangs until aborted, like the production request.
+        return new Promise((_, reject) =>
+          req.config.abortSignal?.addEventListener("abort", () => reject(new Error("aborted"))),
+        );
+      },
+    };
+    const p = createGeminiProvider({
+      apiKey: "test",
+      model: "gemini-3.5-flash-lite",
+      fallbackModel: "gemini-3.8-flash",
+      slowMs: 20,
+      callTimeoutMs: 60,
+      retries: 1,
+      models: models as unknown as NonNullable<GeminiOptions["models"]>,
+      ...fast,
+      ...extra,
+    });
+    return { p, calls };
+  }
+  const ask = (p: ReturnType<typeof provider>["p"]) =>
+    p.generateJSON({ promptId: "p3-tailor", system: "S", user: "U", schema });
+
+  it("cuts off a request that never answers and asks the fallback model", async () => {
+    const { p, calls } = provider({ "gemini-3.5-flash-lite": ["hang"] });
+    const res = await ask(p);
+    expect(res.data.title).toBe("from gemini-3.8-flash");
+    expect(calls).toEqual(["gemini-3.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+  });
+
+  it("ends with a clear error, not a hang, when every model hangs", async () => {
+    const { p } = provider({ "gemini-3.5-flash-lite": ["hang"], "gemini-3.8-flash": ["hang"] });
+    const started = Date.now();
+    await expect(ask(p)).rejects.toThrow(/did not answer in 0.06 s/);
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
+  it("falls back to Flash when the second lite call is rate limited", async () => {
+    // Main lite is slow; the hedge (lite again) gets 429 twice; Flash answers.
+    const { p, calls } = provider({ "gemini-3.5-flash-lite": ["hang", "busy", "busy"] }, { callTimeoutMs: 400 });
+    const res = await ask(p);
+    expect(res.data.title).toBe("from gemini-3.8-flash");
+    expect(calls.filter((m) => m === "gemini-3.8-flash")).toHaveLength(1);
+  });
+});

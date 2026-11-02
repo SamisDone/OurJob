@@ -56,3 +56,37 @@ test("the tailoring stream reports reading, tailoring and checking, then the sav
   expect(events.filter((e) => e.type === "stage").map((e) => e.stage)).toEqual(["reading", "tailoring", "checking"]);
   expect(events.at(-1)).toMatchObject({ type: "done", id: expect.stringMatching(/^[0-9a-f-]{36}$/) });
 });
+
+test("tailoring never spins forever: a silent server or a closed stream ends in an error with Try again", async ({
+  page,
+  context,
+  baseURL,
+}, info) => {
+  test.skip(info.project.name !== "desktop", "Same screen on phones; this checks timing.");
+  const user = SHELL_USERS.confirmed;
+  await signInAs(context, baseURL!, user.email, user.name, user.id);
+  await page.clock.install();
+
+  // 1. The server never answers (a killed function, a hung model request).
+  await page.route("**/api/tailor", () => new Promise(() => {}));
+  await page.goto("/tailor");
+  await page.getByLabel("Job post").fill(JD);
+  await page.getByRole("button", { name: "Tailor my CV" }).click();
+  await expect(page.getByText("Reading the job, in progress")).toBeVisible();
+  await page.clock.fastForward(101_000);
+  const alert = page.getByRole("alert").filter({ hasText: "The CV was not tailored." });
+  await expect(alert).toContainText("took too long and was stopped");
+  await expect(alert.getByRole("button", { name: "Try again" })).toBeVisible();
+  // The post he pasted is still there.
+  await expect(page.getByLabel("Job post")).toHaveValue(JD);
+
+  // 2. The stream closes after a step, with no result and no error line.
+  await page.unroute("**/api/tailor");
+  await page.route("**/api/tailor", (route) =>
+    route.fulfill({ status: 200, contentType: "application/x-ndjson", body: '{"type":"stage","stage":"reading"}\n' }),
+  );
+  await alert.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "The CV was not tailored." })).toContainText(
+    "connection closed before the CV was ready",
+  );
+});

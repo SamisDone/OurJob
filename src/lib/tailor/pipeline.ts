@@ -45,6 +45,8 @@ export type TailorResult = {
 export type TailorStage = "reading" | "tailoring" | "checking";
 
 type Deps = {
+  /** Aborted at the request's deadline or when he leaves: no further step starts. */
+  signal?: AbortSignal;
   /** Writes the CV (P3 and fixes). This is the model he picked in Settings. */
   provider: LLMProvider;
   /** Reads the job post (P2). Defaults to `provider`; the app passes the standard model, so Thorough only rewrites. */
@@ -71,6 +73,7 @@ export async function tailorCv(
   const t1 = now();
 
   const { matched, gaps } = splitKeywords(spec, profile);
+  deps.signal?.throwIfAborted();
   deps.onStage?.("tailoring");
   const { system, user } = p3Prompt(profile, spec, matched, gaps, opts);
   const first = await cachedGenerate(deps.provider, deps.cache, P3_PROMPT_VERSION, {
@@ -82,13 +85,14 @@ export async function tailorCv(
   });
   const t2 = now();
 
+  deps.signal?.throwIfAborted();
   deps.onStage?.("checking");
   const ctx = { profile, matched, gaps, pages: opts.pages, jobText: cleaned };
   let { resume, issues } = validateTailored(first.data, ctx);
   const firstIssues = issues;
   const fixMs: number[] = [];
   let rounds = 0;
-  while (rounds < MAX_FIX_ROUNDS && failing(issues).size && now() - t0 < FIX_BUDGET_MS) {
+  while (rounds < MAX_FIX_ROUNDS && failing(issues).size && now() - t0 < FIX_BUDGET_MS && !deps.signal?.aborted) {
     const started = now();
     const problems = [...failing(issues)].map(([ref, errors]) => ({ ref, current: textAt(resume, ref), errors }));
     const fix = await cachedGenerate(deps.provider, deps.cache, P3_FIX_PROMPT_VERSION, {

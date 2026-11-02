@@ -32,8 +32,13 @@ export type GeminiOptions = {
   /** Requests per minute to stay under. Free-tier limits are shown in AI Studio. */
   rpm?: number;
   retries?: number;
-  /** Per-request timeout in ms. */
+  /** Per-request timeout in ms for the SDK's own HTTP layer. */
   timeoutMs?: number;
+  /**
+   * Our limit per model request in ms (default 35 s). A request that has not
+   * answered by then is cancelled and the fallback model is asked.
+   */
+  callTimeoutMs?: number;
   /**
    * When the main model has not answered after this many ms, the fallback
    * model is asked too and the first answer wins (the other request is
@@ -77,6 +82,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
   const rpm = opts.rpm ?? 8;
   const retries = opts.retries ?? 3;
   const slowMs = opts.slowMs ?? 10_000;
+  const callTimeoutMs = opts.callTimeoutMs ?? 35_000;
   const log =
     opts.log ??
     ((e) => console.info(`[llm] ${e.promptId} ${e.model} ${e.ms}ms in=${e.inputTokens} out=${e.outputTokens}`));
@@ -100,6 +106,10 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
       await waitForSlot();
       if (signal?.aborted) throw new LLMError("unavailable", "Cancelled: the other model answered first.");
       const started = now();
+      // Our own limit per request: with an abortSignal passed, the SDK's timeout does not apply, and a request
+      // that never answers once held a tailoring for 300 s until Vercel killed it (2026-11-02).
+      const timeout = AbortSignal.timeout(callTimeoutMs);
+      const abortSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
       try {
         const res = await models.generateContent({
           model,
@@ -110,7 +120,7 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
             maxOutputTokens: args.maxOutputTokens,
             responseMimeType: "application/json",
             responseJsonSchema: schema,
-            abortSignal: signal,
+            abortSignal,
           },
         });
         const usage = {
@@ -121,6 +131,8 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
         return { text: res.text ?? "", usage };
       } catch (e) {
         if (signal?.aborted) throw new LLMError("unavailable", "Cancelled: the other model answered first.");
+        // Not retried: another 35 s on the same model would not help; the caller asks another model.
+        if (timeout.aborted) throw new LLMError("unavailable", `Gemini did not answer in ${callTimeoutMs / 1000} s.`);
         const status = statusOf(e);
         if (status === 401 || status === 403) {
           throw new LLMError(
@@ -157,58 +169,61 @@ export function createGeminiProvider(opts: GeminiOptions): LLMProvider {
   const busyError = (e: unknown) => e instanceof LLMError && (e.code === "unavailable" || e.code === "rate_limited");
 
   /**
-   * The main model, with the fallback as a hedge: asked when the main model is
-   * busy, or when it has not answered after slowMs. The first answer wins and
-   * the other request is cancelled. If the fallback fails (say its daily quota
-   * is used up), the main model's answer is still awaited.
+   * The main model, with two kinds of backup. When it has not answered after
+   * slowMs, the hedge model (lite) is asked as well. When a call fails busy,
+   * rate limited or timed out, the fallback model is asked, once, even if the
+   * hedge is already running. The first answer wins and the others are
+   * cancelled; the call fails only when every request has failed.
    */
   function callOnce<T>(args: GenerateArgs<T>, user: string): Promise<{ text: string; usage: Usage }> {
     const fallback = opts.fallbackModel && opts.fallbackModel !== opts.model ? opts.fallbackModel : null;
     const slowHedge = opts.hedgeModel ?? opts.model;
-    const main = new AbortController();
-    const hedge = new AbortController();
     return new Promise((resolve, reject) => {
       let done = false;
-      let running = 1;
+      let running = 0;
       let hedged = false;
-      let mainError: unknown;
-      let hedgeError: unknown;
-      const win = (value: { text: string; usage: Usage }, loser: AbortController) => {
+      let fellBack = false;
+      const controllers: AbortController[] = [];
+      const errors: unknown[] = [];
+      const finish = (winner?: AbortController) => {
+        done = true;
+        clearTimeout(timer);
+        controllers.filter((c) => c !== winner).forEach((c) => c.abort());
+      };
+      const run = (model: string, why?: string) => {
         if (done) return;
-        done = true;
-        clearTimeout(timer);
-        loser.abort();
-        resolve(value);
-      };
-      const failed = () => {
-        if (done || --running > 0) return;
-        done = true;
-        clearTimeout(timer);
-        // The fallback's error says more when the main model was only busy.
-        reject(busyError(mainError) && hedgeError ? hedgeError : (mainError ?? hedgeError));
-      };
-      const startHedge = (why: string, model: string | null) => {
-        if (hedged || done || !model) return;
-        hedged = true;
+        if (why) console.info(`[llm] ${args.promptId}: ${why}, also asking ${model}`);
+        const c = new AbortController();
+        controllers.push(c);
         running++;
-        console.info(`[llm] ${args.promptId}: ${opts.model} ${why}, also asking ${model}`);
-        callModel(model, args, user, hedge.signal).then(
-          (v) => win(v, main),
+        callModel(model, args, user, c.signal).then(
+          (v) => {
+            if (done) return;
+            finish(c);
+            resolve(v);
+          },
           (e) => {
-            hedgeError = e;
-            failed();
+            errors.push(e);
+            if (!done && !fellBack && fallback && model !== fallback && busyError(e)) {
+              fellBack = true;
+              run(
+                fallback,
+                `${model} ${e instanceof LLMError && e.message.startsWith("Gemini did not answer") ? "timed out" : "is busy"}`,
+              );
+            }
+            if (done || --running > 0) return;
+            finish();
+            // The last error says most: a daily limit or a timeout of the model asked last.
+            reject(errors.at(-1));
           },
         );
       };
-      const timer = setTimeout(() => startHedge(`has not answered in ${slowMs / 1000} s`, slowHedge), slowMs);
-      callModel(opts.model, args, user, main.signal).then(
-        (v) => win(v, hedge),
-        (e) => {
-          mainError = e;
-          if (busyError(e)) startHedge("is busy", fallback);
-          failed();
-        },
-      );
+      const timer = setTimeout(() => {
+        if (hedged) return;
+        hedged = true;
+        run(slowHedge, `${opts.model} has not answered in ${slowMs / 1000} s`);
+      }, slowMs);
+      run(opts.model);
     });
   }
 
