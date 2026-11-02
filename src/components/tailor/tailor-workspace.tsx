@@ -14,11 +14,11 @@ export const CLIENT_LIMIT_MS = 100_000;
  * Paste, then the three named steps as the server reports them, then the
  * saved tailoring. The request streams one JSON line per stage.
  */
-export function TailorWorkspace({ recent }: { recent?: ReactNode }) {
+export function TailorWorkspace({ recent, initialPost = "" }: { recent?: ReactNode; initialPost?: string }) {
   const router = useRouter();
   const [step, setStep] = useState<0 | 1 | 2 | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialPost);
 
   const run = async (jd: string) => {
     setText(jd);

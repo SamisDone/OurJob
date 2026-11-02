@@ -32,6 +32,11 @@ const ROUTES: Route[] = [
 const GATED = new Set(["/today", "/tailor", "/tailor/example-id", "/jobs/example-id", "/tracker", "/companies"]);
 /** What a gated page shows once the profile is confirmed. */
 const CONFIRMED: Record<string, (main: Locator) => Promise<void>> = {
+  // The feed, or its state before the first search (today.spec.ts may have seeded a job meanwhile).
+  "/today": (main) =>
+    expect(
+      main.getByText(/Last search at|The first search has not run yet|No new matches today/).first(),
+    ).toBeVisible(),
   "/tailor": (main) => expect(main.getByLabel("Job post")).toBeVisible(),
   "/tailor/example-id": (main) => expect(main.getByText("This page does not exist.")).toBeVisible(),
 };

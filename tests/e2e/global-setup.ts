@@ -22,7 +22,11 @@ export default async function globalSetup() {
       await sql`delete from profile_sources where user_id = ${u.id}`;
       await sql`delete from master_profiles where user_id = ${u.id}`;
       await sql`delete from search_preferences where user_id = ${u.id}`;
+      await sql`delete from job_matches where user_id = ${u.id}`;
     }
+    // today.spec.ts seeds its own fictional company (its job goes with it) and run.
+    await sql`delete from companies where normalized_name like 'e2e %'`;
+    await sql`delete from pipeline_runs where stats->>'e2e' = 'true'`;
     const raw = JSON.parse(readFileSync("tests/fixtures/llm/p1-profile/nadia-chowdhury.json", "utf8")).output;
     const profile = normalizeProfile(p1OutputSchema.parse(raw));
     await sql`insert into master_profiles (user_id, version, data, is_current, confirmed_at, note)

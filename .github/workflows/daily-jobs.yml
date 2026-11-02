@@ -1,0 +1,40 @@
+name: Daily jobs
+
+# Fetches every tracked company's job board, keeps fresh remote jobs he can work from,
+# scores the best new ones, and writes them for the Today screen (docs/ARCHITECTURE.md section 8).
+on:
+  schedule:
+    - cron: "30 0 * * *" # 00:30 UTC, 06:30 in Dhaka. GitHub may start scheduled runs late at busy times.
+  workflow_dispatch:
+    inputs:
+      limit_companies:
+        description: "Check only this many companies (empty for all)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run the pipeline
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_MODEL: gemini-3.5-flash-lite
+          LLM_DAILY_CALL_BUDGET: "40"
+        run: pnpm jobs:daily ${{ inputs.limit_companies && format('--limit-companies={0}', inputs.limit_companies) || '' }}

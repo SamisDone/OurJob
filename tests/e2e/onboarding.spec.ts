@@ -98,6 +98,6 @@ test("onboarding builds, reviews and confirms a profile, then saves preferences"
 
   // Confirmed: Today no longer asks him to finish onboarding.
   await page.goto("/today");
-  await expect(page.getByText("Coming soon in this build.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Today" })).toBeVisible();
   await expect(page.getByText("Finish your profile first.")).toHaveCount(0);
 });

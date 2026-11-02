@@ -32,9 +32,9 @@ All are public, read-only endpoints that companies use to embed their own job li
 
 | ATS | Endpoint (list jobs) | Notes |
 |---|---|---|
-| Greenhouse | `GET https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | Greenhouse's docs say Job Board GET endpoints need no auth. `content=true` includes the HTML description. Date fields: `updated_at` is always present; look for `first_published` (verify). `updated_at` is NOT a post date. |
-| Lever | `GET https://api.lever.co/v0/postings/{site}?mode=json` | Published postings are public. EU-hosted boards use `api.eu.lever.co` (verify). Date: `createdAt` in ms epoch (verify). Some write-ups mention a 1 request/second crawl delay; respect it. |
-| Ashby | `GET https://api.ashbyhq.com/posting-api/job-board/{name}?includeCompensation=true` | Compensation summaries when the company publishes them. Date: `publishedAt` (verify). Has `isRemote` / location fields (verify). |
+| Greenhouse | `GET https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true` | Greenhouse's docs say Job Board GET endpoints need no auth. `content=true` includes the HTML description. Date fields: `updated_at` is always present; `first_published` is the post date (verified 2026-11-02; `content` arrives entity-encoded). `updated_at` is NOT a post date. A missing board answers 404 `{"status":404,"error":"Job not found"}`. |
+| Lever | `GET https://api.lever.co/v0/postings/{site}?mode=json` | Published postings are public. EU-hosted boards use `api.eu.lever.co` (verify). Date: `createdAt` in ms epoch (verified 2026-11-02, with `workplaceType` remote/hybrid/onsite and `country` as an ISO code; no salary field seen, pay ranges sit in `additional`). A missing board answers 404 `{"ok":false,"error":"Document not found"}`. Some write-ups mention a 1 request/second crawl delay; respect it. |
+| Ashby | `GET https://api.ashbyhq.com/posting-api/job-board/{name}?includeCompensation=true` | Compensation summaries when the company publishes them. Date: `publishedAt` (verified 2026-11-02; evergreen postings keep their original date). `isListed`, `isRemote`, `workplaceType` (Remote, Hybrid), `location`, `secondaryLocations` and `address.postalAddress.addressCountry` (a country or region name) are present. |
 | Workable | `GET https://apply.workable.com/api/v1/widget/accounts/{account}` | Widget endpoint. Some sources pace it at 1 request per 3 seconds; do the same. Date field (verify). |
 | SmartRecruiters | `GET https://api.smartrecruiters.com/v1/companies/{company}/postings` | Paginated. Date: `releasedDate` (verify). |
 | Recruitee | `GET https://{company}.recruitee.com/api/offers` | Date: `published_at` or `created_at` (verify). |
@@ -90,7 +90,7 @@ Companies table grows from these inputs, in order of value:
 1. **Apply links in tier 2 and 3 jobs** that point to a supported ATS (section 3). Biggest source.
 2. **HN "Who is hiring?"** careers links.
 3. **remoteintech/remote-jobs** on GitHub: a community directory of remote-friendly tech companies (ISC license, one Markdown file per company with YAML frontmatter; check `CONTRIBUTING.md` for the current schema). Import company name and website, then run ATS detection. Re-sync weekly.
-4. **Seed file in this repo**: `data/companies.seed.json`, a list of `{ name, website, careersUrl? }` that contributors can extend by pull request.
+4. **Seed file in this repo**: `data/companies.seed.json`, a list of `{ name, website, ats, slug }` that contributors can extend by pull request. Each board was checked with a real request and its postings name the company (DECISIONS.md, 2026-11-03).
 5. **Manual add** in the Companies screen.
 
 Each company row tracks `discovered_via`, `first_seen_at`, and `open_roles_count`. "Lesser-known" is approximated (no source labels this): a company is boosted when it is not in `data/well-known-companies.json` (a short list of large, famous employers, editable) and has under 500 open roles. Pratik can mute any company.
@@ -127,7 +127,7 @@ type NormalizedJob = {
 ## 8. Dates and the 7-day rule
 
 - Use the source's own publish or create date when it exists and is a real post date.
-- Greenhouse `updated_at` changes when a job is edited, so it is not a post date. Use `first_published` if present (verify); otherwise fall back to `first_seen_at`.
+- Greenhouse `updated_at` changes when a job is edited, so it is not a post date. Use `first_published` (present on every posting checked); otherwise fall back to `first_seen_at`.
 - `first_seen_at` is when our crawler first saw the job. It is reliable only after a company has been tracked for at least one previous run. So: **on the first crawl of a newly added company, jobs without a real post date are stored but not shown as fresh.** From the second crawl on, a job first seen today counts as posted today.
 - Remotive delays listings 24 hours; its dates are still the original publish dates.
 - A job is in the feed if `postedAt >= now - 7 days`. Jobs that disappear from their source are marked closed (`closed_at`) and hidden.

@@ -1,12 +1,13 @@
 "use client";
 
 import { CircleAlert, Inbox, Play, RotateCw, Search, TriangleAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Page, PageHeader } from "@/components/shell/page-states";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -29,12 +30,18 @@ export function TodayView({
   now,
   timeZone,
   tailorHref = (j) => `/tailor?job=${encodeURIComponent(j.id)}`,
+  saveJob = postSave,
+  onRunNow,
 }: {
   jobs: FeedJob[];
   run: TodayRun;
   now: Date;
   timeZone: string;
   tailorHref?: (job: FeedJob) => string;
+  /** Stores the star; the default calls the API. */
+  saveJob?: (id: string, saved: boolean) => Promise<void>;
+  /** Shown only when a run can be started from here. */
+  onRunNow?: () => void;
 }) {
   const [jobs, setJobs] = useState(initialJobs);
   const [filter, setFilter] = useState<FeedFilter>("all");
@@ -57,8 +64,15 @@ export function TodayView({
   const toggleSave = (job: FeedJob) => {
     const saved = !job.saved;
     const set = (value: boolean) => setJobs((all) => all.map((j) => (j.id === job.id ? { ...j, saved: value } : j)));
-    set(saved);
-    toast(saved ? "Saved." : "Removed from saved.", { action: { label: "Undo", onClick: () => set(!saved) } });
+    const store = (value: boolean) => {
+      set(value);
+      saveJob(job.id, value).catch(() => {
+        set(!value);
+        toast.error("That did not save. Try again.");
+      });
+    };
+    store(saved);
+    toast(saved ? "Saved." : "Removed from saved.", { action: { label: "Undo", onClick: () => store(!saved) } });
   };
 
   const late = isSearchLate(run.finishedAt, now);
@@ -71,10 +85,12 @@ export function TodayView({
         actions={
           <>
             <span className="text-sm text-muted-foreground">{lastChecked(run, timeZone)}</span>
-            <Button variant="outline" onClick={() => toast("Search started. New jobs appear here as they are scored.")}>
-              <Play data-icon="inline-start" />
-              Run search now
-            </Button>
+            {onRunNow && (
+              <Button variant="outline" onClick={onRunNow}>
+                <Play data-icon="inline-start" />
+                Run search now
+              </Button>
+            )}
           </>
         }
       />
@@ -84,8 +100,8 @@ export function TodayView({
           <TriangleAlert />
           <AlertTitle>The daily search is late.</AlertTitle>
           <AlertDescription>
-            The last search finished more than 30 hours ago, so newer jobs may be missing. Run it now or check the
-            GitHub Actions schedule.
+            The last search finished more than 30 hours ago, so newer jobs may be missing.{" "}
+            {onRunNow ? "Run it now or check the GitHub Actions schedule." : "Check the GitHub Actions schedule."}
           </AlertDescription>
         </Alert>
       )}
@@ -147,8 +163,17 @@ export function TodayView({
   );
 }
 
-/** Today when the last search found nothing new. */
-export function TodayEmpty({ run, timeZone }: { run: TodayRun; timeZone: string }) {
+async function postSave(id: string, saved: boolean) {
+  const res = await fetch(`/api/jobs/${encodeURIComponent(id)}/save`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ saved }),
+  });
+  if (!res.ok) throw new Error(`Save answered ${res.status}`);
+}
+
+/** Today when the last search found nothing new, or before the first search. */
+export function TodayEmpty({ run, timeZone }: { run: TodayRun | null; timeZone: string }) {
   return (
     <Page wide>
       <PageHeader title="Today" description={DESCRIPTION} />
@@ -157,15 +182,13 @@ export function TodayEmpty({ run, timeZone }: { run: TodayRun; timeZone: string 
           <EmptyMedia variant="icon">
             <Inbox />
           </EmptyMedia>
-          <EmptyTitle>No new matches today.</EmptyTitle>
+          <EmptyTitle>{run ? "No new matches today." : "The first search has not run yet."}</EmptyTitle>
           <EmptyDescription>
-            {run.companies} companies checked at {formatClock(run.finishedAt, timeZone)}. Add a company you like on the
-            Companies page to watch it too.
+            {run
+              ? `${run.companies} companies checked at ${formatClock(run.finishedAt, timeZone)}. Jobs from the last 7 days that fit you and are open where you live show up here.`
+              : "The search runs every morning at 06:30 Dhaka time and checks each company's careers page. Your matches show up here after it finishes."}
           </EmptyDescription>
         </EmptyHeader>
-        <EmptyContent>
-          <Button variant="outline">Add a company</Button>
-        </EmptyContent>
       </Empty>
     </Page>
   );
@@ -202,6 +225,12 @@ export function TodaySkeleton() {
       </div>
     </Page>
   );
+}
+
+/** TodayError for the real page: Try again reloads the feed from the server. */
+export function TodayLoadError() {
+  const router = useRouter();
+  return <TodayError onRetry={() => router.refresh()} />;
 }
 
 /** Today when the feed could not load. */

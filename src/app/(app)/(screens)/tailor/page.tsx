@@ -6,6 +6,8 @@ import { TailorWorkspace } from "@/components/tailor/tailor-workspace";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
+import { jobPostText } from "@/lib/jobs/feed";
+import { profileDb } from "@/lib/profile/service";
 import { currentProfileStatus } from "@/lib/profile/status";
 import { listTailorings } from "@/lib/tailor/service";
 
@@ -15,7 +17,7 @@ const DESCRIPTION = "Paste a job post and get your CV rewritten for it, ready to
 
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ job?: string }> }) {
   const status = await currentProfileStatus();
   if (status !== "confirmed") {
     return (
@@ -26,8 +28,12 @@ export default async function Page() {
   }
   const user = await requireUser();
   const recent = await listTailorings(user.id, 8);
+  // "Tailor CV" on a job in Today: the post is already in the box.
+  const { job } = await searchParams;
+  const initialPost = job ? ((await jobPostText(profileDb(), user.id, job)) ?? "") : "";
   return (
     <TailorWorkspace
+      initialPost={initialPost}
       recent={
         recent.length > 0 && (
           <Card className="mt-8 max-w-3xl">

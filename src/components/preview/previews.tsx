@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { TodayEmpty, TodayError, TodaySkeleton, TodayView } from "@/components/jobs/today-view";
 import { TailorPaste, TailorResultView, TailorWorking, type TailorResult } from "@/components/tailor/tailor-view";
@@ -33,6 +34,8 @@ export function TodayPreview({ state }: { state?: string }) {
       now={sampleNow}
       timeZone={sampleTimeZone}
       tailorHref={() => "/preview/tailor"}
+      saveJob={async () => {}}
+      onRunNow={() => toast("Search started. New jobs appear here as they are scored.")}
     />
   );
 }

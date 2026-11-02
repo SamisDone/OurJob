@@ -48,4 +48,8 @@ export type PipelineStats = {
   companiesCrawled: number;
   jobsScored: number;
   llmCalls: number;
+  /** Jobs kept after the role, date and location rules (the rest are not stored). */
+  jobsStored?: number;
+  jobsClosed?: number;
+  durationMs?: number;
 };
