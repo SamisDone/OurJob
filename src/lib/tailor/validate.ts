@@ -398,9 +398,12 @@ export function validateTailored(
 
   /* 4. Skills: every item maps to a profile skill, under the profile's name. */
   const skillById = new Map(p.skills.map((s) => [s.id, s]));
+  // A tool only a tech line names (no skill entry) cites that role or project as its skillId (4d).
+  const techById = new Map([...p.experience, ...p.projects].map((x) => [x.id, new Set(x.tech.map(skillFold))]));
   for (const group of resume.skills) {
     group.items = group.items.filter((item) => {
       const s = skillById.get(item.skillId);
+      if (!s && techById.get(item.skillId)?.has(skillFold(item.name))) return true;
       if (!s) {
         issues.push({
           check: "skills",
@@ -506,6 +509,23 @@ export function validateTailored(
     if (leaks(s.name, true).length) continue;
     groupFor(s).items.push({ name: s.name, skillId: s.id });
     restored.push(s.name);
+  }
+  // Tools a role's or project's tech line names with no skill entry of their own (Bun, Chrome APIs) stay too.
+  const named = new Set([
+    ...resume.skills.flatMap((g) => g.items.map((i) => skillFold(i.name))),
+    ...p.skills.flatMap((s) => [s.name, ...s.aliases].map(skillFold)),
+  ]);
+  for (const x of [...p.experience, ...p.projects]) {
+    for (const tool of x.tech) {
+      const name = tool.trim();
+      if (name.length < 2 || named.has(skillFold(name)) || leaks(name, true).length) continue;
+      named.add(skillFold(name));
+      const group = skillGroupOf(name);
+      let g = resume.skills.find((y) => y.group === group);
+      if (!g) resume.skills.push((g = { group, items: [] }));
+      g.items.push({ name, skillId: x.id });
+      restored.push(name);
+    }
   }
   if (restored.length)
     issues.push({

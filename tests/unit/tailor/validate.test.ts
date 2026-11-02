@@ -307,6 +307,25 @@ describe("validator", () => {
     expect(["PostgreSQL", "Kafka"]).toContain(data.items[0].name);
   });
 
+  it("4d. keeps tools only a project's tech line names, with that project as their source, and only once", () => {
+    const withTech = structuredClone(profile);
+    const proj = withTech.projects[0];
+    proj.tech = [...proj.tech, "Bun", "Gemini API", "Chrome APIs", "bun"];
+    const r = good();
+    r.skills = [{ group: "Languages", items: [{ name: "Go", skillId: "sk_go" }] }];
+    const once = validateTailored(r, { ...ctx, profile: withTech });
+    const items = once.resume.skills.flatMap((g) => g.items);
+    for (const name of ["Bun", "Gemini API", "Chrome APIs"])
+      expect(items.filter((i) => i.name.toLowerCase() === name.toLowerCase())).toEqual([{ name, skillId: proj.id }]);
+    const group = (name: string) => once.resume.skills.find((g) => g.items.some((i) => i.name === name))?.group;
+    expect(group("Bun")).toBe("Backend");
+    expect(group("Chrome APIs")).toBe("Frontend");
+    // The validator runs again on its own output: check 4 keeps these items.
+    const again = validateTailored(once.resume, { ...ctx, profile: withTech });
+    expect(again.resume.skills).toEqual(once.resume.skills);
+    expect(of(again.issues, "skills").filter((i) => /not a skill/.test(i.message))).toEqual([]);
+  });
+
   it("2e and 2f. flag a word said twice and job terms stacked in front of the source", () => {
     const { issues } = run((r) => {
       r.experience[0].bullets[1].text =
