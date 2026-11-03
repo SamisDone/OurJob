@@ -84,7 +84,16 @@ export function JobSheet({
                   <Nums>{formatPosted(job.postedAt, now)}</Nums>
                 </Fact>
                 <Fact label="Source">
-                  {job.source}
+                  {job.sourceUrl && !job.direct ? (
+                    <>
+                      Found on{" "}
+                      <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                        {job.source}
+                      </a>
+                    </>
+                  ) : (
+                    job.source
+                  )}
                   {job.direct && <span className="text-muted-foreground">, direct from the company</span>}
                 </Fact>
               </dl>

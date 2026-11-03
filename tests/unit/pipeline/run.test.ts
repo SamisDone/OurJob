@@ -40,6 +40,10 @@ const resetBoards = () => {
     "boards-api.greenhouse.io/v1/boards/gitlab/jobs": gitlab,
     "api.ashbyhq.com/posting-api/job-board/linear": { ...linear, jobs: [...linear.jobs, fresh] },
     "api.lever.co/v0/postings/spotify": read("tests/fixtures/sources/lever/spotify.json"),
+    // Job boards answer with nothing unless a test gives them jobs.
+    "himalayas.app/jobs/api/search": { jobs: [] },
+    "remotive.com/api/remote-jobs": { jobs: [] },
+    "jobicy.com/api/jobs": { jobs: [] },
   };
 };
 
@@ -186,5 +190,71 @@ describe("daily run (PGlite, real migrations, real board fixtures, fake model)",
     expect(r.runId).toBeNull();
     expect(r.preview.map((p) => p.title)).toEqual(["Backend Engineer"]);
     expect((await db.select().from(schema.pipelineRuns)).length).toBe(runs);
+  });
+
+  it("job boards: credited, deduped against the company's own posting, and undated jobs count only from a board's second run", async () => {
+    resetBoards();
+    const rem = read("tests/fixtures/sources/remotive/all.json");
+    const him = read("tests/fixtures/sources/himalayas/search-bd.json");
+    const at = (d: Date) => d.toISOString().slice(0, 19); // Remotive writes UTC without a zone
+    const t1 = new Date(NOW.getTime() + 3 * 3_600_000);
+    const remotiveJob = (id: number, title: string, company: string) => ({
+      ...rem.jobs[0],
+      id,
+      title,
+      company_name: company,
+      url: `https://remotive.com/remote-jobs/software-development/x-${id}`,
+      publication_date: at(new Date(NOW.getTime() - 3_600_000)),
+      candidate_required_location: "Worldwide",
+    });
+    const himJob = (guid: string, title: string, when: Date) => ({
+      ...him.jobs[1],
+      guid: `https://himalayas.app/companies/bolt-labs/jobs/${guid}`,
+      applicationLink: `https://himalayas.app/companies/bolt-labs/jobs/${guid}?utm_source=api`,
+      title,
+      companyName: "Bolt Labs",
+      locationRestrictions: [],
+      pubDate: when.getTime() / 1000 - 600,
+      expiryDate: when.getTime() / 1000 + 30 * 86_400,
+    });
+    // The Remotive copy of Linear's own posting is the same job: the company's version is kept.
+    boards["remotive.com/api/remote-jobs"] = {
+      jobs: [remotiveJob(1, "Backend Engineer", "Linear"), remotiveJob(2, "Senior Backend Developer", "Acme Remote")],
+    };
+    boards["himalayas.app/jobs/api/search"] = { jobs: [himJob("platform-engineer", "Platform Engineer", t1)] };
+    await run(t1);
+
+    const remotiveRows = await db.select().from(schema.jobs).where(eq(schema.jobs.source, "remotive"));
+    expect(remotiveRows.map((j) => j.title)).toEqual(["Senior Backend Developer"]);
+    expect(remotiveRows[0].attribution).toEqual({
+      label: "Remotive",
+      url: "https://remotive.com/remote-jobs/software-development/x-2",
+    });
+    const [linearJob] = await db.select().from(schema.jobs).where(eq(schema.jobs.sourceJobId, "fresh-1"));
+    expect(linearJob.alsoSeenIn).toEqual([
+      { source: "remotive", url: "https://remotive.com/remote-jobs/software-development/x-1" },
+    ]);
+    const [h1] = await db.select().from(schema.jobs).where(eq(schema.jobs.source, "himalayas"));
+    expect(h1).toMatchObject({ postedAt: null, postedAtSource: "unknown" });
+    expect(h1.closedAt!.getTime()).toBeGreaterThan(t1.getTime()); // closes on its expiry date
+
+    const prefs = searchPreferencesSchema.parse({ country: "PT" });
+    let feed = await getFeed(db, userId, prefs, t1);
+    const acme = feed.jobs.find((j) => j.company === "Acme Remote")!;
+    expect(acme).toMatchObject({ source: "Remotive", direct: false, sourceUrl: remotiveRows[0].applyUrl });
+    expect(feed.jobs.some((j) => j.company === "Bolt Labs")).toBe(false); // first Himalayas run: no date to trust
+
+    const t2 = new Date(t1.getTime() + 3_600_000);
+    boards["himalayas.app/jobs/api/search"] = {
+      jobs: [
+        himJob("platform-engineer", "Platform Engineer", t2),
+        himJob("platform-engineer-2", "Platform Engineer II", t2),
+      ],
+    };
+    await run(t2);
+    feed = await getFeed(db, userId, prefs, t2);
+    const bolt = feed.jobs.filter((j) => j.company === "Bolt Labs");
+    expect(bolt.map((j) => j.title)).toEqual(["Platform Engineer II"]);
+    expect(bolt[0]).toMatchObject({ source: "Himalayas", postedAt: t2.toISOString() });
   });
 });

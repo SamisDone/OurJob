@@ -14,9 +14,10 @@ const RANGE = new RegExp(
   "g",
 );
 const PERIOD: [RegExp, Salary["period"]][] = [
-  [/^.{0,40}?\b(?:per hour|an hour|hourly|\/\s*h(?:ou)?r)\b/i, "hour"],
-  [/^.{0,40}?\b(?:per day|a day|daily|\/\s*day)\b/i, "day"],
-  [/^.{0,40}?\b(?:per month|a month|monthly|\/\s*mo(?:nth)?)\b/i, "month"],
+  // "/month" right after the number has no word boundary before the slash, so it is matched on its own.
+  [/^.{0,40}?(?:\b(?:per hour|an hour|hourly)|\/\s*h(?:ou)?r)\b/i, "hour"],
+  [/^.{0,40}?(?:\b(?:per day|a day|daily)|\/\s*day)\b/i, "day"],
+  [/^.{0,40}?(?:\b(?:per month|a month|monthly)|\/\s*mo(?:nth)?)\b/i, "month"],
 ];
 const PER_YEAR: Record<Salary["period"], number> = { year: 1, month: 12, day: 260, hour: 2080 };
 

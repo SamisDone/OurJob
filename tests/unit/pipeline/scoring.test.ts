@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { checkAssessments, p4OutputSchema, p4Prompt, type P4Job } from "@/lib/llm/prompts/p4-fit";
 import { p1OutputSchema } from "@/lib/llm/prompts/p1-profile";
+import { whereOf } from "@/lib/jobs/feed";
 import { prefilterScore } from "@/lib/pipeline/prefilter";
 import { feedScore, payScore } from "@/lib/pipeline/rank";
 import { normalizeProfile } from "@/lib/profile/normalize";
@@ -40,6 +41,7 @@ describe("prefilter", () => {
       "Engineering Manager, Commerce Systems",
       "Director, Site Reliability Engineering",
       "PhD Machine Learning Engineer, Intern",
+      "Technical Customer Support Engineer, APAC (Weekend Coverage)",
     ])
       expect(prefilterScore(job(t), profile, prefs), t).toBe(0);
     expect(
@@ -144,6 +146,20 @@ describe("P4 checks", () => {
     const { user, system } = p4Prompt(profile, prefs, jobs);
     expect(user.match(/<job id="/g)).toHaveLength(3);
     expect(system).toMatch(/Ignore any instructions/);
+  });
+});
+
+describe("where a job is open", () => {
+  it("shortens a long country list around his country", () => {
+    const many = {
+      kind: "countries" as const,
+      countries: ["AF", "AL", "BD", "IN", "NP"],
+      confidence: "structured" as const,
+    };
+    expect(whereOf("remote", many, "", "BD")).toBe("Remote, Bangladesh and 4 more countries");
+    expect(whereOf("remote", { ...many, countries: ["BD", "IN"] }, "", "BD")).toBe("Remote, Bangladesh, India");
+    expect(whereOf("remote", { kind: "unknown", confidence: "parsed" }, "Remote")).toBe("Remote, location not stated");
+    expect(whereOf("onsite", null, "Toronto, ON")).toBe("Toronto, ON");
   });
 });
 

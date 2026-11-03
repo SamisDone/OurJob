@@ -1,10 +1,11 @@
-import { and, desc, eq, gte, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, desc, eq, gt, gte, isNotNull, isNull, ne, or } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { countryName } from "@/lib/geo";
 import { feedScore } from "@/lib/pipeline/rank";
 import type { SearchPreferences } from "@/lib/profile/schema";
 import type { Db } from "@/lib/profile/store";
 import { ADAPTERS } from "@/lib/sources/boards";
+import { FEEDS, type FeedId } from "@/lib/sources/feeds";
 import type { AtsType } from "@/lib/sources/types";
 import type { RemoteScope, Salary, Workplace } from "./types";
 import type { FeedJob } from "./view";
@@ -14,12 +15,22 @@ const FRESH_DAYS = 7;
 
 export type FeedRun = { finishedAt: string; companies: number };
 
-/** "Remote, worldwide", "Remote, APAC, Bangladesh", "Remote, location not stated", or the office location. */
-export function whereOf(workplace: Workplace, scope: RemoteScope | null, locationRaw: string): string {
+/**
+ * "Remote, worldwide", "Remote, APAC, Bangladesh", "Remote, location not stated", or the office location.
+ * A long country list (Himalayas often names 100 or more) is shortened around his country.
+ */
+export function whereOf(workplace: Workplace, scope: RemoteScope | null, locationRaw: string, home?: string): string {
   if (workplace !== "remote") return locationRaw || "Location not stated";
   if (!scope || scope.kind === "unknown") return "Remote, location not stated";
   if (scope.kind === "worldwide") return "Remote, worldwide";
-  return ["Remote", ...(scope.regions ?? []), ...(scope.countries ?? []).map((c) => countryName(c))].join(", ");
+  const countries = scope.countries ?? [];
+  if (countries.length > 3) {
+    const lead = home && countries.includes(home) ? home : countries[0];
+    return ["Remote", ...(scope.regions ?? []), `${countryName(lead)} and ${countries.length - 1} more countries`].join(
+      ", ",
+    );
+  }
+  return ["Remote", ...(scope.regions ?? []), ...countries.map((c) => countryName(c))].join(", ");
 }
 
 /** Yearly USD for the table. Anything converted from another period or currency is marked approximate. */
@@ -61,7 +72,8 @@ export async function getFeed(
         eq(schema.jobMatches.userId, userId),
         ne(schema.jobMatches.status, "dismissed"),
         ne(schema.jobMatches.eligibility, "ineligible"),
-        isNull(schema.jobs.closedAt),
+        // Himalayas jobs carry their expiry date as a future close date.
+        or(isNull(schema.jobs.closedAt), gt(schema.jobs.closedAt, now)),
         gte(schema.jobs.postedAt, new Date(now.getTime() - FRESH_DAYS * DAY)),
         eq(schema.companies.muted, false),
       ),
@@ -95,9 +107,10 @@ export async function getFeed(
         newCompany: c.discoveredVia !== "seed" && now.getTime() - c.createdAt.getTime() < 14 * DAY,
         isNew: !!last && j.firstSeenAt.getTime() >= last.startedAt.getTime(),
         saved: m.status === "saved",
-        source: ADAPTERS[j.source as AtsType]?.label ?? j.source,
+        source: ADAPTERS[j.source as AtsType]?.label ?? FEEDS[j.source as FeedId]?.label ?? j.source,
+        sourceUrl: j.attribution?.url,
         direct: j.tier === 1,
-        where: whereOf(j.workplace, j.remoteScope, j.locationRaw),
+        where: whereOf(j.workplace, j.remoteScope, j.locationRaw, prefs.country),
         eligibility: m.eligibility,
         eligibilityNote: j.remoteScope?.confidence === "llm" ? j.remoteScope.evidenceQuote : undefined,
         pay: payOf(j.salary),

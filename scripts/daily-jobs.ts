@@ -18,6 +18,7 @@ import { createGeminiProvider } from "../src/lib/llm/gemini";
 import { runDailyPipeline, type Company } from "../src/lib/pipeline/run";
 import { loadSeed, loadWellKnown, upsertSeed } from "../src/lib/pipeline/seed";
 import type { Db } from "../src/lib/profile/store";
+import type { FeedId } from "../src/lib/sources/feeds";
 import type { AtsType } from "../src/lib/sources/types";
 
 config({ path: [".env.local", ".env"], quiet: true });
@@ -27,9 +28,9 @@ const value = (name: string) => flag(name)?.split("=")[1];
 const dryRun = !!flag("dry-run");
 const noLlm = !!flag("no-llm") || dryRun;
 const limitCompanies = Number(value("limit-companies")) || undefined;
-const source = value("source") as AtsType | undefined;
-if (source && !["greenhouse", "lever", "ashby"].includes(source)) {
-  console.error(`Unknown --source=${source}. Use greenhouse, lever or ashby.`);
+const source = value("source") as AtsType | FeedId | undefined;
+if (source && !["greenhouse", "lever", "ashby", "himalayas", "remotive", "jobicy"].includes(source)) {
+  console.error(`Unknown --source=${source}. Use greenhouse, lever, ashby, himalayas, remotive or jobicy.`);
   process.exit(1);
 }
 
@@ -49,8 +50,10 @@ const provider =
     : createGeminiProvider({
         apiKey,
         model: process.env.LLM_MODEL || "gemini-3.5-flash-lite",
-        fallbackModel: process.env.LLM_FALLBACK_MODEL || "gemini-3.8-flash",
-        hedgeModel: process.env.LLM_HEDGE_MODEL || "gemini-3.5-flash-lite",
+        // Lite only, one request per batch: no Flash fallback (its 20 free requests a day are the tailoring
+        // backup) and no second request when an answer is slow. A batch that fails waits for the next run.
+        fallbackModel: undefined,
+        slowMs: 10 * 60_000,
         rpm: Number(process.env.LLM_RPM) || undefined,
         log: () => {},
       });
@@ -87,7 +90,14 @@ async function main() {
       ? seed.map((c, i) => ({ id: `seed-${i}`, name: c.name, ats: c.ats, slug: c.slug, crawlCount: 0 }))
       : undefined;
     const summary = await runDailyPipeline(
-      { db, http: createPoliteClient(), provider, cache, log: (l) => console.log(l) },
+      {
+        db,
+        // Remotive blocks more than 2 requests a minute; the run makes one.
+        http: createPoliteClient({ hostIntervalMs: { "remotive.com": 30_000 } }),
+        provider,
+        cache,
+        log: (l) => console.log(l),
+      },
       {
         trigger: process.env.GITHUB_EVENT_NAME === "workflow_dispatch" ? "manual" : "schedule",
         dryRun,

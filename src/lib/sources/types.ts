@@ -46,6 +46,8 @@ export type NormalizedJob = {
   postedAt?: Date;
   postedAtSource: PostedAtSource;
   attribution?: Attribution;
+  /** When the source says the listing ends (Himalayas `expiryDate`); stored as the job's close date. */
+  closesAt?: Date;
 };
 
 /** A board adapter: the URL to fetch, and the response to postings. Fetching goes through the polite client. */

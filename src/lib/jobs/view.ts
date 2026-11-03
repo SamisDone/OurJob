@@ -16,6 +16,8 @@ export type FeedJob = {
   saved: boolean;
   /** Where the job came from, for the source line: "Careers page (Ashby)", "Himalayas". */
   source: string;
+  /** The job's page on the board it came from, for the source link their terms ask for. */
+  sourceUrl?: string;
   /** Company-direct (tier 1) or a job board or aggregator. */
   direct: boolean;
   where: string;

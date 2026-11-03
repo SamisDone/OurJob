@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq, gte, inArray, isNotNull, isNull, ne, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNotNull, isNull, ne, notInArray, or, sql } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { PoliteHttpError, type PoliteClient } from "@/lib/http/polite";
 import type { PipelineStats, RemoteScope } from "@/lib/jobs/types";
@@ -19,9 +19,10 @@ import { draftSearchPreferences } from "@/lib/profile/build";
 import { searchPreferencesSchema, type MasterProfile, type SearchPreferences } from "@/lib/profile/schema";
 import type { Db } from "@/lib/profile/store";
 import { ADAPTERS } from "@/lib/sources/boards";
+import { FEEDS, type FeedContext, type FeedId } from "@/lib/sources/feeds";
 import { normalizePosting } from "@/lib/sources/normalize";
 import type { AtsType, NormalizedJob } from "@/lib/sources/types";
-import { dedupeJobs, normalizeTitle } from "./dedupe";
+import { dedupeJobs, normalizeCompanyName, normalizeTitle } from "./dedupe";
 import { eligibilityOf } from "./eligibility";
 import { prefilterScore } from "./prefilter";
 import { parseSalaryText } from "./salary";
@@ -55,7 +56,8 @@ export type RunOptions = {
   trigger: "schedule" | "manual";
   dryRun?: boolean;
   limitCompanies?: number;
-  source?: AtsType;
+  /** One ATS or one job board only. */
+  source?: AtsType | FeedId;
   /** P4 calls this run may make (LLM_DAILY_CALL_BUDGET). */
   llmBudget: number;
   /** New jobs scored per user per run. */
@@ -102,11 +104,17 @@ export async function runDailyPipeline(
     const seekers = deps.db ? await loadSeekers(deps.db) : [];
     let companies = dryRunCompanies ?? (deps.db ? await loadCompanies(deps.db) : []);
     if (opts.source) companies = companies.filter((c) => c.ats === opts.source);
+    const feedIds = (Object.keys(FEEDS) as FeedId[]).filter((id) => !opts.source || opts.source === id);
     companies = companies.slice(0, opts.limitCompanies ?? opts.maxCompanies ?? 400);
     log(`${companies.length} companies, ${seekers.length} people with a confirmed profile`);
 
     /* 2. Fetch: one queue per ATS host, hosts in parallel; the polite client spaces requests 1 s apart per host. */
-    const fetched = await fetchAll(companies, deps.http);
+    // Tier 2 boards run alongside: their hosts are different, and each is called once or a few times.
+    const countries = [...new Set(seekers.map((s) => s.prefs.country).filter((c): c is string => !!c))];
+    const [fetched, feeds] = await Promise.all([
+      fetchAll(companies, deps.http),
+      fetchFeeds(feedIds, { http: deps.http, countries, now: started }),
+    ]);
     const ok = fetched.filter((f): f is Extract<Fetched, { jobs: NormalizedJob[] }> => "jobs" in f);
     stats.companiesCrawled = ok.length;
     for (const f of fetched) {
@@ -115,12 +123,19 @@ export async function runDailyPipeline(
         errors.push({ source: f.company.ats, company: f.company.name, message: f.error });
       } else sourceStats(f.company.ats).fetched += f.jobs.length;
     }
+    for (const f of feeds) {
+      if ("error" in f) {
+        sourceStats(f.id).errors++;
+        errors.push({ source: f.id, message: f.error });
+      } else sourceStats(f.id).fetched += f.jobs.length;
+    }
+    const okFeeds = feeds.filter((f): f is { id: FeedId; jobs: NormalizedJob[] } => "jobs" in f);
     const firstCrawl = new Set(ok.filter((f) => f.company.crawlCount === 0).map((f) => f.company.id));
-    const companyOf = new Map<string, Company>();
-    for (const f of ok) for (const j of f.jobs) companyOf.set(`${j.source}:${j.sourceJobId}`, f.company);
+    const companyOf = new Map<string, string>();
+    for (const f of ok) for (const j of f.jobs) companyOf.set(`${j.source}:${j.sourceJobId}`, f.company.id);
 
     /* 3. Dedupe, then keep only what someone could see: his kind of role, a place he can work from, the last 7 days. */
-    const all = dedupeJobs(ok.flatMap((f) => f.jobs));
+    const all = dedupeJobs([...ok.flatMap((f) => f.jobs), ...okFeeds.flatMap((f) => f.jobs)]);
     const fresh = (j: NormalizedJob) => !j.postedAt || started.getTime() - j.postedAt.getTime() <= FRESH_DAYS * DAY;
     const prefsList = seekers.length ? seekers : [];
     const relevant = all.filter(
@@ -168,8 +183,26 @@ export async function runDailyPipeline(
         .where(eq(schema.companies.id, c.id));
     }
 
-    /* 5. Store jobs. A job with no real post date counts from today, but not on a company's first crawl. */
-    const stored = await storeJobs(db, relevant, companyOf, firstCrawl, started);
+    /* 5. Store jobs. A job with no real post date counts from today, but not on the first crawl of its company
+       or job board (docs/JOB_SOURCES.md section 8). Board jobs get a company row by name, shared with the seed. */
+    const feedJobs = relevant.filter((j) => j.tier !== 1);
+    const ids = await ensureCompanies(
+      db,
+      feedJobs.map((j) => j.companyName),
+    );
+    for (const j of feedJobs)
+      companyOf.set(`${j.source}:${j.sourceJobId}`, ids.get(normalizeCompanyName(j.companyName))!);
+    const seenFeeds = new Set(
+      (
+        await db
+          .selectDistinct({ source: schema.jobs.source })
+          .from(schema.jobs)
+          .where(inArray(schema.jobs.source, feedIds.length ? feedIds : ["-"]))
+      ).map((r) => r.source),
+    );
+    const datedFromToday = (j: NormalizedJob, companyId: string) =>
+      j.tier === 1 ? !firstCrawl.has(companyId) : seenFeeds.has(j.source);
+    const stored = await storeJobs(db, relevant, companyOf, datedFromToday, started);
     for (const s of stored) if (s.isNew) sourceStats(s.source).new++;
 
     /* 6. Jobs that left a board this run are closed. */
@@ -189,19 +222,46 @@ export async function runDailyPipeline(
         .returning({ id: schema.jobs.id });
       stats.jobsClosed! += closed.length;
     }
+    // Remotive and Jobicy return every open job (Jobicy: of the last 7 days), so a missing one is closed.
+    // Himalayas is searched by update date; its jobs close on their expiry date instead (their terms).
+    for (const f of okFeeds.filter((f) => FULL_LIST_FEEDS.has(f.id))) {
+      const ids = f.jobs.map((j) => j.sourceJobId);
+      const closed = await db
+        .update(schema.jobs)
+        .set({ closedAt: started })
+        .where(
+          and(
+            eq(schema.jobs.source, f.id),
+            isNull(schema.jobs.closedAt),
+            ids.length ? notInArray(schema.jobs.sourceJobId, ids) : undefined,
+          ),
+        )
+        .returning({ id: schema.jobs.id });
+      stats.jobsClosed! += closed.length;
+    }
 
     /* 7. Matches per person: prefilter and eligibility now; a changed post is scored again. */
     for (const s of seekers) await upsertMatches(db, s, stored);
 
     /* 7b. A job from a checked board that no longer passes the rules leaves the feed, unless he saved or applied. */
+    // Himalayas is left out: its search drops a job once it has not been updated for 7 days, which says nothing new.
     const crawledIds = ok.map((f) => f.company.id);
-    if (crawledIds.length) {
+    const fullFeeds = okFeeds.filter((f) => FULL_LIST_FEEDS.has(f.id)).map((f) => f.id);
+    if (crawledIds.length || fullFeeds.length) {
       const keep = stored.map((s) => s.id);
       const leaving = db
         .select({ id: schema.jobs.id })
         .from(schema.jobs)
         .where(
-          and(inArray(schema.jobs.companyId, crawledIds), keep.length ? notInArray(schema.jobs.id, keep) : undefined),
+          and(
+            or(
+              crawledIds.length
+                ? and(inArray(schema.jobs.companyId, crawledIds), inArray(schema.jobs.source, Object.keys(ADAPTERS)))
+                : undefined,
+              fullFeeds.length ? inArray(schema.jobs.source, fullFeeds) : undefined,
+            ),
+            keep.length ? notInArray(schema.jobs.id, keep) : undefined,
+          ),
         );
       await db
         .delete(schema.jobMatches)
@@ -324,6 +384,45 @@ async function fetchAll(companies: Company[], http: PoliteClient): Promise<Fetch
   return out;
 }
 
+/** Job boards that return every open job each time, so a job missing from the answer has closed. */
+const FULL_LIST_FEEDS = new Set<FeedId>(["remotive", "jobicy"]);
+
+async function fetchFeeds(
+  ids: FeedId[],
+  ctx: FeedContext,
+): Promise<({ id: FeedId; jobs: NormalizedJob[] } | { id: FeedId; error: string })[]> {
+  return Promise.all(
+    ids.map(async (id) => {
+      try {
+        return { id, jobs: await FEEDS[id].fetch(ctx) };
+      } catch (e) {
+        return { id, error: `${FEEDS[id].label}: ${e instanceof Error ? e.message : String(e)}` };
+      }
+    }),
+  );
+}
+
+/** Company rows for job-board jobs, found by normalized name (a seeded company is reused), else added. */
+async function ensureCompanies(db: Db, names: string[]): Promise<Map<string, string>> {
+  const byNorm = new Map(names.map((n) => [normalizeCompanyName(n), n.trim()] as const).filter(([k]) => k));
+  if (!byNorm.size) return new Map();
+  const values = [...byNorm].map(([normalizedName, name]) => ({
+    name,
+    normalizedName,
+    discoveredVia: "aggregator" as const,
+  }));
+  for (let i = 0; i < values.length; i += 100)
+    await db
+      .insert(schema.companies)
+      .values(values.slice(i, i + 100))
+      .onConflictDoNothing();
+  const rows = await db
+    .select({ id: schema.companies.id, normalizedName: schema.companies.normalizedName })
+    .from(schema.companies)
+    .where(inArray(schema.companies.normalizedName, [...byNorm.keys()]));
+  return new Map(rows.map((r) => [r.normalizedName, r.id]));
+}
+
 const hashOf = (j: NormalizedJob) =>
   createHash("sha256")
     .update(JSON.stringify([j.title, j.locationRaw, j.descriptionText]))
@@ -342,8 +441,8 @@ type StoredJob = {
 async function storeJobs(
   db: Db,
   jobs: (NormalizedJob & { alsoSeenIn: { source: string; url: string }[] })[],
-  companyOf: Map<string, Company>,
-  firstCrawl: Set<string>,
+  companyOf: Map<string, string>,
+  datedFromToday: (job: NormalizedJob, companyId: string) => boolean,
   now: Date,
 ): Promise<StoredJob[]> {
   const out: StoredJob[] = [];
@@ -363,11 +462,11 @@ async function storeJobs(
       ).map((r) => [`${r.source}:${r.id}`, r.hash]),
     );
     const values = chunk.map((j) => {
-      const company = companyOf.get(`${j.source}:${j.sourceJobId}`)!;
+      const companyId = companyOf.get(`${j.source}:${j.sourceJobId}`)!;
       const isNew = !before.has(`${j.source}:${j.sourceJobId}`);
-      const undatedButSeen = !j.postedAt && isNew && !firstCrawl.has(company.id);
+      const undatedButSeen = !j.postedAt && isNew && datedFromToday(j, companyId);
       return {
-        companyId: company.id,
+        companyId,
         source: j.source,
         tier: j.tier,
         sourceJobId: j.sourceJobId,
@@ -386,7 +485,8 @@ async function storeJobs(
         postedAtSource: j.postedAt ? j.postedAtSource : undatedButSeen ? ("first_seen" as const) : ("unknown" as const),
         firstSeenAt: now,
         lastSeenAt: now,
-        closedAt: null,
+        // Himalayas gives an expiry date; the job leaves the feed then (their terms). Others close when they go.
+        closedAt: j.closesAt ?? null,
         attribution: j.attribution ?? null,
         alsoSeenIn: j.alsoSeenIn,
         contentHash: hashOf(j),
@@ -413,7 +513,7 @@ async function storeJobs(
           postedAt: sql`coalesce(${schema.jobs.postedAt}, excluded.posted_at)`,
           postedAtSource: sql`case when ${schema.jobs.postedAt} is null then excluded.posted_at_source else ${schema.jobs.postedAtSource} end`,
           lastSeenAt: sql`excluded.last_seen_at`,
-          closedAt: null,
+          closedAt: sql`excluded.closed_at`,
           alsoSeenIn: sql`excluded.also_seen_in`,
           contentHash: sql`excluded.content_hash`,
           updatedAt: now,
@@ -507,7 +607,7 @@ async function scoreMatches(
       and(
         eq(schema.jobMatches.userId, s.userId),
         isNull(schema.jobMatches.scoredAt),
-        isNull(schema.jobs.closedAt),
+        or(isNull(schema.jobs.closedAt), gt(schema.jobs.closedAt, o.now)),
         gte(schema.jobs.postedAt, o.since),
         ne(schema.jobMatches.eligibility, "ineligible"),
       ),

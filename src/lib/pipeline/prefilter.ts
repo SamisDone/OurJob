@@ -13,7 +13,7 @@ import { normalizeTitle } from "./dedupe";
 const ROLE =
   /\b(?:engineer(?:ing)?|developer|programmer|software|swe|sde|full[- ]?stack|front[- ]?end|back[- ]?end|web|mobile|ios|android|devops|sre|machine learning|ml|ai|data scientist|architect)\b/i;
 const NOT_ROLE =
-  /\b(?:sales|account (?:executive|manager)|recruit(?:er|ing)|marketing|counsel|legal|accountant|payroll|customer success|support specialist|product (?:manager|owner|strategist|designer)|program manager|project manager|strategist|curriculum|enablement|partner|solutions (?:architect|engineer|consultant)|sales engineer)\b/i;
+  /\b(?:sales|account (?:executive|manager)|recruit(?:er|ing)|marketing|counsel|legal|accountant|payroll|customer success|support specialist|customer support|technical support|support engineer|product (?:manager|owner|strategist|designer)|program manager|project manager|strategist|curriculum|enablement|partner|solutions (?:architect|engineer|consultant)|sales engineer)\b/i;
 /** People-management titles count only when one of his target titles is one. */
 const MANAGES = /\b(?:manager|director|head of|vp|vice president|chief)\b/i;
 const LEVELS: [RegExp, "intern" | "junior" | "mid" | "senior" | "lead"][] = [
